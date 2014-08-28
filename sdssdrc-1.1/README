@@ -1,0 +1,21 @@
+The construction of configure script seems to rely on very new
+version of the GNU autotools, so I ended up running them on fnalu (fsui03):
+
+aclocal -I m4
+autoheader
+automake
+autoconf
+./configure --with-cfitsio=/das2/data/src/cfitsio --datadir=/das2/data/imaging
+make dist
+
+This procedure creates the distribution file (eg sdssdrc-1.0.tar.gz) that
+can be built on other machines (even those with old autotools):
+
+$ cd sdssdrc-1.0
+$ ./configure \
+> --with-cfitsio-includedir=/opt/cfitsio/include  \
+> --with-cfitsio-libdir=/opt/cfitsio/lib  \
+> --datadir=/srv/das/imaging
+$ make
+$ cp drC /srv/das/www/cgi-bin
+

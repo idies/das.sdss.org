@@ -1,0 +1,76 @@
+AC_PREREQ(2.59)
+AC_INIT([sdssdrc],[1.1], [neilsen@fnal.gov])
+AC_CONFIG_AUX_DIR(config)
+
+AM_INIT_AUTOMAKE(sdssdrc,1.1)
+
+AC_CONFIG_SRCDIR([drC.c])
+AC_CONFIG_HEADERS([config.h])
+
+# Checks for programs.
+AC_PROG_CC
+AC_LANG_C
+AC_PROG_AWK
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+# Find CFITSIO
+AC_ARG_WITH(
+  cfitsio_libdir,
+  [ --with-cfitsio_libdir[[=PATH]] the path for the CFITSIO library ],
+  [ CFITSIO_LIBDIR="${withval}" ]
+)
+AC_ARG_WITH(
+  cfitsio_includedir,
+  [ --with-cfitsio_includedir[[=PATH]] the path for the CFITSIO headers ],
+  [ CFITSIO_INCLUDEDIR="${withval}" ]
+)
+AC_ARG_WITH(
+  cfitsio,
+  [ --with-cfitsio[[=PATH]] the path for the CFITSIO libraries and headers ],
+  [ CFITSIO_LIBDIR="${withval}" 
+    CFITSIO_INCLUDEDIR="${withval}" 
+  ]
+)
+LDFLAGS="$LDFLAGS -L${CFITSIO_LIBDIR}"
+INCLUDES="$INCLUDES -I${CFITSIO_INCLUDEDIR}"
+
+AC_CHECK_LIB(popt,main)
+AC_CHECK_LIB(m,main)
+AC_CHECK_LIB(cfitsio,ffopen)
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([sysexits.h stdio.h unistd.h string.h])
+
+AC_SUBST([INCLUDES])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+AC_FUNC_ALLOCA
+
+# GNUlib stuff
+gl_WCHAR_H
+gl_STDINT_H
+#AM_CONDITIONAL(USE_GNULIB_STDINT, [test 1 -eq 0])
+gl_MD5
+
+# Use inline if you can
+AC_C_INLINE
+if test "$ac_cv_c_inline" != no ; then
+   AC_DEFINE(HAVE_INLINE,1,"use inlines")
+   AC_SUBST(HAVE_INLINE)
+fi
+
+# Determine where the data is
+IMDATADIR=$(eval echo $(echo ${datadir}))
+if test "$prefix" = NONE ; then
+   IMDATADIR=$(echo $IMDATADIR | sed 's%^NONE%/usr/local%g') 
+fi
+AC_DEFINE_UNQUOTED(IMDATADIR,"${IMDATADIR}","The configuration file for the DAS")
+
+AC_OUTPUT([Makefile])
