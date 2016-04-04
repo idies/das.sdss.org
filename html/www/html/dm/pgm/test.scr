@@ -1,0 +1,9 @@
+main:
+me$ = "hi"
+IF "hi" = "HI" THEN
+note "hi"
+IF ASC(MID$("hi",2)) = ASC(MID$("HI",2)) THEN
+note "bye"
+ENDIF
+ENDIF
+end

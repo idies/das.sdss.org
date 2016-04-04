@@ -1,0 +1,621 @@
+<HTML> <HEAD> <TITLE>DERVISH Expression Evaluator Functional Specifications</TITLE>
+</HEAD> <BODY>
+<H1>Requirements</h1>
+
+CHH, DJH, SK, JAM, DLP, and BY met on 12/6 and drew up a tenative list of requirements
+for interactive manipulation of FITS files and the database:
+
+<ul>
+  <li> Place the data from FITS binary tables and FITS ASCII tables in
+       an Objectivity Database. Optimise per-file overheads over
+       memory. Assume FITS files are small enough that
+       having multiple copies of the data im memory is not a burden.
+       The tool should be fast enough to stuff the outputs of photo
+       in a resonable time.
+       
+  <li> Place data from a query of the database into FITS files. Somehow,
+       deal with the fact that a query could return much more data
+       than is proper to put into a file.
+       
+  <li> Deal with "something like a list" of both objects and C-schema.
+       The source of the lists is either the data base (object lists) or
+       FITS files (C -lists).
+       
+       The representations are to be held in memory. Be able to
+       generate new lists, given a set of lists. Be able to form expressions of
+       the data members, be able to control iteration over the lists.
+
+       For lists of objects, be able to go back and forth (i.e edit) objects,
+       including putting them back into the database, optionally preserving
+       oids.
+       
+  <li> Given lists in memory, be able to apply operations to 250,000 of them
+       in 300 seconds. Be able to match two lists of 250,000 in the style of
+       target selection in _____ seconds.
+       
+</ul>
+<H1>DERVISH Expression Evaluator Functional Specifications</H1>
+This document specifies the functional specifications for a new DERVISH-based
+expression evaluator.
+
+<h2>Motivation</h2>
+The survey currently supports TCL interfaces to the following complex data
+types:
+<dl>
+  <dt><a href="/dervish/doc/www/dervish.dump.html#diskio">SCHEMA</a>
+  <dd>These are C structures, whose schema are accesible from DERVISH.  Values
+      of members of instances may be fetched and set with the TCL verbs
+      <a href="/dervish/doc/www/tclDiskio.html#membersGet">membersGet</a> and
+      <a href="/dervish/doc/www/tclDiskio.html#memberSet">memberSet</a>.
+  <dt><a href="/dervish/doc/www/dervish.chain.html">CHAIN</a>
+  <dd>A doubly linked list of instances of SCHEMA.
+  <dt><a href="/dervish/doc/www/dervish.fitsio.html">TBLCOL</a>.
+  <dd>These are tables of data, originally created to read in FITS ASCII and
+      Binary Tables.  Currently, most access to FITS tables goes through
+      a TBLCOL.
+  <dt>FITS ASCII and Binary Tables.
+  <dd>While these are currently supported through TBLCOLs, we may be able
+      to interface to these files more efficiently at times without passing
+      though a TBLCOL.  Currently, the Frames Pipeline is doing this with
+      their own special sortware.
+  <dt><a href="/sdb/doc/www/sdb.home.html">SDB</a>-Supported C++ Classes
+  <dd>These are C++ classes whose public methods and constructors are
+      accessible through TCL.  Instances of such C++ classes may represent
+      objects stored in an Objectivity database.
+  <dt><a href="/dervish/doc/www/dervish.hgaf.html">AF</a>
+  <dd>An array of floats.  Each element also contains an error and a mask.
+      Is this still an officially supported type?
+  <dt><a href="/dervish/doc/www/tclVectorExpr.html#VectorDefn">VECTOR</a>
+  <dd>A vector of floating point values.  These are a intended to be a
+      replacement for AFs, though utilities are provided to translate between
+      the two types.  VECTORS may be filled from, or fill, the values of
+      members on a CHAIN (the members must be first-level members; i.e., the
+      member cannot be specified using the grammar supported by
+      <em>handleExprEval</em>).
+</dl>
+Additionally, the following complex data types lack TCL interfaces:
+<dl>
+  <dt><a href="/dervish/doc/www/dervish.array.html">ARRAY</a>
+  <dd>Multi-dimensional arrays of SCHEMA.  Its not clear to me what their
+      role is in the world of DERVISH.
+</dl>
+<p>
+A number of tools exist which provide a means for evaluating
+arbitrary mathematical expressions containing TCL handles to some of the DERVISH
+complex data structures list above.  These tools are completely
+independent of each other, essentially sharing no code.  Each tool supports
+only one or two complex data types.  These tools include:
+<dl>
+  <dt><a href="/dervish/doc/www/tclHandle.html#handleExprEval">handleExprEval</a>
+  <dd>Allows a user to access a data element from a DERVISH handle to an instance
+      of a known SCHEMA using a subset of the full C grammar
+      (e.g., <code>handleExprEval h12.mask->rows<1><2></code>).  This calls
+      the C routine <a href="/dervish/doc/www/handleExpr.c.html"><code>shTclHandleExprEval()</code></a> (see link for the supported grammar).  Additional
+      TCL procs provide a friendly interface based on this verb,
+      including setting and fetching the value of individual data
+      members.  These include
+      <a href="/dervish/doc/www/tclProcedures.html#exprPrint">exprPrint</a>,
+      <a href="/dervish/doc/www/tclProcedures.html#exprPrintAsArray">exprPrintAsArray</a>,
+      <a href="/dervish/doc/www/tclProcedures.html#exprMember">exprPrintMember</a>, and
+      <a href="/dervish/doc/www/tclProcedures.html#exprSet">exprSet</a>.
+      This works on a single instance object; its does not support any of the
+      container data types.  It does not support any mathematical operations,
+      but rather simply allows access to individual data elements within a
+      C structure, including the ability to follow pointers, access individual
+      elements in an array, etc.
+  <dt><a href="/dervish/doc/www/tclVectorExpr.html#vectorExprEval">vectorExprEval</a>
+  <dd>Evaluates an arbitrary methematical expression.  The only complex data
+      type the expression may contain is a DERVISH handle to a VECTOR.  Multiple
+      VECTORs may be contained in the same expression so long as they are of
+      the same length.
+  <dt><a href="/dervish/doc/www/dervish.f2s.html">TBLCOL/Schema Conversion</a>
+  <dd>This converts data in a TBLCOL to a homogenous CHAIN, and
+      vice-versa.  It is done by parsing a translation table, which is
+      converted into an operation stack.  The looping over individual rows in
+      the TBLCOL and individual elements in the CHAIN is done at the
+      C level.
+  <dt><a href="/sdb/doc/www/fitsdb.html">TBLCOL/C++ Class Conversion</a>
+  <dd>This converts data in a TBLCOL to a C++ container class containing
+      instances of C++ classes, and vice versa.  It was created primarily to
+      tranfer data between FITS tables and the survey databases.
+      It is done by parsing a
+      translation table, which is converted into an operation stack.  The
+      looping over individual rows in the TBLCOL and individual elements in
+      the container class is done at the C++ level.  Methods may be strung
+      together and links followed (i.e., h1.calibration()->trans().a()).
+      This facility was written under Versant and has not yet been converted
+      to Objectivity, therefore it is currently defunct.
+  <dt>SCHEMA-to-FITS
+  <dd>Robert Lupton has written a tool for the Frames Pipeline to dump SCHEMA
+      instances directly to FITS tables, bypassing DERVISH's TBLCOL interface.
+</dl>
+<p>
+The above list of tools bears witness to the usefulness of expression
+evaluators to the survey.  It also evidences our history of having created
+such a tool multiple times, each design and implementation mostly independent
+of the others, and each tool limited in terms of which set of DERVISH-based
+complex data types it supports.  Each time we've found a need for such an
+evaluator for a specific task, we have created a separate evaluator which
+works only for that specific task.  There will surely be tasks ahead of us
+which call for expression evaluators outside the scope of the current set of
+tools, some of which we cannot now predict.
+<p>
+One such task is at hand.  We require a tool which allows us an efficient
+browsing capability to data in the survey databases.  It should allow us to
+manipulate and play with the data; e.g., follow pointers, perform mathematical
+calculations, plot results, etc.  Such a task calls for an expression
+evaluator which can handle C++ class methods, and which can produce results
+which can be interfaced to the current set of DERVISH tools for examining
+data (e.g., VECTORS, pgplot, etc).
+Thus we are faced with the prospect of either creating yet another expression
+evaluator, or modifying one of the current ones.
+<p>
+The current set of tools presents real concerns for long-term support.  Some
+of the implementations are themselves not readily supported, and the prospects
+of supporting numerous such pieces of software is daunting.  We have learned
+much while implementing the current set of tools, and would do much differently
+were we to do it again.  And we will have to do it again.
+<p>
+We propose to do it again, one last time.  The proposal is for a single
+expression evaluator which can support all of our tasks.  It will be designed
+in such a way as to support the addition of new complex data types.  It will
+be based on a grammar, allowing later extensions to the grammar.  A single
+such expression evaluator will greatly simplify our long-term support
+requirements, as well as provide a constant user interface.
+
+<h2>Requirements</h2>
+We impose the following requirements on our new expression evaluator:
+<ul>
+  <li>It must support all of the current set of DERVISH-based complex data types.
+      More specifically, we require support for the data types SCHEMA, CHAIN,
+      TBLCOL, C++ classes, AF, and VECTOR.  Support for direct access to FITS
+      tables is an enhanced goal.
+  <li>It must be designed such that additional complex data types may be added
+      easily.
+  <li>It must be based on a grammar, designed in such a way as to easily
+      support future extensions to the grammar.
+  <li>A given expression may contain a mixture of all supported DERVISH-based
+      complex data types.  All public data elements in a given type should be
+      able to be set or fetched, and all public methods for C++ classes
+      invoked.
+  <li>SCHEMA (either individual instances or all instances in a CHAIN) must be
+      supported with all the functionality of <code>handleExprEval</code>.  C++
+      class methods must be supported, including the ability to cascade method
+      calls.
+  <li>It must be able to create new instances, including persistent instances
+      of C++ classes in an Objectivity database.
+  <li>The expression must be parsed into an operation stack once, and that
+      operation stack executed for each element in a container class (e.g.,
+      CHAINs).
+  <li>Loops over container classes must be performed at the C/C++ level.
+  <li>It must be able to run within a C environment (clearly minus its
+      interface to C++ classes), as well as a C++ environment.
+  <li>It should be able to determine the required behavior simply by
+      parsing the string.  For example, it must be able to determine whether
+      the expression contains container objects, know that it must therefore
+      be able to loop over that container, and check that all containers to be
+      looped over in the expression are of the same length.
+</ul>
+
+<H2>Functional Specifications</h2>
+
+<H3>TCL Interface</H3>
+
+The TCL interface will be provided by a single TCL verb, <em>evalExpr</em>.
+<p>
+<PRE>
+evalExpr &lt;expression&gt;
+</PRE>
+where <var>expression</var> is a string, consisting of one or more
+<def>compound statements</def> separated by semi-colons. 
+It returns a TCL list, each list element being either a DERVISH handle or
+a blank ({}), one element for each compound-statement in the expression.  
+<p>
+Additionally, we may want to provide verbs like <em>sortExpr</em>,
+<em>selectExpr</em>, etc.
+
+<H3>C/C++ Interface</H3>
+
+TBD.  Whatever it is, it should be C functions (not C++).
+
+<H3>Compound Statement Syntax</H3>
+
+The following are the allowed types of compound statements:
+<DL>
+<DT> schema-assignment
+<DD> Syntax:
+<PRE>
+    schema-handle;
+    member = expr;
+    member = expr;
+    ...
+</PRE>	
+    where <var>schema-handle</var> is a DERVISH handle to a SCHEMA instance,
+    and <VAR>member</VAR> is a data member of that
+    SCHEMA.  The specified data members will be set for that single instance.
+    The SCHEMA handle is returned.  The SCHEMA must already exist.
+ <P>
+<DT> chain-assignment
+<DD> Syntax:
+<PRE>
+    chain-handle;
+    member = expr;
+    member = expr;
+    ...
+</PRE>	
+    where <var>chain-handle</var> is a DERVISH handle to a homogeneous CHAIN
+    of instances of SCHEMA, and <VAR>member</VAR> is a data member of that
+    SCHEMA.  The specified data members will be set for each element of the
+    CHAIN as the main loop is executed.  The CHAIN handle is returned.  The
+    CHAIN must already exist.
+ <P>
+<DT> array-assignment
+<DD> Syntax:
+<PRE>
+    array-handle;
+    member = expr;
+    member = expr;
+    ...
+</PRE>	
+    where <var>array-handle</var> is a DERVISH handle to an ARRAY of instances
+    of SCHEMA, and <VAR>member</VAR> is a data member of that SCHEMA.
+    The specified data members will be set for each element of the
+    ARRAY as the main loop is executed.  The ARRAY handle is returned.  The
+    ARRAY must already exist.
+ <P>
+<DT> known-schema-assignment
+<DD> Syntax:
+<PRE>
+    known-schema-name;
+    member = expr;
+    member = expr;
+    ...
+</PRE>	
+    where <var>known-schema-name</var> is the name of a known C struct SCHEMA,
+    and	<VAR>member</VAR> is a data member of that SCHEMA.
+    A new CHAIN of type <VAR>known-schema-name</VAR> will be created,  The
+    specified data members will be set for each element of the CHAIN as the
+    main loop is executed.  The CHAIN handle is returned.  If the expression
+    contains no container objects, then the CHAIN consists of a single object.
+ <P>
+<DT> tblcol-assignment
+<DD> Syntax:
+<PRE>
+    tblcol-handle;
+    field = expr;
+    field = expr;
+    elem-type field = expr;
+    elem-type field = expr;
+    ...
+</PRE>	
+    where <var>tblcol-handle</var> is a DERVISH handle to a TBLCOL.  The TBLCOL
+    must exist, but it need not have any space allocated yet.  If its size is
+    0, then its size is determined by the length of the main loop.  There can
+    be no iterators in the any of the <VAR>expr</VAR> so that the length can
+    be determined by the parser.  If its size is greater than 0, then it must
+    be at least as long as the length of the main loop.  If the elementary
+    data type is specified in a field assignment statement, then that field is
+    assumed not to exist in the TBLCOL (it is an error if it does), and a new
+    field is added to the TBLCOL.  If the elementary data type is not
+    specified, then that field is assumed to exist in the TBLCOL (it is an
+    error if it doesn't).  The specified fields will be set for each row of the
+    TBLCOL as the main loop is executed.  The TBLCOL handle is returned.
+ <P>
+<DT> fits-assignment --- <STRONG>ENHANCED GOAL</STRONG>
+<DD> Syntax:
+<PRE>
+    fits-handle;
+    field = expr;
+    field = expr;
+    elem-type field = expr;
+    elem-type field = expr;
+    ...
+</PRE>	
+    where <var>fits-handle</var> is a DERVISH handle to a FITS struct.  The
+    FITS struct must exist, but it need not be defined yet.  If the elementary
+    data type is specified in a field assignment statement, then that field is
+    assumed not to exist in the FITS (it is an error if it does), and a new
+    field is added to the FITS.  If the elementary data type is not
+    specified, then that field is assumed to exist in the FITS struct (it is
+    an error if it doesn't).  The specified fields will be written for each
+    row of the FITS as the main loop is executed.  The FITS handle is returned.
+ <P>
+<DT> schema-member-assignment
+<DD> Syntax:
+<PRE>
+    schema-handle.member = expr;
+    schema-handle.member = expr;
+    ...
+</PRE>	
+    where <var>schema-handle</var> is DERVISH handle to an existing instance of
+    a SCHEMA, and <VAR>member</VAR> is a member in that SCHEMA.
+    The expression cannot contain any container objects.
+    The specified fields will be set.  Nothing is returned.
+<p>
+<DT> chain-member-assignment
+<DD> Syntax:
+<PRE>
+    chain-handle.member = expr;
+    chain-handle.member = expr;
+    ...
+</PRE>	
+    where <var>chain-handle</var> is DERVISH handle to an existing homogeneous
+    CHAIN of C struct SCHEMA, and <VAR>member</VAR> is a member in that SCHEMA.
+    The CHAIN must
+    be long enough to accomodate the main loop.  Multiple CHAINs may be
+    assigned to.  The specified fields will be set for each row of the
+    CHAINs as the main loop is executed.  Nothing is returned.
+ <P>
+<DT> array-member-assignment
+<DD> Syntax:
+<PRE>
+    array-handle.member = expr;
+    array-handle.member = expr;
+    ...
+</PRE>	
+    where <var>array-handle</var> is DERVISH handle to an existing ARRAY
+    of instances of SCHEMA, and <VAR>member</VAR> is a member in that SCHEMA.
+    The ARRAY must
+    be long enough to accomodate the main loop.  Multiple ARRAYs may be
+    assigned to.  The specified fields will be set for each element of the
+    ARRAYs as the main loop is executed.  Nothing is returned.
+ <P>
+<DT> tblcol-field-assignment
+<DD> Syntax:
+<PRE>
+    tblcol-handle.field = expr;
+    tblcol-handle.field = expr;
+    ...
+</PRE>	
+    where <var>tblcol-handle</var> is a DERVISH handle to an existing
+    TBLCOL, and <VAR>field</VAR> is a field in that TBLCOL.  The TBLCOL must
+    be long enough to accomodate the main loop.  Multiple TBLCOLs may be
+    assigned to.  The specified fields will be set for each row of the
+    TBLCOLs as the main loop is executed.  Nothing is returned.
+ <P>
+<DT> voector-assignment
+<DD> Syntax:
+<PRE>
+    vector-handle = expr;
+    vector-handle = expr;
+    ...
+</PRE>	
+    where <var>vector-handle</var> is a DERVISH handle to an existing
+    VECTOR.  If the vector is not the correct size, it will be resized.
+    Multiple VECTORS may be assigned to.
+    TBLCOLs as the main loop is executed.  Nothing is returned.
+ <P>
+<DT> constructor
+<DD> Syntax:
+<PRE>
+    class-name(clustering-directive, expr, expr, ...)
+</PRE>	
+    where <var>class-name</var> is the name of an SDB supported C++ class,
+    and <VAR>clustering-directive</VAR> is a DERVISH handle to a valid object
+    which may be used as an Objectivity clustering directive.  If
+    <VAR>clustering-directive</VAR> is 0, then transient objects are created;
+    if blank (""), then they are created in the default database.
+    A new <EM>ooTVArray(ooHandle(<VAR>class-name</VAR>))</EM> is created.
+    The constructor will be called once for each element of the loop, and the
+    resultant object stored in the <EM>ooTVArray</EM>.  A DERVISH handle to
+    the <EM>ooTVArray</EM> is returned.
+ <P>
+<DT> method-list
+<DD> Syntax:
+<PRE>
+    class-handle.method(expr, expr, ...);
+    class-handle.method(expr, expr, ...);
+    ...
+</PRE>
+    This is intended to support calling C++ methods which may not necessarily
+    have return values.  If the <var>class-handle</var> is a container class
+    (either <code>ooVArray</code>, <code>ooTVArray</code>, or
+    <code>ooItr</code>) then we will be looping.  Else, we assume its a
+    single object.  A blank is returned.	
+ <P>
+</DL>
+<p>
+Above, the token <em>member</em> refers to any data member of a SCHEMA which
+can be referenced using <code>handleExprEval</code>.
+
+<H3>Right-Hand-Side Expression Syntax</H3>
+On the right hand side of every assignment, and passed in as arguemnts to
+methods and functions, are <def>expression</def>s.  These are C++ like
+right-hand-side(rhs) arithmetic expressions, with support for accessing
+structure data members and C++ class methods.  It may contain any of the
+following:
+<DL>
+<DT> vector-handle
+<DD> A DERVISH handle to a VECTOR.  Data members and methods attached to the
+     handle refer not to the VECTOR, but to the individual elements of the
+     VECTOR as the main loop is executed.
+<DT> chain-handle
+<DD> A DERVISH handle to a CHAIN.  Data members and methods attached to the
+     handle refer not to the CHAIN, but to the individual elements of the
+     CHAIN as the main loop is executed.
+<DT> array-handle
+<DD> A DERVISH handle to an ARRAY.  Data members and methods attached to the
+     handle refer not to the ARRAY, but to the individual elements of the
+     CHAIN as the main loop is executed.
+<DT> ooTVArray/ooVArray-handle
+<DD> A DERVISH handle to an <EM>ooTVArray</EM> or an <EM>ooVArray</EM>.
+     Data members and
+     methods attached to the handle refer not to the array, but to the
+     individual elements of the array as the main loop is executed.
+<DT> ooItr-handle
+<DD> A DERVISH handle to an <EM>ooItr</EM>.  Data members and methods attached
+     to the handle refer not to the iterator, but to the individual elements of
+     the iterator as they are accessed as the main loop is executed.
+<DT> tblcol-handle
+<DD> A DERVISH handle to a TBLCOL.  Fields attached to the
+     handle refer not to the TBLCOL, but to the individual rows of the
+     TBLCOL as the main loop is executed.
+<DT> fitstbl-handle -- <strong>ENHANCED GOAL</strong>
+<DD> A DERVISH handle to a FITS struct.  Fields attached to the
+     handle refer not to the FITS struct, but to the individual rows of the
+     FITS file as the main loop is executed.
+<DT> object-handle
+<DD> A DERVISH handle to a C++ object.  Data members and methods attached to the
+     handle refer to the same object and generate the same value for each
+     element in the main loop.
+<DT> schema-handle
+<DD> A DERVISH handle to a C struct SCHEMA.  Data members and methods attached        to the handle refer to the same object and generate the same value for
+     each element in the main loop.
+<DT> literal
+<DD> Either a quoted character string, or a number.
+<DT> operator
+<DD> Any supported operator.  This will include '.' and '->' applied to
+     class and struct handles.
+</DL>
+Looping is determined by the handles contained in the expression.  By default,
+it will loop for the length of the shortest <EM>CHAIN</EM>, <EM>ARRAY</EM>,
+<EM>ooItr</EM>, <EM>ooVArray</EM>, <EM>ooTVArray</EM>, or <em>VECTOR</em>.
+If the lengths of all such structures vary, a warning will be issued.  
+
+<H4>Expression Grammar</H4>
+<PRE>
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ASSIGNMENTS
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+expression :		# each compund statement must be internally consistent
+			# concerning its looping
+	compound-statement
+	expression; compund-statement
+
+compund-statement :
+	known-schema-assignment
+	chain-assignment
+	array-assignment
+	tblcol-assignment
+	fits-assignment			# ENHANCED GOAL
+	data-member-assignment
+	field-assignment
+	constructor			# C++ only
+	method-list			# C++ only
+	
+known-schema-assignment :		# create new CHAIN of specified SCHEMA
+	known-schema-name; member = expr
+	known-schema-assignment; member = expr
+
+chain-assignment :
+	chain-handle; member = expr	# modify old CHAIN
+	known-schema-assignment; member = expr
+
+array-assignment :
+	array-handle; member = expr	# modify old ARRAY
+	array-assignment; member = expr
+
+tblcol-assignment :			# return modified TBLCOL
+	tblcol-handle; field = expr
+	tblcol-handle; elem-type = expr
+	tblcol-assignment; field = expr
+	tblcol-assignment; elem-type field = expr
+
+fits-assignment :			# return modified FITS
+	fits-handle; field = expr
+	fits-handle; elem-type = expr
+	fits-assignment; field = expr
+	fits-assignment; elem-type field = expr
+
+data-member-assignment :		# modify old chain
+	chain-handle.member = expr
+	data-member-assignment; data-member-assignment
+
+field-assignment :			# modify old TBLCOL
+	tblcol-handle.field = expr
+	field-assignment; field-assignment
+
+constructor :				# create new ooTVArray<ooHandle<class>>
+					# C++ only
+	class-name(arguments)
+	constructor; constructor
+
+expr-list :				# nothing returned
+					# Each expression must return void
+	expr
+	expr; expr
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+BASICS
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+letter: one of
+	'a'-'z' 'A'-'Z'
+
+underscore:
+	'_'
+
+digit: one of
+	0 1 2 3 4 5 6 7 8 9
+
+following-character:
+	letter
+	underscore
+	digit
+
+identifier:
+	letter
+	underscore
+	identifier following-character
+
+elem-type: one of
+	int16 ...
+
+handle:			# must match name of a known DERVISH TCL handle
+	'h' digit
+	handle digit
+
+chain-handle:		# must be handle to a homogeneous CHAIN
+	handle
+
+tblcol-handle:		# must be handle to a TBLCOL
+	handle
+
+known-schema-name:	# must match name of a known SCHEMA
+	identifier      
+
+unknown-schema-name:	# can't match name of any known SCHEMA
+	identifier      
+
+class-name:		# must match name of a known SDB-supported C++ class
+			# C++ only
+	identifier      
+
+member:			# must match data member name of associated SCHEMA
+	identifier
+
+field:			# must match field name of associated TBLCOL
+	identifier
+
+method:			# must match method name of associated C++ class
+			# C++ only
+	identifier
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+RIGHT-HAND-SIDE
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+arguments :
+	expr
+	expr, expr
+
+expr: mixture of
+	operator
+	literal
+	struct-handle
+	chain-handle
+	member
+	class-handle			# C++ only
+	itr-handle			# C++ only
+	tvarray-handle			# C++ only
+	varray-handle			# C++ only
+	method				# C++ only
+	function
+	'('
+	')'
+	','
+	'.'
+</PRE>
+
+</BODY></HTML>

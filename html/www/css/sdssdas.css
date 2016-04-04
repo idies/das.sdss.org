@@ -1,0 +1,133 @@
+h1, h2, h3, ul, body { 
+  text-align:center;
+}
+
+p.center {
+  text-align:center;
+}
+
+p.left {
+  text-align:left;
+}
+
+h3.left {
+  font-size: 100%;
+  text-align:left;
+  position: relative;
+  left: 50%;
+  width: 60em;
+  margin-left: -30em;
+}
+
+p {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 60em;
+}
+
+li { 
+  display: inline
+}
+
+form.file-download { 
+  text-align:center;
+}
+
+tr.shaded {
+  background-color: #F0F0F0;
+}
+
+.data-sets, .plate-files, .run-files, .table-of-fields, .segment-list, .fiber-list, .list-summary, .file-types, .list-upload, .field-files, .fiber-files, .release-index-table, .plate-index-table, .program-index-table { 
+  text-align:center;
+}
+
+table.plate-files, table.night-data, table.field-files, table.fiber-files, table.run-files, table.table-of-fields, table.segment-list, table.fiber-list, table.list-summary, table.file-types, table.dlmethod, table.data-sets, table.fiber-index-table, table.plate-index-table, table.program-index-table { 
+  margin-left: auto;
+  margin-right: auto;
+  border-style: solid;
+  border-width: thin; 
+}
+
+table.plate-index-table, table.release-index-table  { 
+  margin-left: auto;
+  margin-right: auto;
+  border-style: solid;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  border-right-width: 0;
+  border-left-width: 0; 
+}
+
+table.table-of-fields { 
+  margin-left: auto;
+  margin-right: auto;
+  border-style: solid;
+  border-width: thin;
+}
+
+table tr th { 
+  text-align: right;
+  white-space: nowrap;
+}
+
+table.night-data tr th, table tr.top th, table.release-index-table tr th, table.fiber-index-table tr th, table.plate-index-table tr th, table.program-index-table tr { 
+  text-align: center;
+}
+
+table.plate-files tr th, table.file-types tr th, table.dlmethod tr th, table.data-sets tr th, table.field-files tr th, table.fiber-files tr th, table.program-index-table th { 
+  text-align: left;
+}
+
+table tr td { 
+  text-align: left;
+  white-space: nowrap;
+}
+
+table td, table th { 
+  border-width: 0;
+}
+
+
+table.plate-files td, table.plate-files th, table.night-data td, table.night-data th, table.field-files td, table.field-files th, table.fiber-files td, table.fiber-files th, table.dlmethod td, table.dlmethod th, table.file-types td, table.file-types th, table.table-of-fields td, table.table-of-fields th, table.segment-list td, table.segment-list th, table.fiber-list td, table.fiber-list th, table.data-sets td, table.data-sets th, table.fiber-index-table td, table.fiber-index-table th, table.program-index-table td, table.program-index-table th { 
+  border-width: thin;
+  padding: 0px;
+  border-style: inset;
+  border-color: gray;
+}
+
+table.plate-index-table td, table.program-index-table td { 
+  text-align: center;
+}
+
+table.fields-in-list caption { 
+  text-align: center;
+}
+
+table.corr td, table.corr th, table.bin td, table.bin th, table.mask td, table.mask th, table.field-misc td, table.field-misc th { 
+  border-width: 0;
+}
+
+td zoom { 
+  border-width: 0;
+  padding: 0;
+  display: block;
+}
+
+.missing-file { 
+  text-decoration: line-through;
+}
+
+pre {
+  text-align:left;
+  border: 1pt solid #A0A0A0;
+  background-color: #F0F0F0;
+  padding: 5pt;
+  display: block;
+}
+
+.sample {
+  position: relative;
+  left: 50%;
+  width: 60em;
+  margin-left: -30em;
+}

@@ -1,0 +1,124 @@
+' Reorder Attributes
+'
+' Reorder the attributes for every selected class on the diagram.  The ordering
+' is based on the value of the 'Number' or 'No.' attribute of each attribute.
+' Thus, before calling this procedure, number the attributes in order starting
+' with 1.  Afterwards, all of the attributes will be numbered 0.
+
+main:
+    FOREACH Window
+	IF Window.Type = "DIAGRAM" THEN
+	    tmp$ = Window.Name
+	    WHILE INSTR(tmp$, "- ") <> 0
+	        tmp$ = MID$(tmp$, INSTR(tmp$, "- ")+2)
+	    WEND
+	    SELECT All FROM Diagram WHERE Name = tmp$
+	    FOREACH Diagram
+		FOREACH Diagram.Item
+		    IF Item.Selected="T" THEN
+		        SELECT All FROM Class WHERE Name=Item.Object
+	   	        FOREACH Class
+			    GOSUB ReorderAttributes
+			NEXT
+		    ENDIF
+	        NEXT
+	        Diagram.UpdateLists
+	    NEXT
+	ENDIF
+    NEXT
+END
+
+FetchDiagramAttributes:
+
+RETURN
+
+ReorderAttributes:
+    nAttr = COUNT(Class.Attribute)
+    dim tName$(nAttr)
+    dim tAttribute$(nAttr)
+    dim tDocument$(nAttr)
+    dim tType$(nAttr)
+    dim tSize$(nAttr)
+    dim tInitial_Value$(nAttr)
+    dim tDescription$(nAttr)
+    dim tScope$(nAttr)
+    dim tKey$(nAttr)
+    dim tKey_Number$(nAttr)
+    dim tDomain$(nAttr)
+    dim tUser_Interface$(nAttr)
+    dim tDerived$(nAttr)
+    dim tStatic$(nAttr)
+    dim tConstant$(nAttr)
+    dim tOptional$(nAttr)
+    dim tReadable$(nAttr)
+    dim tWriteable$(nAttr)
+    dim tExclusive$(nAttr)
+    dim tBound$(nAttr)
+    dim tReserved$(nAttr)
+    j = 0
+    FOR i = 1 TO nAttr
+        FOREACH Class.Attribute
+          IF Attribute.Key_Number = STR$(i) THEN
+	    ' Copy all of the attribute's attributes
+	    j = j + 1
+	    tName$(j) = Attribute.Name
+	    tAttribute$(j) = Attribute.Attribute
+	    tDocument$(j) = Attribute.Document
+	    tType$(j) = Attribute.Type
+	    tSize$(j) = Attribute.Size
+	    tInitial_Value$(j) = Attribute.Initial_Value
+	    tDescription$(j) = Attribute.Description
+	    tScope$(j) = Attribute.Scope
+	    tKey$(j) = Attribute.Key
+	    tKey_Number$(j) = Attribute.Key_Number
+	    tDomain$(j) = Attribute.Domain
+	    tUser_Interface$(j) = Attribute.User_Interface
+	    tDerived$(j) = Attribute.Derived
+	    tStatic$(j) = Attribute.Static
+	    tConstant$(j) = Attribute.Constant
+	    tOptional$(j) = Attribute.Optional
+	    tReadable$(j) = Attribute.Readable
+	    tWriteable$(j) = Attribute.Writeable
+	    tExclusive$(j) = Attribute.Exclusive
+	    tBound$(j) = Attribute.Bound
+	    tReserved$(j) = Attribute.Reserved
+
+	    ' Delete the attribute
+	    DELETE Class.Attribute, Class.Name, tName$(j)
+	    'print "delete ",Name$
+	  ENDIF
+	NEXT
+    NEXT
+
+    ' Create a new copy of each, with number set to 0
+    FOR i = 1 TO j
+        NEW Class.Attribute, Class.Name, tName$(i)
+	'print "new ",tName$(i)
+        FOREACH Class.Attribute
+          IF Attribute.Name = tName$(i) THEN
+		'print "update ",tName$(i)
+		Attribute.Attribute = tAttribute$(i)
+		Attribute.Document = tDocument$(i)
+		Attribute.Type = tType$(i)
+		Attribute.Size = tSize$(i)
+		Attribute.Initial_Value = tInitial_Value$(i)
+		Attribute.Description = tDescription$(i)
+		Attribute.Scope = tScope$(i)
+		Attribute.Key = tKey$(i)
+		Attribute.Key_Number = "0"
+		Attribute.Domain = tDomain$(i)
+		Attribute.User_Interface = tUser_Interface$(i)
+		Attribute.Derived = tDerived$(i)
+		Attribute.Static = tStatic$(i)
+		Attribute.Constant = tConstant$(i)
+		Attribute.Optional = tOptional$(i)
+		Attribute.Readable = tReadable$(i)
+		Attribute.Writeable = tWriteable$(i)
+		Attribute.Exclusive = tExclusive$(i)
+		Attribute.Bound = tBound$(i)
+		Attribute.Reserved = tReserved$(i)
+		Update Class.Attribute, Class.Name, tName$(i)
+          ENDIF
+	NEXT
+    NEXT
+RETURN

@@ -1,0 +1,116 @@
+
+'---------------------------------------------------------------------------
+'                         GenerateDeclaration
+'---------------------------------------------------------------------------
+GenerateDeclaration:
+    '--------------------
+    ' Added by SG for ICG
+    '--------------------
+    PPBeginFlag$ = StartComment$ + "##begin class " + CurrentClass$ + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end class "   + CurrentClass$ + " " + EndComment$
+    '--------------------
+
+    PRINT #1, "#ifndef ", CurrentClass$, "_H"
+    PRINT #1, "#define ", CurrentClass$, "_H"
+    PRINT #1, ""
+    if CurrentPersistence$ = "PERSISTENT" then 
+	print #1, "#include <sdb.h>"
+    end if
+
+    PRINT #1 
+    PRINT #1, PPBeginFlag$   '--- Added by SG for ICG
+    PRINT #1 
+
+    gosub GetGenStr         
+    gosub handleinheritance
+
+    gosub includeclasses  
+    'print #1, " "
+    'gosub DeclImpAttr
+    '--------------------------------------
+    'print #1, ""
+    IF CurrentVisibility$ = "PRIVATE" THEN
+        print #1, "struct ", CurrentClass$,
+    ELSE
+        print #1, "class ", CurrentClass$,
+    ENDIF
+
+    '--------------------
+    'Inheritance
+    '--------------------
+    IF hiPersistent = FALSE AND CurrentPersistence$ = "PERSISTENT" THEN
+	print #1,  " : public ooObj",
+	IF nAnc > 0 THEN PRINT #1, ", "+hiBaseClasses$,
+    ELSE
+        IF nAnc > 0 THEN PRINT #1,  " : "+hiBaseClasses$,
+    ENDIF
+    print #1
+    ' DESCRIPTION
+    descPrinted = FALSE
+    IF EXIST(FILE, ICGOldFile$) THEN
+	OPEN ICGOldFile$ FOR INPUT AS 3
+	inputLine$ = ""
+	printComment = 0
+        WHILE (EOF(3) = 0 AND printComment != 2)
+            LINE INPUT #3, inputLine$
+	    IF inputLine$ = "class "+CurrentClass$ OR LEFT$(inputLine$, LEN("class "+CurrentClass$+" :")) = "class "+CurrentClass$+" :" THEN
+		printComment = 1
+	    ELSEIF LEFT$(inputLine$, LEN(StartComment$)) = StartComment$ THEN
+		IF printComment = 1 THEN
+		    PRINT #1, inputLine$
+		    descPrinted = TRUE
+		ENDIF
+	    ELSEIF printComment = 1 THEN
+		printComment = 2
+	    ENDIF
+        WEND
+	CLOSE #3
+    ENDIF
+    IF descPrinted = FALSE AND LEN(CurrentDescription$) <> 0 THEN
+	ptLead$ = StartComment$ + " "
+	ptText$ = CurrentDescription$
+	ptNum = 1
+	GOSUB PrintText
+    ENDIF
+    ' Body
+    print #1, "{"
+    curScope$ = "private"
+    gosub HandleMembers
+    curScope$ = "protected"
+    gosub HandleMembers
+    curScope$ = "public"
+    gosub HandleMembers
+    gosub GenerateGetFunctions
+    PRINT #1
+    PRINT #1, PPEndFlag$   '--- Added by SG for ICG
+    print #1, "};"
+    print #1
+    print #1, "#endif"
+    curScope$ = "implementation"
+'    gosub HandleMembers
+return
+'----------------------
+'DeclImpAttr
+'----------------------
+DeclImpAttr:
+	 '---------------
+	 'declare implementation attr
+	 '-----------------------
+	 ino=count(class.attribute)
+	 dim impAttrs$(ino)
+	 Atptr=0
+	 foreach class.attribute
+	    if scope$ = "implementation" then
+	       gosub getAttributeName
+	       gosub maptype
+	       atptr=atptr+1
+	       temp$=""
+	       if attribute.static = "True" then temp$=temp$+"static "
+	       if attribute.constant = "True" then temp$=temp$ + "constant "
+	       temp$ = temp$ + sznewtype$ +" "+ sznewname$ + "_;"
+	       impAttrs$(atptr) = temp$   
+	       print #1, "extern ", temp$, " // ",description$ 
+	    end if
+	 next
+  
+return

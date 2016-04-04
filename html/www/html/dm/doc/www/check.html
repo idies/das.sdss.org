@@ -1,0 +1,47 @@
+<html> <head>
+<title>Data Model Flat-File Check Utilities</title>
+</head>
+
+<body>
+<h1>Checking Flat-Files Against the Data Model</h1>
+TCL procs are provided to check the format of flat-files against the data
+model.  Documentation for these procs may be found at:
+<menu>
+  <li><a href="imgCheck.html">imgCheck.tcl</a> --- Procs to check the imaging DA and pipelines
+  <li><a href="mtCheck.html">mtCheck.tcl</a> --- Procs to check the MT DA and pipelines
+  <li><a href="paramCheck.html">paramCheck.tcl</a> --- Procs to check the imaging DA and pipelines
+  <li><a href="fitsCheck.html">fitsCheck.tcl</a> --- Procs to check the imaging DA and pipelines
+  <li><a href="planCheck.html">planCheck.tcl</a> --- Procs to check a pipeline plan file
+</menu>
+
+As an example, first, one must setup the data model:
+<pre>
+sdssdp1> setup dm
+</pre>
+Next, start up <em>dervish</em> and source the <em>dm</em> startup file:
+<pre>
+sdssdp1> dervish
+dervish> source $env(DM_DIR)/etc/dmStartup.tcl
+</pre>
+Now go to the directories containing the report/plan files and run the checks.
+For example, lets say we're checking reductions of run 211:
+<pre>
+sdssdp1> cd /data/dp3.b/data/fixed/211
+sdssdp1> imgCheck idReport-51115.par
+sdssdp1> cd /data/dp3.b/data/211/bias
+sdssdp1> biasCheck biPlan.par
+sdssdp1> cd /data/dp3.b/data/211/ssc
+sdssdp1> sscCheck scPlan-1.par
+sdssdp1> cd /data/dp3.b/data/211/astrom
+sdssdp1> astromCheck asPlan.par
+sdssdp1> cd /data/dp3.b/data/211/photo
+sdssdp1> psCheck psPlan-1.par
+sdssdp1> framesCheck fpPlan-1.par
+sdssdp1> cd /data/dp3.b/data/211/nfcalib
+sdssdp1> fcalibCheck fcPlan-1.par
+</pre>
+The name of each file being checked is printed to the screens, along with any
+inconsistencies with the data model.
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+AUTOMAKE_OPTIONS=gnu
+INCLUDES = -I$(top_builddir)/include
+check_PROGRAMS = print_das_config merge_segment_pipe segment_overlap eq2gc gc2eq brittle_hdrint brittle_fitscell raDecToXY raDecToField fileReadable
+print_das_config_SOURCES = print_das_config.c $(top_builddir)/src/das_config.c
+merge_segment_pipe_SOURCES = merge_segment_pipe.c $(top_builddir)/src/merge_segments.c $(top_builddir)/src/segment_list.c $(top_builddir)/src/read_segment.c
+segment_overlap_SOURCES = segment_overlap.c $(top_builddir)/src/seglist_overlap.c $(top_builddir)/src/segment_list.c $(top_builddir)/src/read_segment.c
+eq2gc_SOURCES = eq2gc.c $(top_builddir)/src/coord_xform.c $(top_builddir)/src/brittle_fits.c $(top_builddir)/src/file_readable.c
+gc2eq_SOURCES = gc2eq.c $(top_builddir)/src/coord_xform.c $(top_builddir)/src/brittle_fits.c $(top_builddir)/src/file_readable.c
+brittle_hdrint_SOURCES = brittle_hdrint.c $(top_builddir)/src/brittle_fits.c
+brittle_fitscell_SOURCES = brittle_fitscell.c $(top_builddir)/src/brittle_fits.c
+raDecToXY_SOURCES = raDecToXY.c $(top_builddir)/src/coord_xform.c $(top_builddir)/src/brittle_fits.c $(top_builddir)/src/file_readable.c
+raDecToField_SOURCES = raDecToField.c $(top_builddir)/src/find_fields.c $(top_builddir)/src/coord_xform.c $(top_builddir)/src/brittle_fits.c $(top_builddir)/src/das_config.c $(top_builddir)/src/file_readable.c
+fileReadable_SOURCES = fileReadable.c $(top_builddir)/src/file_readable.c

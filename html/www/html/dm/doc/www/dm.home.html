@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<TITLE>SDSS Data Model</TITLE>
+<BODY>
+
+<H1>SDSS Data Model</H1>
+
+The SDSS Data Model is <STRONG>THE</STRONG> definition of the retained data
+in the survey, as well as all interface data between independent components of
+the survey (e.g., between separate pipelines, or between pipelines and the
+Operational Database).  All pipelines, as well as the Operational Databases,
+must be in compliance with the Data Model.
+ <P>
+The SDSS Data Model uses the formal methodology of Rumbaugh's Object
+Modeling Technique (<cite>Rumbaugh, J., Blaha, M.,
+Premerlani, W., Eddy, F., and Lorensen, W. 1991,
+Object-Oriented Modeling and Design, Prentice Hall, Englewood Cliffs,
+N.J.</cite>), as implemented
+by the object-oriented CASE tool <EM>Paradigm Plus</EM> (hereafter PP).
+The official
+survey definition of all data is stored within Paradigm Plus.  Paradigm Plus
+provides numerous views on this Data Model, as well as the ability to
+automatically generate C++ code, FITS file formats, and other interfaces to
+the survey retained data derived directly from the Data Model.
+ <P>
+The Data Model is essentially complete for the Monitor Telescope, the DA for
+Imaging Array, the main imaging pipelines (ssc, astrom, ps, and frames),
+and target selection.  The spectroscopic aspects of the survey are yet to be
+incorporated, but are currently under development.
+ <p>
+This set of documentation describes our use of a formal Data Model to define
+the survey retained data; how to use Paradigm Plus to interact with the
+Data Model; and presents various views of the Data Model.
+
+<h2><a href="../../flatFiles/FILES.html">Flat-File Formats</a></h2>
+
+The primary view of the Data Model for the user are the flat-file formats.
+These <STRONG>DEFINE</STRONG> the formats for <STRONG>ALL</STRONG> inputs and
+outputs for all pipelines.  All inputs are in the form of flat-files, which are
+found in two flavors: FITS files (both images and binary tables), and FTCL
+parameter files (i.e., files readable with the DERVISH utility
+<em>param2Chain</em>.  A complete list of all flat-file formats for the set of
+pipelines and other survey components currently supported by the Data Model
+may be found <a href="../../flatFiles/FILES.html">here</a>.
+<p>
+TCL procs are available to check the format of DA/pipeline output flatfiles
+against the data model.  Their use is described <a href="check.html">here</a>.
+
+<h2>Diagrams</h2>
+
+The following diagrams offer an abstract view of the entire Data Model.
+<menu>
+  <li><a href="../mtDA.ps">MT DA and MT Frames</a>
+  <li><a href="../mtCalib.ps">MT Calibration Pipelines</a>
+  <li><a href="../driftScan.ps">Imaging Camera DA</a>
+  <li><a href="../ssc.ps">SSC Pipeline</a>
+  <li><a href="../astrometry.ps">Astrometric Pipeline</a>
+  <li><a href="../ps.ps">Postage Stamp Pipeline</a>
+  <li><a href="../frames.ps">Frames Pipeline</a>
+  <li><a href="../fcalib.ps">Final Photometric Calibration Pipeline</a>
+  <li><a href="../ts.ps">Target Selection</a>
+  <li><a href="../objectState.ps">Object State Diagram</a>
+  <li><a href="../tiles.ps">Tiles and Plates</a>
+  <li><a href="../ccdConfig.ps">CCD Configurations</a>
+  <li><a href="../admin.ps">Administration</a>
+  <li><a href="../rumbaugh.ps">Rumbaugh Method Nomenclature</a>
+</menu>
+
+<h2>For the Developer</h2>
+
+The following sections are of interest to developers of the Data Model.
+Development includes maintaining the abstract view of the Survey Data within
+PP, as well as the two primary views of the data model: the flat-file formats;
+and the C++ database schema definitions.
+
+<MENU>
+  <LI><A HREF="pp.html">Paradigm Plus Usage</A>
+  <LI><A HREF="pp.metaclasses.html">Paradigm Plus Metaclasses</A>
+  <li><a href="RELEASE_NOTES.html"> Release Notes for this version </a>
+</MENU>
+
+<h2>Relevant Documents</h2>
+Here are a few documents relavent to the Data Model (some are really relevant
+to the Operation Database, and not the Data Model).
+<menu>
+  <li> <a href="dbnote.html">OPDB spec</a> with <a href="../opdb.ps">figure</a> --
+       Summary of OPDB for NASA proposal
+  <li> <a href="aug4.html">aug 4th doc</a> -- August 4th meeting
+  <li> <a href="filenames.html">File Naming Conventions</a>
+  <li> <a href="fitsparamdoc.html">Interchange file conventions</a>
+  <li> <a href="tarseldoc.html">Target Selection Data Flow Notes</a>
+  <li><a href="surveyProgress.html">Tracking Survey Progress for Imaging</a>
+</menu>
+<hr>
+<a href="index.html">Index</a>
+
+</BODY>
+</HTML>

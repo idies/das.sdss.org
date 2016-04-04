@@ -1,0 +1,141 @@
+<h1> File format standards</h1>
+<html>
+
+Steve Kent, Jeff Munn and Brian Yanny sat down and discussed briefly some
+standards for input/output files to follow.  Here is a list of 
+standards that we came up with.
+
+<p>
+1. All files interchanged between pipelines shall be in FITS format or in the
+form of ASCII parameter files.  Large or complex amounts of data shall be 
+interchanged as FITS binary tables. Image data shall be in the form of FITS 
+images files.  Parameter files may have a header section with 'keyword value'
+pairs as well as 0 or more 'table' sections with free format tables following
+a format like that described in the param2Chain utility in astrotools.
+
+
+<p>
+2. In FITS binary tables, for all pipelines and processing beyond the DA system,
+the FITS standard shall be followed rigorously.  This implies that
+unsigned 8-bit, signed 16-bit and signed 32-bit quantities in network byte
+order shall be the internal representation of integers in FITS tables.
+unsigned 16-bit data shall be accommodated using the BSCALE/BZERO or TZERONNN
+mechanisms provided in FITS.
+
+<p>
+3. The PDU (primary data unit) header shall be used to store keywords which
+may be thought of as being appended to every entry of a table in all the following
+HDU (header data unit) tables in a file.  For instance if a FITS file has
+information exclusively about a specific imaging RUN, that RUN number shall
+be placed in the PDU for that FITS file and be assumed to apply to each
+element of every HDU in the file.  Similarly if a quantity appears in a HDU
+header (such as CAMROL or CAMCOL), that quantity applies to each table entry
+in the same HDU.
+
+<p>
+4. When fixed arrays of structures are flattened out to be tables each
+field within the structure should become a fixed array.
+
+	For example: if a structure in memory looks like:
+<pre>
+		typedef struct {
+			short x,y;
+			int  apflux;
+		} DETECTION;
+		
+		DETECTION object[5];
+</pre>
+
+	where an object is 5 detections,
+	object should be flattened to:
+
+<pre>
+	TFORM1   '5I'
+	TTYPE1  'x'
+	TFORM2   '5I'
+	TTYPE2  'y'
+	TFORM3   '5J'
+	TTYPE3  'apflux'
+
+	rather than:
+
+	TFORM1   '1I'
+	TTYPE1  'x'
+	TFORM2   '1I'
+	TTYPE2  'y'
+	TFORM3   '1J'
+	TTYPE3  'apflux'
+	TFORM4   '1I'
+	TTYPE4  'x2'
+	TFORM5   '1I'
+	TTYPE5  'y2'
+	TFORM6   '1J'
+	TTYPE6  'apflux2'
+	TFORM7   '1I'
+	TTYPE7  'x3'
+	TFORM8   '1I'
+	TTYPE8  'y3'
+	TFORM9   '1J'
+	TTYPE9  'apflux3'
+	TFORM10   '1I'
+	TTYPE10  'x4'
+	TFORM11   '1I'
+	TTYPE11  'y4'
+	TFORM12   '1J'
+	TTYPE12  'apflux4'
+	TFORM13   '1I'
+	TTYPE13  'x5'
+	TFORM14   '1I'
+	TTYPE14  'y5'
+	TFORM15   '1J'
+	TTYPE15  'apflux5'
+</pre>
+
+<p>
+5. Compression
+	
+	Compression standards are a tricky issue.  
+
+<p>
+	In cases where the data under 
+	consideration is to be kept on spinning disk and where it is
+	so large and compressible that not compressing it would be 
+	expensive (>$50000), then a compressed form of storage which
+	does not exactly follow FITS standard may be considered.
+
+<p>
+	Atlas images are one place where compress may be considered.
+	Also run-length encoded bad-pixel masks.
+	
+<p>
+	If we are keeping any corrected frames on spinning disk, some
+	compressed format may be considered.
+
+<p>
+	If atlas images are kept on disk, we suggest keeping them
+	in fits format where the header section of the
+	file is legal fits and the heap section of the file
+	is used to store the compressed bytes.  A stand alone algorithm
+	(a filter subroutine written entirely in ANSI C) shall be used
+	to decompress the string of heap bytes and turn it into a 
+	postage stamp or mask.  It has also been recommended that
+	all related postage stamp (all 5 filters for one object and all
+	masks for one object) be stored as a contiguous memory chunk
+	in the heap section of the FITS file.  The header section
+	of the fits file shall be ordered and 'seekable' so that 
+	any particular object's heap data may be accessed quickly 
+	with two seeks to disk.
+
+<p>
+
+	Other possibilities for compression are rice compression of the data
+	portion of an image which is then stored as a big heap block appended
+	to a legal fits format header. This would be used for compressing
+	corrected frames.
+
+<p>
+	A third possibility is to push the whole fits file, header and data
+	alike thru the unix compress (.Z) filter (which appears to be better
+	than .gz for compressing image data ???) and saving the file
+	to disk as filename.fit.Z.
+</html>

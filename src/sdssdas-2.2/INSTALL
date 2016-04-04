@@ -1,0 +1,36 @@
+Installing the SDSS DAS 2 CGI interface
+=======================================
+
+The software package contains code for the CGI executables associated
+with the SDSS DAS version 2, except for the drC source and executable,
+which can be found in a separate package, sdssdrc. This package also
+contains web pages closely tied to the scripts (those used to submit
+requests handled by the executables).
+
+The CGI executables should compile using the standard GNU autoconf
+configure invocations. You will want to use the --prefix option to set
+the location where the executables and associated web pages get
+installed, and the --sysconfdir to the location in which you want to
+store the configuration file. For example:
+
+bash$ ./configure --prefix=/srv/das --sysconfdir=/usr/local/etc
+
+will generate makefiles with "install" targets that put CGI
+executables in /srv/das/www/cgi-bin, html pages is /srv/das/www/html,
+and css files in /srv/das/www/css. The executables made using these
+makefiles will read their configuration from
+/usr/local/etc/sdssdas.conf.
+
+Once you have run the configure script, "make" the package:
+
+bash$ make
+
+To copy the executables, web pages, and css files where you requested,
+run make again:
+
+bash$ make install
+
+To actually have a running DAS, you will need to obtain a local copy
+of the data content of the DAS, designate a scratch area, and
+configure both you web server and sdssdas itself.
+

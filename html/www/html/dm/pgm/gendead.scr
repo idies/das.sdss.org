@@ -1,0 +1,372 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: GENDEAD.SCR - Detects and optionally purges unreferenced objects.
+'       Supports RUMBAUGH, BOOCH, FUSION, COAD_YOU, SHLAER_M
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| SG  | 6/16/94  | Initial implementation.
+'---------------------------------------------------------------------------
+
+FindUnreferencedObjects:
+
+  GOSUB Initialize
+  Done = 0
+
+  WHILE (Done <> 1)
+	GOSUB Search_Metaclass
+	IF  (DeadCount = 0) THEN
+	    PRINT " No unreferenced objects were found":44, "          "
+            MSG$ = "No unreferenced objects were found. Repeat for another metaclass?"
+	ELSE
+	    GOSUB PurgeUnreferencedObjects
+	    FOR Index1 = 2 TO DeadIndex
+		IF  (PrintFirst = 0) THEN
+		    PRINT " ", DeadArray$(Index1):43, "  No    "
+		    PrintFirst = 1
+		ELSE
+		    PRINT "                     ", DeadArray$(Index1):43, "  No    "
+		ENDIF
+	    NEXT Index1
+	    MSG$ = "Repeat for another metaclass?"
+	ENDIF
+	PRINT
+	IF  (Asterisk = 0) THEN
+	    Done = ASK (MSG$, "Yes", "No")
+	ELSE
+	    IF  (MIndex = MetaCount) THEN Done = 1
+	ENDIF
+    WEND
+
+END
+
+'----------------------------------
+' I N I T I A L I Z E
+'----------------------------------
+Initialize:
+
+    MetaCount = COUNT(Metaclass) - 2
+    DIM MArray$(MetaCount)
+    Index = 0
+    FOREACH Metaclass
+	IF  (Name$ <> "Diagram") AND (Name$ <> "Script") THEN
+	    Index = Index + 1
+	    MArray$(Index) = Name$
+	ENDIF
+    NEXT
+    MIndex   = 0
+    Asterisk = 0
+    GOSUB Print_Heading
+
+RETURN
+
+'----------------------------------
+' S E A R C H    M E T A C L A S S
+'----------------------------------
+Search_Metaclass:    
+
+    IF  (Asterisk = 1) THEN
+        Found = 1
+    ELSE
+	Found = 0
+    ENDIF
+
+    WHILE (Found = 0)
+	MClass$ = PICK$(MArray$,"Purge Unreferenced Objects", "Select a metaclass")
+	IF  (MClass$ = "*") THEN
+	    Asterisk = 1
+	    Found    = 1
+	ELSE
+	    FOREACH Metaclass
+		IF  (MClass$ = Name$) THEN Found =1
+	    NEXT
+	    IF  (Found = 0) THEN NOTE "Invalid selection."
+	ENDIF
+    WEND
+
+    IF  (Asterisk = 1) THEN 
+	MIndex = MIndex + 1
+	MClass$ = MArray$(MIndex)
+    ENDIF
+
+    DeadCount = 0
+    PRINT MClass$:19, " ",
+    PrintFirst = 0
+
+    MCount = COUNT(MClass$) + 5
+    DIM DeadArray$(MCount)
+    DeadArray$(1) = "None..."
+    DeadIndex = 1
+    SELECT Name FROM MClass$
+    FOREACH MClass$
+	Found = 0
+	MName$ = Name$
+
+	IF  (MClass$ = "Attribute") THEN 'If the Metaclass is 'Attribute'
+	    GOSUB Check_Attributes
+	ELSEIF (MClass$ = "Operation") THEN 'If the Metaclass is 'Operation'
+	    GOSUB Check_Operations
+	ELSE
+	    IF (Paradigm$ = "SHLAER_M") AND (MClass$ = "Process") THEN
+		GOSUB Check_Processes
+	    ENDIF
+	    IF ((Paradigm$ = "FUSION") OR (Paradigm$ = "RUMBAUGH")) AND (MClass$ = "State") THEN
+		GOSUB Check_States
+	    ENDIF
+	    IF (Paradigm$ = "RUMBAUGH") AND (MClass$ = "Qualifier") THEN
+		GOSUB Check_Qualifiers
+	    ENDIF
+	    GOSUB Parse_Diagrams
+	ENDIF
+
+	IF  (Found = 0) THEN
+	    DeadIndex = DeadIndex + 1
+	    DeadArray$(DeadIndex) = MName$
+	ENDIF
+
+    NEXT 'MetaClass
+
+RETURN
+
+'--------------------------------------
+'  P A R S E _ R E L A T I O N S H I P
+'--------------------------------------
+' Purpose : To filter out the name 
+'           which is after the period.
+'--------------------------------------
+Parse_Relationship:
+    Period = INSTR(1, Relationship$, ".")
+    Period = Period + 1
+    Relationship$ = MID$(Relationship$, Period)
+RETURN
+
+
+'--------------------------------------
+'  P A R S E   D I A G R A M S
+'--------------------------------------
+' Purpose : To see if MName$ is in any diagram
+'--------------------------------------
+Parse_Diagrams:
+
+    FOREACH Diagram
+	IF  (Found = 0) THEN
+	    FOREACH Diagram.Item
+		IF  (Notation$ = "NODE") AND (Class$ = MCLass$) AND (Object$ = MName$) THEN
+		    Found = 1
+		ENDIF
+		IF  (Notation$ = "ARC") THEN
+		    GOSUB Parse_Relationship
+		    IF  (Relationship$ = MCLass$) AND (Link$ = MName$) THEN
+			Found = 1
+		    ENDIF
+		ENDIF
+	    NEXT 'Diagram.Item
+	ENDIF
+    NEXT 'Diagram
+    IF  (Found = 0) THEN
+'	PRINT MClass$, " '", MName$, "' is not shown on any diagram"
+        DeadCount = DeadCount + 1
+    ENDIF
+
+RETURN
+
+'----------------------------------
+' C H E C K    A T T R I B U T E S
+'----------------------------------
+' Purpose: To see if the attribute 
+'          belongs to any class or
+'          object(Booch).
+'----------------------------------
+Check_Attributes:
+
+    FOREACH Class
+	FOREACH Class.Attribute
+	    IF  (Name$ = MName$) THEN Found = 1
+	NEXT
+    NEXT
+    IF  (Paradigm$ = "BOOCH") THEN
+	FOREACH Object
+	    FOREACH Object.Attribute
+		IF  (Name$ = MName$) THEN Found = 1
+	    NEXT
+	NEXT
+    ENDIF
+    IF  (Found = 0) THEN
+'	PRINT MClass$, " '", MName$, "' does not belong to any Class"
+	DeadCount = DeadCount + 1
+    ENDIF
+
+RETURN
+
+'---------------------------------
+' C H E C K _ O P E R A T I O N S
+'---------------------------------
+' Purpose: To see if the operation 
+'          belongs to any class or
+'          state.
+'----------------------------------
+Check_Operations:
+
+    FOREACH Class
+	FOREACH Class.Operation
+	    IF  (Name$ = MName$) THEN Found = 1
+	NEXT
+    NEXT
+    IF  (COUNT(Operation.Link.Diagram > 0)) THEN Found = 1
+
+    IF  (Paradigm$ <> "SHLAER_M") AND (Found = 0) THEN
+	FOREACH State
+	    FOREACH State.Operation
+		IF  (Name$ = MName$) THEN Found = 1
+	    NEXT
+	NEXT
+	IF  (Found = 0) THEN
+'	    PRINT MClass$, " '", MName$, "' does not belong to any Class or State"
+	    DeadCount = DeadCount + 1
+	ENDIF
+    ELSE
+	IF  (Found = 0) THEN
+'	    PRINT MClass$, " '", MName$, "' does not belong to any Class"
+	    DeadCount = DeadCount + 1
+	ENDIF
+    ENDIF
+
+RETURN
+
+'-------------------------------
+' C H E C K _ P R O C E S S E S
+'-------------------------------
+' Purpose: To see if the process
+'          belongs to any state.
+'----------------------------------
+Check_Processes:
+
+    FOREACH State
+	FOREACH State.Process
+	    IF  (Name$ = MName$) THEN Found = 1
+	NEXT
+    NEXT
+'   IF  (COUNT(Process.Link.Diagram > 0)) THEN Found = 1
+
+RETURN
+
+'-------------------------------
+' C H E C K _ S T A T E S
+'-------------------------------
+' Purpose: To see if the state
+'          belongs to any class.
+'----------------------------------
+Check_States:
+
+    FOREACH Class
+	FOREACH Class.State
+	    IF  (Name$ = MName$) THEN Found = 1
+	NEXT
+    NEXT
+'   IF  (COUNT(State.Link.Diagram > 0)) THEN Found = 1
+
+RETURN
+
+'---------------------------------
+' C H E C K _ Q U A L I F I E R S
+'---------------------------------
+' Purpose: To see if the qualifier
+'          belongs to any class.
+'----------------------------------
+Check_Qualifiers:
+
+    FOREACH Class
+	FOREACH Class.Qualifier
+	    IF  (Name$ = MName$) THEN Found = 1
+	NEXT
+    NEXT
+
+RETURN
+
+'---------------------------------
+' D E L E T E _ D E A D E N T R I E S
+'---------------------------------
+' Purpose: To select and delete 
+'          unreferenced objects.
+'----------------------------------
+PurgeUnreferencedObjects:
+
+    DelClass$ = ""
+    WHILE (DelClass$ <> "None...") AND (DeadCount > 0)
+	DelClass$ = Pick$(DeadArray$, "Unreferenced objects for metaclass: " + MClass$, "Select object to delete.  '*' to delete all")
+	IF  (DelClass$ = "*") THEN
+	    FOR I = 2 TO DeadIndex
+                DelClass$ = DeadArray$(I)
+		DELETE MClass$, DelClass$
+		DeadCount = DeadCount - 1
+		GOSUB Print_Deleted_Entry
+	    NEXT I
+	    DeadIndex = 0
+	ELSE
+	    IF  EXIST(MClass$, DelClass$) THEN
+		DELETE MClass$, DelClass$
+		DeadCount = DeadCount - 1
+		GOSUB Update_DeadArray
+		GOSUB Print_Deleted_Entry
+	    ENDIF
+	ENDIF
+    WEND
+
+RETURN
+
+'---------------------------------
+' U P D A T E _ D E A D A R R A Y
+'---------------------------------
+' Purpose: To remove the deleted
+'          entry from DeadArray$
+'----------------------------------
+Update_DeadArray:
+
+    Loc    = 0
+    Index1 = 0
+    WHILE (Loc = 0) AND (Index1 < DeadIndex)
+	Index1 = Index1 + 1
+	IF  (DelClass$ = DeadArray$(Index1)) THEN Loc = Index1
+    WEND
+
+    IF  (Loc > 0) THEN
+	FOR Index1 = Loc TO DeadIndex
+	    DeadArray$(Index1) = DeadArray$(Index1 + 1)
+	NEXT Index1
+	DeadIndex = DeadIndex - 1
+    ENDIF
+
+RETURN
+
+'---------------------------------------
+' P R I N T _ D E L E T E D _ E N T R Y
+'---------------------------------------
+Print_Deleted_Entry:
+  IF (PrintFirst = 0) THEN
+    PRINT " ", DelClass$:43, "  Yes   "
+    PrintFirst = 1
+  ELSE
+	  PRINT "                     ", DelClass$:43, "  Yes   "
+  ENDIF
+RETURN
+
+'---------------------------------
+' P R I N T _ H E A D I N G
+'---------------------------------
+Print_Heading:
+
+    PRINT
+    PRINT "Unreferenced Object Report"
+    PRINT "¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯",
+    PRINT
+    PRINT "Generated on: ", TIME$
+    PRINT
+    PRINT "Paradigm: ", PARADIGM$
+    PRINT "Project:  ", APP$
+    PRINT
+    PRINT "Metaclass            Unreferenced Objects                         Purged?  "
+    PRINT "========================================================================="
+
+RETURN

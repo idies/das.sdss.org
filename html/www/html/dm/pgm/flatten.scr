@@ -1,0 +1,661 @@
+'$include "obj.scr"
+
+'---------------------------
+' Flatten:
+' input:  flaIsKey                 boolean --- fetch key attr only going up
+'         flaFollow                boolean --- if false, print identifying
+'                                  information for direct associations only,
+'                                  else follow secondary assocs ad nauseum
+'	  flaBoth                  boolean --- flatten up as well as down
+'         flaFlatFile              boolean --- is output for a flat file?
+' output: flaCnt   		   number of flattened attributes
+'         flaType$(flaCnt)         attribute type
+'         flaName$(flaCnt)         attribute name (no prepended underscore)
+'         flaDataType$(flaCnt)     data type
+'         flaSize$(200)	           number (blank = 1, V = variable)
+'         flaDescription$(flaCnt)  description
+' scope: inside the scope of Class
+'---------------------------
+Flatten:
+    DIM flaType$(200)
+    DIM flaName$(200)
+    DIM flaDataType$(200)
+    DIM flaSize$(200)
+    DIM flaUnits$(200)
+    DIM flaInitValue$(200)
+    DIM flaKey(200)
+    DIM flaDescription$(200)
+    DIM flaLevel(200)
+    DIM flaMode(200)
+    DIM flaOpt(200)
+    DIM flaDirect(200)
+    DIM flaIdName$(200)
+
+    FLATTEN_BOTH = 1
+    FLATTEN_UP = 2
+    FLATTEN_DOWN = 3
+
+    flaCnt = 0
+    flaIdx = 1
+    IF flaBoth = TRUE THEN
+        foMode = FLATTEN_BOTH
+    ELSE
+        foMode = FLATTEN_DOWN
+    ENDIF
+    foLevel = 0
+    foKey = FALSE
+    foOpt = FALSE
+    foDirect = TRUE
+    foHasKey = FALSE
+    flaSwap$ = Class.Utility
+    flaHasOID = FALSE
+    foClassName$ = flaClass$
+    foIdName$ = ""
+    foNelems$ = ""
+    GOSUB FlattenOnce
+    GOSUB ReallyFlatten
+
+    ' Swap "field" and "ccdrow"
+    flaField = 0
+    flaCCDRow = 0
+    IF flaSwap$ = "TRUE" THEN
+	FOR flaI = 1 TO flaCnt
+	    IF UPCASE$(flaName$(flaI)) = "FIELD" THEN
+		flaField = flaI
+	    ELSEIF UPCASE$(flaName$(flaI)) = "FILTER" THEN
+		flaCCDRow = flaI
+	    ENDIF
+	NEXT
+	IF flaField <> 0 AND flaCCDRow <> 0 THEN
+	    flaTmp$ = flaName$(flaField)
+	    flaName$(flaField) = flaName$(flaCCDRow)
+	    flaName$(flaCCDRow) = flaTmp$
+	    flaTmp$ = flaType$(flaField)
+	    flaType$(flaField) = flaType$(flaCCDRow)
+	    flaType$(flaCCDRow) = flaTmp$
+	    flaTmp$ = flaDataType$(flaField)
+	    flaDataType$(flaField) = flaDataType$(flaCCDRow)
+	    flaDataType$(flaCCDRow) = flaTmp$
+	    flaTmp$ = flaSize$(flaField)
+	    flaSize$(flaField) = flaSize$(flaCCDRow)
+	    flaSize$(flaCCDRow) = flaTmp$
+	    flaTmp$ = flaUnits$(flaField)
+	    flaUnits$(flaField) = flaUnits$(flaCCDRow)
+	    flaUnits$(flaCCDRow) = flaTmp$
+	    flaTmp$ = flaInitValue$(flaField)
+	    flaInitValue$(flaField) = flaInitValue$(flaCCDRow)
+	    flaInitValue$(flaCCDRow) = flaTmp$
+	    flaTmp$ = flaDescription$(flaField)
+	    flaDescription$(flaField) = flaDescription$(flaCCDRow)
+	    flaDescription$(flaCCDRow) = flaTmp$
+	    flaITmp = flaKey(flaField)
+	    flaKey(flaField) = flaKey(flaCCDRow)
+	    flaKey(flaCCDRow) = flaITmp
+	    flaITmp = flaMode(flaField)
+	    flaMode(flaField) = flaMode(flaCCDRow)
+	    flaMode(flaCCDRow) = flaITmp
+	    flaTmp$ = flaIdName$(flaField)
+	    flaIdName$(flaField) = flaIdName$(flaCCDRow)
+	    flaIdName$(flaCCDRow) = flaTmp$
+	ELSEIF flaField <> 0 THEN
+	    flaLevel(flaField) = 0
+	ENDIF
+    ENDIF
+
+    ' Remove duplicates
+    FOR flaI = 1 TO flaCnt - 1
+	FOR flaJ = flaI + 1 TO flaCnt
+	    IF flaName$(flaI) = flaName$(flaJ) AND flaDataType$(flaI) = flaDataType$(flaJ) AND flaDescription$(flaI) = flaDescription$(flaJ) AND flaUnits$(flaI) = flaUnits$(flaJ) THEN
+		IF flaLevel(flaJ) < flaLevel(flaI) THEN
+		    flaLevel(flaI) = flaLevel(flaJ)
+		ENDIF
+		IF flaSize$(flaI) <> "" AND flaSize$(flaJ) = "" THEN
+		    flaSize$(flaI) = ""
+		ENDIF
+		FOR flaK = flaJ TO flaCnt-1
+		    flaType$(flaK) = flaType$(flaK+1)
+		    flaName$(flaK) = flaName$(flaK+1)
+		    flaDataType$(flaK) = flaDataType$(flaK+1)
+		    flaSize$(flaK) = flaSize$(flaK+1)
+		    flaUnits$(flaK) = flaUnits$(flaK+1)
+		    flaInitValue$(flaK) = flaInitValue$(flaK+1)
+		    flaKey(flaK) = flaKey(flaK+1)
+		    flaMode(flaK) = flaMode(flaK+1)
+		    flaLevel(flaK) = flaLevel(flaK+1)
+		    flaDescription$(flaK) = flaDescription$(flaK+1)
+		    flaOpt(flaK) = flaOpt(flaK+1)
+		    flaIdName$(flaK) = flaIdName$(flaK+1)
+		NEXT
+		flaCnt = flaCnt - 1
+	    ENDIF
+	NEXT
+    NEXT
+RETURN
+
+'---------------------------
+' FlattenOnce:
+' input:  foMode
+'         foLevel
+'         foKey
+'         foOpt
+'         foNelems
+'	  foClassName
+'         foIdName
+'---------------------------
+FlattenOnce:
+    'note "fo:"+foClassName$+":"+STR$(foLevel)+":"+STR$(foKey)+":"+STR$(foMode)
+    foTop = TRUE            ' Is this class at the top of the hierarchy
+
+    ' If this class is an aggregation on the heap, then add a count parameter
+'    IF flaFlatFile = TRUE AND foNelems = "V" THEN
+'	GOSUB FlattenInsert
+'	ParseName$ = foClassName$
+'	GOSUB ParseName
+'	flaName$(flaIdx) = "n"+UPCASE$(LEFT$(ParseName$,1))+MID$(ParseName$,2)
+'	flaSize$(flaIdx) = ""
+'	flaUnits$(flaIdx) = ""
+'	flaInitValue$(flaIdx) = ""
+'	flaDescription$(flaIdx) = "Number of "+Name$+"s"
+'	flaDataType$(flaIdx) = "uint16"
+'	flaKey(flaIdx) = FALSE
+'	flaType$(flaIdx) = "elem"
+'	flaLevel(flaIdx) = foLevel
+'	flaMode(flaIdx) = FLATTEN_DOWN
+'	flaOpt(flaIdx) = foOpt
+'	flaDirect(flaIdx) = FALSE
+'	flaIdx = flaIdx + 1
+'    ENDIF
+
+    ' Loop through containing classes only if we're allowed to flatten up,
+    ' and this is for a flatfile.
+    IF foMode <> FLATTEN_DOWN AND flaFlatFile = TRUE THEN
+        FOREACH ClassParticipation$
+	  IF Aggregation.Source <> Aggregation.Destination THEN
+	    rawmul$ = multiplicity2$
+	    GOSUB GetMul
+	    IF INSTR(Container1$, "HEAP") <> 0 THEN
+		IF foNelems$ <> "" THEN
+		    ERROR "Multi-object can't participate via heap"
+		ENDIF
+		foNelems$ = "V"
+		FOR flaI = 1 to flaCnt
+		    IF flaSize$(flaI) <> "" THEN
+			ERROR "Can't have array or heap on heap"
+		    ENDIF
+		    flaSize$(flaI) = "V"
+		NEXT
+	    ELSEIF INSTR(Container1$, "FIXED") <> 0 THEN
+		IF foNelems$ <> "" THEN
+		    ERROR "Multi-object can't participate via array"
+		ENDIF
+		IF Constraint2$ <> "" THEN
+		    foNelems$ = Constraint2$
+		ELSEIF INSTR(Container1$, "FIXED(") <> 0 THEN
+		    foIdx = INSTR(Container1$, "FIXED(")
+		    foNelems$ = MID$(Container1$, foIdx+6, INSTR(MID$(Container1$, foIdx+6), ")")-1)
+		ELSE
+		    foNelems$ = "#"
+		ENDIF
+		FOR flaI = 1 to flaCnt
+		    IF flaSize$(flaI) = "V" OR flaSize$(flaI) = "" THEN
+			flaSize$(flaI) = foNelems$+flaSize$(flaI)
+		    ELSE
+			ERROR "Can't have fixed array of fixed array"
+		    ENDIF
+		NEXT
+	    ENDIF
+	    GOSUB FlattenInsert
+	    IF INSTR(Container1$, "HEAP") <> 0 OR INSTR(Container1$, "FIXED") <> 0 THEN
+		flaSize$(flaIdx) = ""
+	    ELSE
+		flaSize$(flaIdx) = foNelems$
+	    ENDIF
+	    flaName$(flaIdx) = ""
+	    flaDataType$(flaIdx) = Name$
+	    flaIdName$(flaIdx) = ""
+	    flaUnits$(flaIdx) = ""
+            flaInitValue$(flaIdx) = ""
+	    flaType$(flaIdx) = "participation"
+	    IF mul = 0 OR INSTR(Container1$, "HEAP") <> 0 OR INSTR(Container1$, "FIXED") <> 0 THEN
+		flaLevel(flaIdx) = foLevel
+	    ELSE
+	        foTop = FALSE
+		flaLevel(flaIdx) = foLevel - 1
+	    ENDIF
+	    IF INSTR(Container1$, "UP") <> 0 THEN
+		IF INSTR(Container1$, "UP2") <> 0 THEN
+	            flaLevel(flaIdx) = flaLevel(flaIdx) - 2
+		ELSE
+	            flaLevel(flaIdx) = flaLevel(flaIdx) - 1
+		ENDIF
+	    ENDIF
+	    flaMode(flaIdx) = FLATTEN_UP
+	    IF foDirect = TRUE AND flaLevel(flaIdx) < 0 THEN
+	        flaKey(flaIdx) = flaIsKey
+	    ELSE
+	        flaKey(flaIdx) = foKey
+	    ENDIF
+	    flaDescription$(flaIdx) = ""
+	    flaOpt(flaIdx) = foOpt
+	    flaDirect(flaIdx) = foDirect
+	    flaIdx = flaIdx + 1
+	    foHasKey = TRUE
+	  ELSE
+	    GOSUB FlattenInsert
+	    flaName$(flaIdx) = Role1$
+	    flaDataType$(flaIdx) = "int32"
+	    flaUnits$(flaIdx) = ""
+	    flaInitValue$(flaIdx) = ""
+	    flaType$(flaIdx) = "elem"
+	    flaSize$(flaIdx) = ""
+	    flaLevel(flaIdx) = foLevel
+	    flaMode(flaIdx) = FLATTEN_UP
+	    flaKey(flaIdx) = TRUE
+	    flaDescription$(flaIdx) = Role1$
+	    flaOpt(flaIdx) = foOpt
+	    flaDirect(flaIdx) = foDirect
+	    flaIdName$(flaIdx) = ""
+	    flaIdx = flaIdx + 1
+	    foHasKey = FALSE
+	  ENDIF
+        NEXT
+    ENDIF
+
+    ' Loop through the base classes
+    FOREACH ClassGeneralization$
+	IF flaFlatFile = TRUE OR Name$ <> "Product" then
+	    GOSUB FlattenInsert
+	    flaType$(flaIdx) = "generalization"
+	    flaName$(flaIdx) = ""
+	    flaDataType$(flaIdx) = Name$
+	    flaSize$(flaIdx) = foNelems$
+	    flaUnits$(flaIdx) = ""
+	    flaInitValue$(flaIdx) = ""
+	    flaKey(flaIdx) = foKey
+	    flaMode(flaIdx) = foMode
+	    flaLevel(flaIdx) = foLevel
+	    flaDescription$(flaIdx) = ""
+	    flaOpt(flaIdx) = foOpt
+	    flaDirect(flaIdx) = foDirect
+	    flaIdName$(flaIdx) = foClassName$
+	    flaIdx = flaIdx + 1
+	    foTop = FALSE
+	    foHasKey = TRUE
+	ENDIF
+    NEXT 'ClassGeneralization$
+
+    ' Bump up the level if we're at level < 0 and there are no participations
+    ' or generalizations --- i.e. all of these attributes must be file wide,
+    ' and not just table wide
+    IF foLevel < 0 AND foTop = TRUE THEN
+	foLevel = foLevel - 1
+    ENDIF
+
+    FOREACH ClassAssociation$
+	IF foClassName$ = Association.Source AND (Association.Source <> Association.Destination OR flaFlatFile = FALSE) THEN
+            IF (foKey = FALSE AND foLevel >= 0) OR INSTR(Container1$, "PRIMARY") <> 0 OR (INSTR(Container1$, "SECONDARY") <> 0 AND (foDirect = TRUE OR flaFollow = TRUE)) THEN
+                targetClass$ = Class.Class
+	        targetName$ = Class.Name
+
+	        con$ = container2$
+	        rawmul$ = multiplicity2$
+	        GOSUB GetMul
+	        mul2 = mul
+
+	        rawmul$ = multiplicity1$
+	        GOSUB GetMul
+	        mul1 = mul
+ 
+	        rol2$ = role2$
+	        rol1$ = role1$
+ 
+		GOSUB FlattenInsert
+		aName$ = association.name
+	        GOSUB FlattenRel
+
+	        flaKey(flaIdx) = TRUE
+		IF INSTR(Container1$, "UP") <> 0 THEN
+		    IF INSTR(Container1$, "UP2") <> 0 THEN
+	                flaLevel(flaIdx) = foLevel - 2
+		    ELSE
+	                flaLevel(flaIdx) = foLevel - 1
+		    ENDIF
+		ELSE
+	            flaLevel(flaIdx) = foLevel
+		ENDIF
+		flaMode(flaIdx) = FLATTEN_UP
+	        flaOpt(flaIdx) = TRUE
+	        flaDirect(flaIdx) = FALSE
+		flaIdName$(flaI) = ""
+		flaIdx = flaIdx + 1
+		IF INSTR(Container1$, "PRIMARY") <> 0 THEN
+	    	    foHasKey = TRUE
+		ENDIF
+            ENDIF
+	ENDIF
+    NEXT 'ClassAssociation$
+
+    ' Loop through each attribute
+    FOREACH Class.Attribute
+        IF (scope$ <> "IMPLEMENTATION" OR flaFlatFile = TRUE) AND (foKey = FALSE OR (Key$ = "Primary" OR (Key$ = "Secondary" AND foDirect = TRUE))) AND (flaFlatFile = FALSE OR Attribute.Constant = "FALSE") THEN
+	    GOSUB GetAttributeName
+	  IF Attribute.Type = "arFloatErr" OR Attribute.Type = "arDoubleErr" THEN
+		GOSUB FlattenInsert
+	        flaName$(flaIdx) = AttribName$
+		szSize$ = Attribute.Size
+		IF foNelems$ <> "" THEN
+		    IF szSize$ <> "" THEN
+	                flaSize$(flaIdx) = szSize$+","+foNelems$
+		    ELSE
+	                flaSize$(flaIdx) = foNelems$
+		    ENDIF
+		ELSE
+	            flaSize$(flaIdx) = szSize$
+		ENDIF
+	        flaUnits$(flaIdx) = Document$
+	        flaInitValue$(flaIdx) = Initial_Value$
+	        flaDescription$(flaIdx) = Description$
+		IF Attribute.Type = "arFloatErr" THEN
+	            flaDataType$(flaIdx) = "float32"
+		ELSE
+	            flaDataType$(flaIdx) = "float64"
+		ENDIF
+	        flaKey(flaIdx) = foKey
+		flaType$(flaIdx) = "elem"
+	        flaLevel(flaIdx) = foLevel
+	        flaMode(flaIdx) = FLATTEN_DOWN
+	        flaOpt(flaIdx) = foOpt
+	        flaDirect(flaIdx) = FALSE
+	        flaIdx = flaIdx + 1
+		GOSUB FlattenInsert
+	        flaName$(flaIdx) = AttribName$+"Err"
+		flaSize$(flaIdx) = flaSize$(flaIdx-1)
+	        flaUnits$(flaIdx) = Document$
+	        flaInitValue$(flaIdx) = Initial_Value$
+	        flaDescription$(flaIdx) = Description$+" (error)"
+	        flaDataType$(flaIdx) = "float32"
+	        flaKey(flaIdx) = foKey
+		flaType$(flaIdx) = "elem"
+	        flaLevel(flaIdx) = foLevel
+	        flaMode(flaIdx) = FLATTEN_DOWN
+	        flaOpt(flaIdx) = foOpt
+	        flaDirect(flaIdx) = FALSE
+		flaIdName$(flaI) = ""
+	        flaIdx = flaIdx + 1
+	        IF Key$ = "PRIMARY" THEN
+	    	    foHasKey = TRUE
+	        ENDIF
+	  ELSE
+	    GOSUB MapType
+	    GOSUB FlattenInsert
+	    flaName$(flaIdx) = AttribName$
+	    IF foNelems$ <> "" THEN
+		IF szSize$ <> "" THEN
+	            flaSize$(flaIdx) = szSize$+","+foNelems$
+		ELSE
+	            flaSize$(flaIdx) = foNelems$
+		ENDIF
+	    ELSE
+	        flaSize$(flaIdx) = szSize$
+	    ENDIF
+	    flaUnits$(flaIdx) = Document$
+	    flaInitValue$(flaIdx) = Initial_Value$
+	    flaDescription$(flaIdx) = Description$
+	    IF szNewType$ = "arTime" THEN
+		szNewType$ = "float64"
+		szElemType = TRUE
+		flaUnits$(flaIdx) = "MJD"
+	    ELSEIF szNewType$ = "ooVString" THEN
+		szElemType = TRUE
+            ENDIF
+	    IF flaFlatFile = TRUE AND foDirect = FALSE AND flaName$(flaIdx) = "id" THEN
+		IF foIdName$ = "" THEN
+		    foIdName$ = foClassName$
+		ENDIF
+		foJ = LEN(foIdName$)
+		WHILE foJ > 0 AND MID$(foIdName$, foJ, 1) <> " "
+		    foJ = foJ - 1
+		WEND
+		flaName$(flaIdx) = LOCASE$(MID$(foIdName$, foJ+1))
+		foIdName$ = ""
+	    ENDIF
+	    flaDataType$(flaIdx) = szNewType$
+	    flaKey(flaIdx) = foKey
+	    IF szElemType = TRUE THEN
+		flaType$(flaIdx) = "elem"
+	    ELSEIF Attribute.Bound = "TRUE" THEN
+		flaType$(flaIdx) = "enum"
+	    ELSEIF (Right$(szNewType$,1) = "*") OR (Right$(szNewType$,1) = "&") THEN
+		ERROR "Illegal persistent pointer or reference attribute"
+	    ELSE
+		flaType$(flaIdx) = "struct"
+	    ENDIF
+	    IF Attribute.Exclusive = "TRUE" THEN
+		flaLevel(flaIdx) = -10
+	    ELSE
+	        flaLevel(flaIdx) = foLevel
+	    ENDIF
+	    flaMode(flaIdx) = FLATTEN_DOWN
+	    flaOpt(flaIdx) = foOpt
+	    flaDirect(flaIdx) = FALSE
+	    'note flaName$(flaIdx)+":"+STR$(flaLevel(flaIdx))
+	    flaIdName$(flaI) = ""
+	    flaIdx = flaIdx + 1
+	    IF Key$ = "PRIMARY" THEN
+	    	foHasKey = TRUE
+	    ENDIF
+	  ENDIF
+        ENDIF
+    NEXT 'ClassAttrib$
+
+    IF foMode = FLATTEN_BOTH OR (foMode = FLATTEN_DOWN AND foLevel >= 0) THEN
+        FOREACH ClassAggregation$
+	   IF Aggregation.Source <> Aggregation.Destination OR flaFlatFile = FALSE THEN
+            IF flaFlatFile = TRUE OR LEFT$(Class.Class, 2) = "ar" OR container1$ <> "" THEN
+                targetClass$ = Class.Class
+	        targetName$ = Class.Name
+
+	        con$ = container1$
+	        rawmul$ = multiplicity2$
+	        GOSUB GetMul
+	        mul2 = mul
+
+	        rawmul$ = multiplicity1$
+	        GOSUB GetMul
+	        mul1 = mul
+ 
+	        rol2$ = role2$
+	        rol1$ = role1$
+ 
+		GOSUB FlattenInsert
+		aName$ = aggregation.name
+	        GOSUB FlattenRel
+		IF flaFlatFile = FALSE THEN
+		    IF flaType$(flaIdx) = "relation" THEN
+		        flaType$(flaIdx) = "aggregation"
+		    ENDIF
+		ELSEIF INSTR(Container1$, "HEAP") <> 0 THEN
+		    flaType$(flaIdx) = "heap"
+		ELSEIF INSTR(Container1$, "FIXED") <> 0 THEN
+		    flaType$(flaIdx) = "array"
+		ELSE
+		    flaType$(flaIdx) = "aggregation"
+		ENDIF
+	        IF Constraint2$ <> "" THEN
+		    flaSize$(flaIdx) = Constraint2$
+		    IF foNelems$ <> "" THEN
+		        flaSize$(flaIdx) = flaSize$(flaIdx)+","+foNelems$
+		    ENDIF
+		ENDIF
+	        IF INSTR(Container1$, "PRIMARY") <> 0 OR INSTR(Container1$, "SECONDARY") <> 0 THEN
+	            flaKey(flaIdx) = TRUE
+		ELSE
+	            flaKey(flaIdx) = FALSE
+		ENDIF
+	        flaLevel(flaIdx) = foLevel + 1
+		flaMode(flaIdx) = FLATTEN_DOWN
+	        flaOpt(flaIdx) = TRUE
+	        flaDirect(flaIdx) = FALSE
+		flaIdName$(flaI) = ""
+		flaIdx = flaIdx + 1
+            ENDIF
+	  ENDIF
+        NEXT 'ClassAggregation$
+    ENDIF
+
+    ' If no primary key attribute or relationship found, dump its oid
+'    IF foHeap = FALSE AND foArray = FALSE AND foHasKey = FALSE AND foDirect = FALSE AND flaHasOID = FALSE THEN
+'	flaHasOID = TRUE
+'	GOSUB FlattenInsert
+'	ParseName$ = foClassName$
+'	GOSUB ParseName
+'	flaName$(flaIdx) = LEFT$(ParseName$, 4)+"_OID"
+'	flaSize$(flaIdx) = ""
+'	flaUnits$(flaIdx) = ""
+'	flaInitValue$(flaIdx) = ""
+'	flaDescription$(flaIdx) = "DB OID for "+ParseName$
+'	flaDataType$(flaIdx) = "char"
+'	flaKey(flaIdx) = TRUE
+'	flaType$(flaIdx) = "elem"
+'	flaLevel(flaIdx) = foLevel
+'	flaMode(flaIdx) = FLATTEN_DOWN
+'	flaOpt(flaIdx) = foOpt
+'	flaDirect(flaIdx) = FALSE
+'	flaIdx = flaIdx + 1
+'    ENDIF
+'    note "DEBUG: "+foClassName$
+'    FOR flaI = 1 TO flaCnt
+'        note STR$(flaI)+"    "+flaType$(flaI)+":"+flaDataType$(flaI)+":"+flaName$(flaI)+":"+STR$(pfMin)+":"+STR$(flaLevel(flaI))+":"+STR$(pfMax)+":"+flaSize$(flaI)
+'    NEXT
+RETURN
+
+ReallyFlatten:
+	flaIdx = 1
+	WHILE flaIdx <= flaCnt
+	    'note "rf:"+STR$(flaIdx)+":"+flaType$(flaIdx)+":"+flaDataType$(flaIdx)+":"+STR$(flaMode(flaIdx))+":"+flaSize$(flaIdx)
+	    IF flaType$(flaIdx) = "elem" OR flaType$(flaIdx) = "enum" THEN
+		flaIdx = flaIdx + 1
+	    ELSEIF flaType$(flaIdx) = "container" AND flaKey(flaIdx) = FALSE THEN
+		flaIdx = flaIdx + 1
+	    ELSEIF flaType$(flaIdx) = "aggregation" AND flaKey(flaIdx) = FALSE THEN
+		flaIdx = flaIdx + 1
+	    ELSEIF flaFlatFile = FALSE AND flaType$(flaIdx) = "relation" THEN
+		flaIdx = flaIdx + 1
+	    ELSE
+		foKey = flaKey(flaIdx)
+		foMode = flaMode(flaIdx)
+		foLevel = flaLevel(flaIdx)
+		foOpt = flaOpt(flaIdx)
+		foDirect = flaDirect(flaIdx)
+		foNelems$ = flaSize$(flaIdx)
+		IF flaType$(flaIdx) = "struct" OR flaType$(flaIdx) = "generalization" OR flaType$(flaIdx) = "participation" THEN
+		    foHasKey = TRUE
+		ELSE
+		    foHasKey = FALSE
+		ENDIF
+		flaSaveIdx = flaIdx
+		rfType$ = flaDataType$(flaIdx)
+		FOR flaI = flaIdx TO flaCnt-1
+		    flaType$(flaI) = flaType$(flaI+1)
+		    flaName$(flaI) = flaName$(flaI+1)
+		    flaDataType$(flaI) = flaDataType$(flaI+1)
+		    flaSize$(flaI) = flaSize$(flaI+1)
+		    flaUnits$(flaI) = flaUnits$(flaI+1)
+		    flaInitValue$(flaI) = flaInitValue$(flaI+1)
+		    flaKey(flaI) = flaKey(flaI+1)
+		    flaMode(flaI) = flaMode(flaI+1)
+		    flaLevel(flaI) = flaLevel(flaI+1)
+		    flaDescription$(flaI) = flaDescription$(flaI+1)
+		    flaOpt(flaI) = flaOpt(flaI+1)
+		    flaDirect(flaI) = flaDirect(flaI+1)
+		    flaIdName$(flaI) = flaIdName$(flaI+1)
+		NEXT
+		flaCnt = flaCnt - 1
+		IF LEFT$(rfType$, 2) <> "ar" THEN
+		    SELECT All FROM Class WHERE Name = rfType$
+		ELSE
+		    SELECT All FROM Class WHERE Class = rfType$
+		ENDIF
+		FOREACH Class
+		    foClassName$ = Class.Name
+		    GOSUB FlattenOnce
+		NEXT
+		flaIdx = flaSaveIdx
+	    ENDIF
+	WEND
+RETURN
+
+FlattenInsert:
+    IF flaIdx <= flaCnt THEN
+        fiI = flaCnt
+        WHILE fiI >= flaIdx
+            flaType$(fiI+1) = flaType$(fiI)
+	    flaName$(fiI+1) = flaName$(fiI)
+	    flaDataType$(fiI+1) = flaDataType$(fiI)
+	    flaSize$(fiI+1) = flaSize$(fiI)
+	    flaUnits$(fiI+1) = flaUnits$(fiI)
+	    flaInitValue$(fiI+1) = flaInitValue$(fiI)
+	    flaKey(fiI+1) = flaKey(fiI)
+	    flaMode(fiI+1) = flaMode(fiI)
+	    flaLevel(fiI+1) = flaLevel(fiI)
+	    flaDescription$(fiI+1) = flaDescription$(fiI)
+	    flaOpt(fiI+1) = flaOpt(fiI)
+	    flaDirect(fiI+1) = flaDirect(fiI)
+	    flaIdName$(fiI+1) = flaIDName$(fiI)
+	    fiI = fiI - 1
+	WEND
+    ENDIF
+    flaCnt = flaCnt + 1
+RETURN
+
+'---------------------------
+' FlattenRel:
+' input: aName$        = association name
+'        con$          = optional container class
+'        currentName$  = diagram name of class being worked on (e.g., From)
+'        targetName$   = diagram name of class linking to (e.g., To)
+'        currentClass$ = class being worked on (e.g., arFrom)
+'        targetClass$  = class linking to (e.g., arTo)
+'        rol1$         = role on from side
+'        rol2$         = role on to side
+'        mul1          = multiplicity on from side (0:one, 1:1 or more, 2:many)
+'        mul2          = multiplicity on to side (0:one, 1:1 or more, 2:many)
+'---------------------------
+FlattenRel:
+    ' Check if container specifies a different target class
+    scContainer$ = con$
+    GOSUB StripContainer
+    IF INSTR(con$, "->") <> 0 THEN
+	ParseName$ = MID$(con$, INSTR(con$, "->")+2)
+	GOSUB ParseName
+	theTargetClass$ = ParseName$
+    ELSE
+	theTargetClass$ = targetName$
+    ENDIF
+
+    ' Determine attribute name
+    GOSUB GetRelAttrName
+    flaName$(flaIdx) = toName$
+	
+    ' If a container is specified, use it.
+    IF scContainer$ <> "" AND INSTR(scContainer$, "->") = 0 AND flaFlatFile = FALSE THEN
+	flaType$(flaIdx) = "container"
+	flaDataType$(flaIdx) = scContainer$
+	flaSize$(flaIdx) = ""
+    ELSE
+	flaType$(flaIdx) = "relation"
+        IF targetClass$ <> "" THEN
+	    flaDataType$(flaIdx) = targetClass$
+        ELSE
+	    flaDataType$(flaIdx) = theTargetClass$
+        ENDIF
+        IF mul2 > 0 THEN
+            flaSize$(flaIdx) = "V"
+        ELSE
+	    flaSize$(flaIdx) = foNelems$
+        ENDIF
+    ENDIF
+    flaDescription$(flaIdx) = ""
+    flaUnits$(flaIdx) = ""
+    flaInitValue$(flaIdx) = ""
+RETURN

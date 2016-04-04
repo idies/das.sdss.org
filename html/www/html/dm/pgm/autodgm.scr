@@ -1,0 +1,194 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: autodgm.scr - Script that puts up all classes in an Object Diagram.
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| DD  | 2/15/93  | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+'| HH  | 4/25/94  | Reimplemented the program. User may change the constants
+'|     |          | x0, y0, hspace, vspace, and xmax to improve the layout
+'|     |          | of the generated diagram.
+'------|----------|---------------------------------------------------------
+'| HH  | 4/26/94  | Added getxmax to allow user enter row width.
+'---------------------------------------------------------------------------
+'| SG  | 05/03/94 | Modified so that the user can control the number of 
+'|     |          | classes to be drawn on a diagram. The script will open
+'|     |          | additional diagrams accordingly and name them by adding
+'|     |          | a number to the original diagram name.
+'---------------------------------------------------------------------------
+'| SG  | 06/16/94 | Added 'Autodgm_Main:' and moved the check for paradigm
+'|     |          | into it so that AUTODGM.SCR can be included and used in
+'|     |          | S_GENSM.SCR (Shlaer_m - generate Super Model)
+'---------------------------------------------------------------------------
+'| SG  | 08/26/94 | Added code to handle duplicate diagram names
+'---------------------------------------------------------------------------
+' This script draws all classes on a diagram row by row in alphabetical 
+' order. You will be asked to enter a diagram name, a row width and number 
+' of classes to be put in a diagram.
+
+'-----------------
+'Modified by SG on 06/16/94
+'-----------------
+Autodgm_Main:
+
+    IF  (Paradigm$ = "SHLAER_M") THEN
+	dig$="Information Model"
+    ELSEIF (Paradigm$="BOOCH") THEN
+	dig$ = "Class Diagram"
+    ELSE
+	dig$="Object Diagram"
+    ENDIF
+
+    GOSUB AutoDiagram
+
+END
+'------------------
+
+'---------------------------------------------------------------------------
+' PROCEDURE: AutoDiagram
+'
+' Draw all classes in the repository with their attributes and operations
+' listed. A simple two-dimensional grid-like layout is used.
+'---------------------------------------------------------------------------
+AutoDiagram:
+
+x0     = 50   'upper left corner coordinate of the first class
+y0     = 200
+hspace = 200  'horizontal space between classes
+vspace = 200  'vertical space between classes
+xmax   = 1800 'The classes are placed on the canvas row by row, 
+	      'the max length of a row = xmax (< 23600)
+	      'The width of the entire canvas=24000     
+
+
+gosub getdname   'output d$
+gosub getxmax
+
+'--------------------------
+' Added by SG - 05/03/94
+'--------------------------
+input "Number of Classes for a diagram : ", NoOfClasses
+'Determine if more than one diagram is required'
+if (NoOfClasses < COUNT(Class)) then 
+  d$ = d$ + "_1"
+endif
+'--------------------------
+' Added by SG - 08/26/94
+'--------------------------
+Tempd$ = ""
+WHILE EXIST(Diagram, d$)
+    ERROR "Duplicate diagram name '", d$,"'."
+    INPUT "Enter a new diagram name", d$
+    if  (NoOfClasses < COUNT(Class)) then 
+        d$ = d$ + "_1"
+    endif
+WEND  
+'--------------------------
+diagram.new  d$, , dig$
+
+x=x0
+y=y0
+
+maxy=0
+
+'--------------------------
+' Added by SG - 05/03/94
+'--------------------------
+DNumber     = 1
+Counter     = 0
+'--------------------------
+
+foreach class
+
+   '--------------------------
+   ' Added by SG - 05/03/94
+   '--------------------------
+   'This IF statement would open a new diagram if the counter is >= NoOfClasses
+   If  Counter >= NoOfClasses then
+     counter = 0
+     x=x0
+     y=y0
+     Dnumber = Dnumber + 1
+     IF  (Tempd$ <> "") THEN  'SG - 08/26/94
+         d$ = Tempd$
+         Tempd$ = ""
+     ENDIF
+     d$= LEFT$(d$, LEN(D$)-LEN(STR$(DNumber-1))) + str$(Dnumber)
+     WHILE EXIST(Diagram, d$)  'SG - 08/26/94
+         Tempd$ = d$
+         ERROR "Duplicate diagram name '", d$,"'."
+         INPUT "Enter a new diagram name", d$
+     WEND  
+     diagram.new  d$, , dig$
+   endif
+   Counter = Counter + 1
+   '--------------------------
+
+   diagram.drawobject "Class", x, y, name$
+   n$ = name$
+   diagram.updatelists
+   gosub updateXandY
+   EDIT.DESELECTALL   ' SG - 08/26/94
+
+next
+diagram.viewusedpages
+
+RETURN
+
+'-----------------
+'getdname
+'-----------------
+getdname:
+ok=0
+while ok=0 
+  input "Enter new diagram name: ", d$
+  g = exist(Diagram, d$) 
+  if g then  
+    s$="Diagram '"+d$+"' exists, please enter another name."
+    note s$
+  else
+    ok=1    
+  end if
+wend
+return
+
+'--------------------------
+'getxmax
+'--------------------------
+getxmax:
+  input  "Enter row width between 2000 and 24000: ",  xmax
+  if xmax < 2000 then
+     xmax = 2000
+  elseif xmax > 23500 then
+    xmax = 23500
+  end if
+return
+
+'-------------
+'updateXandY
+'--------------
+updateXandY:
+   ' update x and y
+   select all from diagram where name=d$
+   foreach diagram
+      foreach diagram.item
+	 if item.class="class" then
+	    if object$ = n$ then
+	       w = val(width$) 
+	       h = val(height$)
+	       if maxy < h then maxy=h                 
+	       x= x+w+hspace
+	       if x>xmax then
+		 x=x0
+		 y = y+maxy+vspace
+		 maxy=0
+	       end if       
+	    end if 'object$ = n$
+	 end if   
+      next 
+   next
+return
+

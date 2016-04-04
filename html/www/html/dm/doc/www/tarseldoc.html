@@ -1,0 +1,237 @@
+<pre>
+Jeff Munn and Brian Yanny discussed flow of data into the OPDB after
+the frames pipeline finished up until and through target selection.
+
+	Steps in Target Selection
+
+0. The Frames pipeline runs on a given RUN. The astrometric pipeline has already
+generated astrometric calibrations, call them astro_calib0 for this run.
+The MT pipeline has generated photometric calibrations which the ps pipeline
+has applied and photoms exist for this run as well. (this last photom generating
+step may actually occur after the frames pipeline has run), call this
+photo_calib0.
+
+1. The FITS tables containing the 5-color objects detected by the frames pipeline
+are are stuffed into the database. Also stuffed are field_list summaries and 
+imaging run summaries.
+
+2. The astro_calib0 and photo_calib0 calibrations are stuffed into the database.
+A link is make between this field_list and these (default or initial) calibrations.
+
+3.  There exists a 'method' for each instrumental quantity which returns a calibrated
+    quantity.  For instance, objects contain x,y, and apCounts for each filter.  
+
+	One calls a method 'calc_ra' 
+	with a specific astroCalib (default to astro_calib0) which returns the
+       ra J2000 corresponding to x,y pixel centroids.
+
+	One calls a method 'objectPtr->Calc_mag(photoCalib0,"r")' to get the r-band
+	magnitude. 
+
+	And so on: for the radial profiles one 
+	converts counts/pixel --> mag/square(arcsec).
+
+	There is a method which returns reddening for each object
+	based on it's positions.
+
+	Note that the calibrated quantities are calculated 'on the fly' in this fashion
+	in the OPDB, and are not stored directly in the OPDB.
+
+4. QA is run on the recently added runs. a GOOD or BAD flag set assigned in every field
+in the field_list.  This QA can do things like match up objects in the overlap
+with previous scans to see if they match up.
+
+5. Links are created in the database between duplicate detections which point to the 
+	same 'real' object on the sky.  This is a non-trivial operation. 
+	However, it seems to be important that it get done, especially for
+	the Southern Survey, where there will be 50 duplicate detections of the
+	same object.  It's also important in the North.  Using the QA in 3. above, one
+	should be able to tell if the astrometry is pretty close, if not, one
+	should redo the astrometry.
+	The astrometry should be good to 0.3 arcsecs or better,
+	and so some match radius of order 0.5-1 arcsec will be fixed to
+	determined matches.  There are a few pathological cases, such as pairs
+	of nearby objects which may not get matched up properly, that needs to
+	be especially worried about.
+				
+		Suppose we have two close objects, separated by 1''.
+		suppose the astrometry is off by about 1''.
+		Then one might link A to B' and A' to nothing and B to nothing
+		instead of A to A' and B to B':
+	
+
+				Run 175, field 73:         A-B
+							   |	
+			      	Run 176, field 73:      A'-B'
+
+		Instead of:
+
+						           A--B
+						           |  |
+							   A'-B'
+
+	There are also difficult cases where an object is a blend in one, and
+	resolved into two objects in the other. In this case the blended object
+	is linked to both of the two individual objects.
+
+6. Select a piece of sky, a "Targeting Region", a list of fields to target-select on.
+
+	A "Targeting Region" consists of a list of fields within that region, 
+	a specific astrom_calib and a specific photo_calib.  
+
+	This region of the sky is what used to be called a 'brick'.  In
+	general it should be large enough to allow QSO target selection
+	to have the information it needs about neighboring object density.
+
+	At the very least, a method exists to determine the boundaries of the
+	region that the "Targeting region" encompasses.
+
+	QA for all fields in that region should
+	have at least one 'GOOD' field for every piece of space in that region.
+
+	One should be done imaging the sky in this region.
+
+	Target selection is run on one or more "Targeting Region"s at a time,
+	never on a 'fractional Targeting Region'.
+
+	Export over the firewall (1st time) is done for all objects in a 
+	"Targeting Region"s at one time, never on a 'fractional Targeting Region'.
+
+	When the time comes to recalibrate astrometrically or photometrically,
+	a new object called a "Calibrated Region" is created which points to
+	the same list of fields, but which points to a new astrometric and/or
+	photometric calibrations.
+	This new "Calibrated region" can then be thrown over the firewall to 'replace'
+	an existing "targeting region".  The target flags selected previously do
+	not change.
+
+7.  Set primary/secondary/repeat flags for all objects in all fields in the "Targeting Region"
+
+	For all the fields in the targeting region, use the QA "GOOD/BAD" flags as well
+	as predetermined dividing lines based on lambda,eta, l,b, mu,nu to
+	set the PRIMARY/SECONDARY bits in the target_flags attribute of each object.
+	
+	This is a rather complex operation.
+	
+	The target_flags attribute for each object looks like this:
+
+	enum arTargetFlags
+{
+  AR_TF_DETERMINED    = 0x00000001,  // Has this object been through the
+                                     // targeting pipeline?
+  AR_TF_PRIMARY       = 0x00000002,  // Primary object?
+  AR_TF_REPEAT        = 0x00000004,  // Repeat object from previous field?
+
+  AR_TF_GALAXY_CLASS  = 0x00000010,  // Galaxy according to galaxy WG?
+  AR_TF_QSO_CLASS     = 0x00000020,  // Galaxy according to QSO WG?
+
+	...
+}
+
+	The DETERMINED bit is 0 if this object has not yet been thru the
+	targeting pipeline. Once this bit is set the flags PRIMARY, REPEAT,
+	GALAXY_CLASS, QSO_CLASS can no longer be changed.
+
+	The REPEAT bit is set if this is a repeat detection of an object in the
+	overlap strip appended to each frame.  There is no S/N gain in
+	adding together repeated detections, since these are the same bits.
+
+	The PRIMARY bit is set if this object in this field is the one
+	to target amongst all it's links to the same object, if this bit
+	is not set then the object is secondary and never will be targeted.
+
+	The GALAXY_CLASS bit is set if, based on the likelihood flags put out
+	by the frames pipeline and a TBD algorithm, this object is a galaxy and
+	not a star for purposes of Galaxy target selection.
+
+	The QSO_CLASS bit is set if, based on the likelihood flags put out
+	by the frames pipeline and a TBD algorithm, this object is a galaxy and
+	not a star for purposes of QSO target selection. (?) Not clear
+	if this is needed or not.
+
+
+8.  Run the Galaxy and QSO target selection code, setting flags.
+
+	There are fixed algorithms for selecting galaxies (based on 
+	petrosian r-mag, surface brightness, flux in 3'', red-ness of object)
+	to determine if an object is a galaxy. If so, set the appropriate flag:
+
+	enum arTargetFlags
+{
+	...
+  AR_TF_BRIGHT_GALAXY = 0x00000040,  // Bright galaxy target?
+  AR_TF_RED_GALAXY    = 0x00000080,  // Faint red elliptical?
+	...
+}
+
+	There are algorithms for selecting QSOs (based on
+	color vs. a color cube, FIRST source matchup, etc). Apply them and set
+	appropriate flags:
+
+	enum arTargetFlags
+{
+
+  ...
+  AR_TF_QSO_UVX       = 0x00000100,  // UVX QSO candidate?
+  AR_TF_QSO_OUTLIER   = 0x00000200,  // Non-UVX QSO outlier candidate?
+  AR_TF_QSO_RADIO     = 0x00000400,  // FIRST source?
+  AR_TF_QSO_HIZ       = 0x00000800,  // High-Z QSO canidate?
+	
+  ...
+}
+
+       
+9. Send all objects which have been targeted and not
+yet tiled to tiling.  
+
+10. Export all objects in the "Targeting Region" over the firewall (export as
+FITS files with calibrated quantities). 
+
+11.  Stellar and Serendipity working groups
+	return a list of id's of targets that they would like to see targeted.
+	(default and/or changing algorithms) They access through the SDBX.
+
+	Plus they may have a default algorithm in the OPDB.
+
+	The OPDB sets the flags on their additional targets
+	plus the 'SDBX examined' flag is set.
+
+{
+...
+  AR_TF_SDBX_EXAMINED = 0x00000008,  // Has SDBX examined this target?
+  AR_TF_STELLAR_WG    = 0x00010000,  // Stellar WG target?
+  AR_TF_SERENDIPITY_WG= 0x00020000,  // Serendipity WG target?
+....
+}
+
+12. Select other targets, such as sky fibers, reddening and spectrophoto (telluric)
+	standards, guide stars, bright light trap stars.
+
+	(sky objects may have been picked by frames pipeline, a few per frame,
+	stored as 'sky or mask objects' in the database).
+{
+  ...
+  AR_TF_REDDENING     = 0x00001000,  // Reddening standard?
+  AR_TF_SPECTROPHOTO  = 0x00002000,  // Spectrophotometric standard?
+  AR_TF_LIGHT_TRAP    = 0x00004000,  // Light-trap star?
+  AR_TF_GUIDE_STAR    = 0x00008000,  // Guide star?
+  AR_TF_SKY           = 0x00040000,  // Sky?
+...
+};
+
+
+13.  Final target list.  Merge all target candidates. 
+	Resolve conflicts with 55'' separation.
+	
+	Come up with final targeting list.
+	Set a final targeting flag:
+	
+  {
+   ...
+  AR_TF_FINAL_TARGET  = 0x00080000,  // Final Target?
+  AR_TF_TOO_CLOSE     = 0x00100000,  // Rejected, too close to another Target?
+  AR_TF_TOO_MANY      = 0x00200000,  // Rejected, too many of these already?
+  AR_TF_REJECTED      = 0x00400000,  // Rejected, for some other reason?
+
+14.  Pass on final targeting list to plate drilling task...
+</pre>

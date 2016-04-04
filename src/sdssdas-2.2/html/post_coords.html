@@ -1,0 +1,145 @@
+<link rel="stylesheet" type="text/css" href="../css/sdssdas.css"/>
+<html>
+<head>
+  <title>SDSS DAS Coordinate List Submission Form</title>
+</head>
+
+<body>
+
+<form method="post" action="http://das.sdss.org/www/cgi-bin/post_coords" enctype="multipart/form-data">
+  <h1>SDSS DAS Coordinate List Submission Form</h1>
+
+<!--
+
+  <h2>Data Release Choice</h2>
+
+  <table class="data-sets">
+    <thead>
+      <tr class="top">
+	<th></th>
+	<th>Description</th>
+      </tr>
+    </thead>
+    <tr>
+      <th><input type="radio" name="dataset" value="0"/>All data</th>
+      <td>Links to all existing or hypothetical data corresponding to your list.</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="71" checked="checked"/>DR6/7 main</th>
+      <td>The DR6 main imaging survey, main reduction.</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="70"/>DR6/7 target</th>
+      <td>The DR6 main imaging survey, reduction used for spectroscopic target selection.</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="72"/>DR7 SEGUE</th>
+      <td>The DR7 SEGUE data.</td>
+    </tr>
+  </table>    
+
+-->
+
+  <p class="left">Provide your list of coordinates as tab or comma
+  separated value (CSV) lists. Each line must specify one set of
+  coordinates. The first coordinate must be the right ascension in
+  decimal degrees, and the second must be the declination, also in
+  decimal degrees.  You may include comments by starting a line with a
+  &#35; character. This form will only accept tables of less that
+  10000 lines. In practice, the CAS performs coordinate searches much
+  more efficiently, so we recommend that if you have a list of more
+  than a few hundred sets of coordinates that you submit the list to
+  the CAS cross-id form instead.</p>
+
+  <div class="list-upload">
+  <p class="list-upload">Either select file to upload
+  <input type="file" name="inputFile"><input type="submit" name="Submit" value="Submit"></p>
+
+  <p class="list-upload">or enter the CSV information below.</p>
+
+  <p class="list-upload"><textarea cols="60" rows="6" name="csvIn">#RA,Dec
+205.547,28.375
+  </textarea></p>
+
+  <p class="list-upload">
+  <input type="submit" name="Submit" value="Submit Request"> or, if you want
+  to start again, 
+  <input type="reset" value="Reset Form" name="Reset"></p>
+
+  </div>
+
+<h2>Alternatives</h2>
+
+<p class="left">Note that for many queries, you will be better off
+  using one of several CAS utilities to match your coordinates to
+  imaging fields. Outlines of several of these, in increasing
+  order of complexity (and versatility), follow. All of these will
+  generate a CSV file that can be uploaded into the DAS using the 
+  <a href="post_fields.html">post fields</a> form.</p>
+
+<h3 class="left">The CAS Imaging Query Service (IQS) Form</h3>
+  <p class="left">From
+  the <a href="http://cas.sdss.org/astro/en/tools/search/IQS.asp">CAS
+  Imaging Query Service (IQS) Form</a>, select the minimal outputs,
+  and upload your list of coordinates in the "Proximity" part of the
+  "Position constraints" section. Note that this will return the
+  fields corresponding to matching objects in the SDSS catalog, and so
+  is only guaranteed to be correct for coordinates for which there are
+  matching objects in the SDSS catalog.</p>
+
+<h3 class="left">The CAS Cross-ID form</h3>
+  <p class="left">The 
+    <a href="http://cas.sdss.org/astro/en/tools/crossid/upload.asp">
+      SDSS Catalog Archive Server cross-id form</a> also finds fields
+      in which matching SDSS objects can be found, but is more
+      versatile in what it can return. For example, it can return the
+      URLs of some DAS files directly, eliminating the need for uploading 
+      lists to the DAS at all. For example:</p>
+<div class="sample">
+<pre><tt>SELECT 
+   p.objID, p.ra, p.dec, 
+   p.run, p.rerun, p.camcol, p.field, dbo.fGetUrlFitsBin(p.fieldid,'g')
+FROM #x x, #upload u, PhotoTag p
+WHERE u.up_id = x.up_id and x.objID=p.objID 
+ORDER BY x.up_id</tt></pre>
+</div>
+
+<h3 class="left">A General CAS SQL Query</h3>
+
+  <p class="left">The most versatile approach is to use the general SQL tools in
+ <a href="http://cas.sdss.org/astro/en/tools/search/sql.asp">the CAS</a> or
+ <a href="http://cas.sdss.org/CasJobs/">casjobs</a> to generate tables
+ useful to the DAS. This approach allows you to return fields
+ corresponding to coordinates that do not have matches in the SDSS
+ catalog. For example:</p>
+<div class="sample">
+<pre><tt>
+SELECT DISTINCT f.run, f.rerun, f.camcol, f.field
+FROM specObjAll AS s
+CROSS APPLY dbo.fGetNearbyFrameEq(s.ra,s.dec,23.4,0) AS nf
+CROSS APPLY dbo.fCoordsFromEq(s.ra,s.dec) AS p
+JOIN field AS f ON f.fieldID = nf.fieldID
+WHERE 
+   ((p.mu*f.e_r-f.b_r*p.nu-f.e_r*f.a_r+f.b_r*f.d_r)/(f.c_r*f.e_r-f.b_r*f.f_r))
+     BETWEEN 0 AND 2048
+ AND
+   ((p.mu*f.f_r-f.c_r*p.nu-f.a_r*f.f_r+f.c_r*f.d_r)/(f.b_r*f.f_r-f.c_r*f.e_r))
+     BETWEEN 0 AND 1489
+ AND s.z > 3.5 AND s.zConf > 0.95
+</tt></pre>
+</div>
+<p class="left">The 23.4 in line 3 is the distance from the center of
+a field to a corner, in arcminutes. The long messy equations calculate
+the row and column pixel coordinates in the field. The last line
+actually selects the scientifically interesting entries, in this case
+high redshift objects.
+</p>
+
+<p class="left">Like the cross-id form, this approach allows you to go directly to
+  the URLs of the files you want by replacing the run, rerun, etc. in
+  the "SELECT" above with calls to the fGetUrl* functions provided by
+  the CAS.</p>
+
+</form>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" type="text/css" href="../css/sdssdas.css"/>
+  <title>SDSS DAS Version 2</title>
+  <meta name="generator" content="amaya 8.7, see http://www.w3.org/Amaya/" />
+  <style type="text/css">
+    ul, dl {
+      position: relative;
+      left: 50%;
+      width: 60em;
+      margin-left: -30em;
+      text-align: left;
+    }
+    li {
+      display: list-item;
+    }
+    .warning {
+      color: red;
+    }
+    .page {
+      width: 60em;
+      margin: 0 auto;
+    }
+
+  </style>
+</head>
+
+<body class="page">
+
+<h1>SDSS DAS Version 2 <span class="warning">new with DR7!</span></h1>
+
+<p class="left"><em>This is the SDSS DAS version 2 main page. For the previous
+version of the DAS, please use
+the <a href="http://das.sdss.org/DR6-cgi-bin/DAS">DR6 DAS</a>. For
+general information on the SDSS, please consult the 
+<a href="http://www.sdss.org">SDSS homepage</a>. For more
+inforation on using SDSS data, please consult the 
+<a href="http://www.sdss.org/dr7">SDSS DR7</a> web site.
+</em></p>
+
+<p class="left">The SDSS Data Archive Server (DAS) serves files produced and
+consumed by the SDSS data processing pipelines. See 
+<a href="manual/dataProcessing.html">this overview</a> of the pipelines for
+a description of the pipelines, references to more detailed
+information on them, and tables of what files are available in the DAS
+and where to find them. For the online SQL database and more advanced
+interactive data exploration tools, see the
+<a href="http://cas.sdss.org/astro/en/">Catalog Archive Server (CAS)</a>.
+</p>
+
+<p class="left">The DAS itself provides direct access to the
+   <a href="#dirs">directory tree</a> with the
+  data, <a href="#interactive">interactive forms</a> that allow users
+  to upload tables of data of interest for exploration of bulk
+  download, and web pages for browsing <a href="#dr7">data release
+  7</a> and <a href="#olddr">older data releases</a>.
+
+
+<h2><a name="interactive"></a>Interactive download tools</h2>
+<ul>
+  <li><a href="post_coords.html">Upload a list of coordinates</a>, and browse
+    or download imaging fields covering these coordinates.</li>
+  <li><a href="post_fibers.html">Upload a user generated list of
+    spectroscopic fibers</a>, and browse or download files in bulk.</li>
+  <li><a href="post_fields.html">Upload a user generated list of imaging
+    fields</a>, and browse or download files in bulk.</li>
+</ul>
+
+<p class="left">Each of these forms can be used either to browse a user specified data
+set, or generate a list of URLs of files corresponding to that data set. You
+can then save this list to disk, and use <a
+href="http://www.gnu.org/software/wget/">wget</a> or any other bulk http
+download utility (eg <a href="http://curl.haxx.se/">curl</a>) to download the
+whole list. If you saved the URL list an a file named <tt>sdss-wget.lis</tt>,
+you can use wget to download the files into a directory structure
+corresponding to that of the DAS with a command that looks like this: </p>
+<div class="sample">
+<pre><tt>bash$ wget -x -nH -i sdss-wget.lis </tt></pre>
+</div>
+<p class="left">
+The <tt>-c</tt> and <tt>--cut-dirs</tt> options are also likely to be
+of interest to DAS users; consult the wget documentation.</p>
+
+<p class="left">Mass download
+through <a href="http://samba.anu.edu.au/rsync/">rsync</a> is also
+available. The command to use a DAS generated file for rsync looks like this:</p>
+<div class="sample">
+<pre><tt>bash$ rsync -vtHP --files-from=sdss-rsync.lis rsync://user@rsync.sdss.org/DAS . </tt></pre>
+</div>
+<p class="left">The password is <code>sdss</code>.</p>
+
+<h2><a name="dr7"></a>Browse Data Release 7</h2>
+<ul>
+  <li>Browse the complete set of DR7 runs with all reruns, <a
+    href="imaging/dr-99.html">by stripe</a> and <a
+    href="imaging/dr-byRun-99.html">by run.</a></li>
+  <li>Browse DR7 legacy survey imaging, best rerun, <a
+    href="imaging/dr-71.html">by stripe</a> and <a
+    href="imaging/dr-byRun-71.html">by run.</a></li>
+  <li>Browse DR7 SEGUE survey imaging, best rerun, <a
+    href="imaging/dr-72.html">by stripe</a> and <a
+    href="imaging/dr-byRun-72.html">by run.</a></li>
+  <li>Browse DR7 supernova survey imaging, <a href="imaging/dr-74.html">by
+    stripe</a> and <a href="imaging/dr-byRun-74.html">by run.</a></li>
+  <li>Browse the DR7 <a href="imaging/dr-75.html">equatorial stripe
+  coadd.</a></li>
+  <li>Browse spectroscopy (rerun 26), <a
+    href="spectro/programs-26.html">organized by program</a> or <a
+    href="spectro/allPlates-26.html">on one big page.</a></li>
+  <li>Browse DR7 legacy survey imaging, target rerun, <a
+    href="imaging/dr-70.html">by stripe</a> and <a
+    href="imaging/dr-byRun-70.html">by run.</a></li>
+  <li>Browse DR7 SEGUE survey imaging, target rerun, <a
+    href="imaging/dr-73.html">by stripe</a> and <a
+    href="imaging/dr-byRun-73.html">by run.</a></li>
+</ul>
+
+<p class="left">The DAS also includes Steve Kent's
+  <a href="../../sdssmosaic">SDSS mosaic interface</a>.</p>
+
+<p class="left">You can also browse <a href="#olddr">older data releases</a>.</p>
+
+<h2><a name="dirs"></a>Working directly with the directories and files</h2>
+
+<p class="left">You can also browse the raw directory structures:</p>
+<dl>
+  <dt><a href="../../imaging">http://das.sdss.org/imaging</a></dt>
+  <dd>holds the files generated by the imaging pipelines. The base URL
+  points to a directory of all imaging runs included in the DAS.</dd>
+  <dt><a href="../../spectro">http://das.sdss.org/spectro</a></dt>
+  <dd>holds the files generated by the spectroscopic pipelines.</dd>
+  <dt><a href="../../pt">http://das.sdss.org/pt</a></dt>
+  <dd>holds the files generated by the photometric telescope pipeline,
+  mtpipe, including photometric soluctions and object catalogs.</dd>
+  <dt><a href="../../nightly">http://das.sdss.org/nightly</a></dt>
+  <dd>holds the files generated at the observatory by MJD. These files
+  include the text night log, cloud camera images, and other
+  observing data.</dd>
+  <dt><a href="../../software">http://das.sdss.org/software</a></dt>
+  <dd>holds source code for some of the software products used in the
+  survey. The directory holds the source code of the final (for SDSS-II) versions
+  of serveral key processing
+  pipelines. The <a href="../../software/CVSrepository">CVSrepository</a>
+  subdirectory holds tar files of the contents of the CVS repository
+  for most key products.</dd>
+  <dt><a href="../../va">http://das.sdss.org/va</a></dt>
+  <dd>holds value added catalogs stored in the DAS.</dd>
+<!--
+  <dt><a href="../../contents">http://das.sdss.org/contents</a></dt>
+  <dd>holds an assortment of metadata relating to the DAS site. The 
+  <a href="../../contents/tsv">tsv</a>
+  and <a href="../../contents/par">par</a> subdirectories are likely
+  to be of most interest to users, containing tables that describe
+  what files correspond to each data release.</dd>
+-->
+  <dt><a href="../../unprocessed">http://das.sdss.org/unprocessed</a></dt>
+  <dd>holds the raw data files as they came from the
+  mountain.</dd>
+</dl>
+<p class="left">From these directories, you can download files using rsync or an http
+downloader such as wget. The total volumes of these directories can be found 
+<a href="volume.html">here</a>.
+</p>
+
+<p class="left">For example, to download all files for run 3836, rerun 41 using wget: 
+</p>
+<div class="sample">
+<pre><tt>bash$ wget -r -nH -np -N -l inf http://das.sdss.org/imaging/3836/41/</tt></pre>
+</div>
+<p class="left">
+where <ul style="list-style-type: none">
+  <li>- the <tt>-r</tt> option requests that wget download recursively,</li>
+  <li>- the <tt>-nH</tt> asks that the directory named after the host name of
+    the DAS not be created,</li>
+  <li>- the <tt>-np</tt> prevents wget from following the "<tt>..</tt>" link
+    in the directory (which would have the undesired consequence of
+    downloading the entire DAS), </li>
+  <li>- the <tt>-N</tt> tells wget not to re-download a file if a file with
+    the same name and size and a more recent date is already present,
+    and </li>
+  <li>- the <tt>-l inf</tt> tells wget not to limit the depth of the directory structure.</li>
+</ul>
+</p>
+<p class="left">
+You will probably want to explore the <tt>--cut-dirs</tt> and
+<tt>--directory-prefix</tt> options to refine where wget stores the
+files it retrieves. If you started a download which was then
+interrupted, the <tt>-c</tt> option can be used to tell it to continue
+partially downloaded files.</p>
+
+<p class="left"><em>If you want a directory but not other files or subdirectories in its
+parent, you must use the trailing slash in the URL!</em></p>
+
+<p class="left">You can accomplish something very similar using rsync: </p>
+
+<div class="sample">
+<pre><tt>bash$ rsync -rvtHP rsync://sdss@rsync.sdss.org/DAS/imaging/3836/41 .</tt></pre>
+</div>
+<p class="left">The password is <code>sdss</code>.</p>
+
+<p class="left">
+The <tt>-r</tt> asks that the files be downloaded recursively.</p>
+
+<h2><a name="olddr"></a>Older Data Releases</h2>
+<ul>
+  <li>Browse spectroscopy (rerun 25, up to MJD 54468), <a
+    href="spectro/programs-25.html">organized by program</a> or <a
+    href="spectro/allPlates-25.html">on one big page.</a></li>
+  <li>Browse DR6 legacy survey imaging, best rerun, <a
+    href="imaging/dr-61.html">by stripe</a> and <a
+    href="imaging/dr-byRun-61.html">by run.</a></li>
+  <li>Browse DR6 legacy survey imaging, target rerun, <a
+    href="imaging/dr-60.html">by stripe</a> and <a
+    href="imaging/dr-byRun-60.html">by run.</a></li>
+  <li>Browse the DR6 <a href="spectro/dr6index.html">spectroscopic archive.</a></li>
+  <li>Browse DR5 legacy survey imaging, best rerun, <a
+    href="imaging/dr-51.html">by stripe</a> and <a
+    href="imaging/dr-byRun-51.html">by run.</a></li>
+  <li>Browse DR5 legacy survey imaging, target rerun, <a
+    href="imaging/dr-50.html">by stripe</a> and <a
+    href="imaging/dr-byRun-50.html">by run.</a></li>
+  <li>Browse the DR5 <a href="spectro/dr5index.html">spectroscopic archive.</a></li>
+  <li>Browse DR4 legacy survey imaging, best rerun, <a
+    href="imaging/dr-41.html">by stripe</a> and <a
+    href="imaging/dr-byRun-41.html">by run.</a></li>
+  <li>Browse DR4 legacy survey imaging, target rerun, <a
+    href="imaging/dr-40.html">by stripe</a> and <a
+    href="imaging/dr-byRun-40.html">by run.</a></li>
+  <li>Browse the DR4 <a href="spectro/dr4index.html">spectroscopic archive.</a></li>
+  <li>Browse DR3 legacy survey imaging, best rerun, <a
+    href="imaging/dr-31.html">by stripe</a> and <a
+    href="imaging/dr-byRun-31.html">by run.</a></li>
+  <li>Browse DR3 legacy survey imaging, target rerun, <a
+    href="imaging/dr-30.html">by stripe</a> and <a
+    href="imaging/dr-byRun-30.html">by run.</a></li>
+  <li>Browse the DR3 <a href="spectro/dr3index.html">spectroscopic archive.</a></li>
+  <li>Browse DR2 legacy survey imaging, best rerun, <a
+    href="imaging/dr-21.html">by stripe</a> and <a
+    href="imaging/dr-byRun-21.html">by run.</a></li>
+  <li>Browse DR2 legacy survey imaging, target rerun, <a
+    href="imaging/dr-20.html">by stripe</a> and <a
+    href="imaging/dr-byRun-20.html">by run.</a></li>
+  <li>Browse the DR2 <a href="spectro/dr2index.html">spectroscopic archive.</a></li>
+<!--
+  <li>Browse DR1 legacy survey imaging, best rerun, <a
+    href="imaging/dr-11.html">by stripe</a> and <a
+    href="imaging/dr-byRun-11.html">by run.</a></li>
+  <li>Browse DR1 legacy survey imaging, target rerun, <a
+    href="imaging/dr-10.html">by stripe</a> and <a
+    href="imaging/dr-byRun-10.html">by run.</a></li>
+-->
+</ul>
+</body>
+</html>

@@ -1,0 +1,78 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: genam.scr -  Architecture Model Report
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+
+print
+print " Architecture Model Report"
+print "=========================="
+print
+print "Paradigm:  ", Paradigm$
+print "Project :  ", App$
+print "Time    :  ", time$
+print
+if paradigm$ = "rumbaugh" then
+
+  gosub OOADPM
+endif
+
+end
+
+OOADPM:
+
+print "==========="
+print "  NETWORK  "
+print "==========="
+print
+mc$ = "NETWORK"
+dashline$ = "----------------------------------------------------------------------------------------"
+print "  Network":25, "Description" 
+print dashline$
+
+foreach Network
+   print "  ",name$:22, " ", description$
+next
+print
+
+print "=========="
+print "  DEVICE  "
+print "=========="
+print
+print "  Device":25, "Description" 
+print dashline$
+
+foreach Device
+   print "  ",name$:22, " ", description$
+next
+print
+
+print "=========="
+print "  THREAD  "
+print "=========="
+print
+print "  Thread":25, "Description" 
+print dashline$
+
+mc$ = "THREAD"
+foreach Thread
+   print "  ", name$:22, " ", description$
+next
+print
+
+print "============="
+print "  PROCESSOR  "
+print "============="
+print
+print "  Processor":25, "Description" 
+print dashline$
+
+foreach Processor
+   print "  ", name$:22, " ", description$
+next
+return

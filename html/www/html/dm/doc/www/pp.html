@@ -1,0 +1,210 @@
+<HTML>
+<HEAD>
+<TITLE>Paradigm Plus: Usage</TITLE>
+</HEAD>
+<BODY>
+<H1>Paradigm Plus</H1>
+<MENU>
+<LI> <A HREF="#dm">Check-Out the Data Model</a>
+<LI> <A HREF="#setup">Setup</A>
+<LI> <A HREF="#execute">Execute</A>
+<LI> <A HREF="#add">Adding a Class</A>
+<LI> <A HREF="#code">Automatic Code Generation</A>
+<LI> <A HREF="#reorderAttributes">Reordering Attributes</A>
+<LI> <A HREF="#drawRel">Draw Relationships</A>
+<LI> <A HREF="#modify">Modifying a Class</A>
+</MENU>
+
+<h2><a name="dm">Check Out the Data Model</a></h2>
+The Data Model is maintained in the CVS module <em>dm</em>.  This module
+includes a number of binary files: these include a database file which contains
+the actual data model, as well as numerous diagrams.  Since we have no way of
+merging two sets of changes to a binary file, only one copy of <em>dm</em>
+should be checked out at any one time.  Actually, only the <em>app</em> and
+<em>log</em> subdirectories contain binary files, so multiple users can check
+out some of the other subdirectories (e.g., the <em>flatFiles</em>
+subdirectory).
+
+<H2><A NAME="setup">Setup</A></H2>
+Paradigm Plus should be run on <EM>sdss</EM>.  It is
+supported in the Fermilab UPR system, under the product name
+<EM>pp</EM>.  Thus, to access the Paradigm Plus tool:
+<PRE>
+fncase% setup pp
+</PRE>
+The following environmental variables must be set before you run Paradigm
+Plus.  They point to the directory which holds the Paradigm Plus project
+containing the SDSS Data Model.
+ <P>
+For sh users:
+<PRE>
+export PP_INI_FILE=/usrdevel/s1/dm/.paradigm
+export PP_APP_PATH=/usrdevel/s1/dm/app
+export PP_LOG_PATH=/usrdevel/s1/dm/log
+export PP_PGM_PATH=/usrdevel/s1/dm/pgm
+</PRE>
+For csh users:
+<PRE>
+setenv PP_INI_FILE /usrdevel/s1/dm/.paradigm
+setenv PP_APP_PATH /usrdevel/s1/dm/app
+setenv PP_LOG_PATH /usrdevel/s1/dm/log
+setenv PP_PGM_PATH /usrdevel/s1/dm/pgm
+</PRE>
+Above, "/usrdevel/s1" should be substituted with the path in which
+you've CVS checked-out the <em>dm</em> module.
+If the file <EM>~/.pprc</EM> exists in your home directory, it will be sourced
+whenever the Paradigm Plus UPR product <EM>pp</EM> is <EM>setup</EM>.  Thus, if
+the above lines are included in that file, they will be declared automatically
+whenever you use Paradigm Plus.
+
+<H2><A NAME="execute">Execute</A></H2>
+The Paradigm Plus executable is named <EM>paradigm</EM>.  Start it up in the
+background.
+<PRE>
+fncase% paradigm &
+</PRE>
+It does not matter which directory you are in when you start up Paradigm Plus.
+It takes a while for things to start up, with numerous windows opening and
+closing.  Eventually, you should be looking at an object diagram.  Verify that
+you are in the SDSS project; the label of all PP windows should include
+the string "- sdss -".  If instead of opening up in the <em>sdss</em>
+application, you are presented with an error box saying "Application file (...)
+not found!", then you have probably just checked out the <em>dm</em> product
+and PP doesn't know where it is.  Select <em>OK</em> in the error box, and then
+from the PP menu bar select <em>File</em>, and from its menu <em>Open</em>.
+You will be prompted with a file dialog box, from which you should specify
+<em>dm/app/sdss.app</em> from wherever you checked-out <em>dm</em>.  The next
+time you start up PP, it should find the <em>sdss</em> application.
+
+<H2><A NAME="add">Adding a Class</A></H2>
+The fundamental unit of data in the Data Model is a <def>class</def>.  A
+class is a collection of <def>attributes</def>, and optionally
+<def>operations</def>.  Objects are associated to other objects via
+<def>associations</def>.  Thus, formally defining a set of retained data
+for the survey requires the addition of one or more classes to the Data
+Model.  Classes are most easily created via an Object Diagram.  
+When creating classes and associations, follow the rules and suggestions
+outlined in the discussion of our use of
+<A HREF="pp.metaclasses.html">Paradigm Plus Metaclasses</A>.
+
+<H2><A NAME="code">Automatic Code Generation</A></H2>
+Software code may be generated automatically in various formats directly from
+the Data Model.  The code is written directly to a file.  The automatically
+generated code is bracketed within the file by comments of a format
+recognized by the PP scripts which generate the code.  A single file may
+contain many such blocks of automatically generated code.  If the code is
+regenerated, only those parts of the file bracketed within the recognized
+comments are replaced; the remainder of the file is maintained as is.  Thus,
+after the initial code generation, the file may be added to, and these changes
+will be maintained whenver the code is regenerated.  Sections of the files
+contained within the PP brackets should not be edited, as these edits will be
+lost the next time the code is regenerated.
+ <P>
+The following code formats are currently supported:
+<DL>
+<DT> C++ Code
+<DD> C++ classes may be generated for specified classes.  The schema library to
+which the class belongs must first have been checked out of CVS in the same
+directory where the <em>dm</em> directory resides, as all automatic C++ code
+generation occurs relative to that path.  On an object
+diagram, select those classes which you wish to generate C++ code for, then
+from the <EM>Run</EM> menu select <EM>C++ Code</EM>.  Those classes which have
+a value specified in their <EM>Class</EM> meta-attribute
+will have a C++ class
+generated.  The C++ class will take the name specified in the object's
+<EM>Class</EM> meta-attribute.  Two files will be created/modified:
+<EM>$PP_APP_PATH/../../sourceFile/include/class.ddl</EM>, which contains
+the Objectivity schema definition; and
+<EM>$PP_APP_PATH/../../sourceFile/src/class.cc</EM>, which contains the
+C++ implementation of the class.  In the file paths, <EM>sourceFile</EM> is
+replaced with the value of the class's <EM>Source File</EM> meta-attribute,
+and <EM>class</EM> is replaced with the value of the class's <EM>Class</EM>
+meta-attribute.
+Automatically generated code in the files is bracketed by
+lines of the format:
+<PRE>
+//##begin ...
+automatically generated code
+//##end ...
+</PRE>
+where the ellipses are replaced with text specific to that file.
+It is also
+possible to list out differences between the current files, and the newly
+generated files, without overwriting the files.  In other words, the newly
+generated code is written to temporary files, these are diff'd against
+the old files, and the temporary files are discarded without overwriting
+the old files.  To perform this function, select <em>C Code</em> from
+the <em>Run</em> menu.
+
+<DT> Flat-Files
+<DD> Flat-files -- either FITS files or FTCL parameter files -- may
+be generated for specified classes.  On an object
+diagram, select those classes which you wish to generate flat-files for, then
+from the <EM>Run</EM> menu select <EM>Ada Code</EM>.  Those classes which have
+a value specified in their <EM>Document</EM> meta-attribute
+will have a sample flat-file
+generated.  One file will be created/modified:
+<EM>$PP_APP_PATH/../flatFiles/document.html</EM>, 
+in which <EM>document</EM> is
+replaced with the value of the class's <EM>Document</EM> meta-attribute.
+Automatically generated code in the files is bracketed by
+lines of the format:
+<PRE>
+&lt;!--##begin ... --&gt;
+automatically generated code
+&lt;!--##end ... --&gt;
+</PRE>
+where the ellipses are replaced with text specific to that file.
+It is also
+possible to list out differences between the current files, and the newly
+generated files, without overwriting the files.  In other words, the newly
+generated code is written to temporary files, these are diff'd against
+the old files, and the temporary files are discarded without overwriting
+the old files.  To perform this function, select <em>Smalltalk Code</em> from
+the <em>Run</em> menu.
+</DL>
+
+<H2><A NAME="reorderAttributes">Reordering Attributes</A></H2>
+Scripts loop over attributes in the order in which they are created.  This
+order may be seen by doing an <EM>Update Lists</EM> from the
+<EM>Edit</EM> menu in an
+object diagram, or using the Table Viewer to list the attributes.  The order
+may be changed using the "Reorder Attributes" script.  Perform the following
+steps:
+<OL>
+<LI> Start up the Table utility, viewing attributes.
+<LI> Change the value of the <EM>Key_Number</EM> field for all attributes in a
+given class.  The values should be from 1 to N, where N is the number of
+attributes, in the order you wish where 1 is the first attribute and N the
+last.
+<LI> Select the class whose attributes are to be reordered on an object
+diagram.
+<LI> Select <EM>Script...</EM> from the <EM>Run</EM> menu, and select the
+script <EM>Reorder Attributes</EM>
+</OL>
+
+<H2><A NAME="drawRel">Draw Relationships</A></H2>
+All relationships between two classes may be automatically drawn on a diagram.
+Perform the following steps:
+<OL>
+<LI> Select the two classes whose relationships you wish to have drawn.  Only
+one diagram may be open, and exactly two classes must be selected on that
+diagram.
+<LI> Select <EM>Script...</EM> from the <EM>Run</EM> menu, and select the
+script <EM>Draw Relationships</EM>
+<LI> The relationships will be drawn as exactly-one-to-exactly-one associations
+with no notation.  For each relationship drawn, double click on it to open its
+edit box.  Select <em>OK</em> without modifying it, and it will be redrawn with
+the correct cardinality, notations, etc.
+</OL>
+
+<h2><a name="modify">Modifying a Class</a></h2>
+Classes, and relationships between classes, may be modified using the usual
+PP tools.  When any modifications are performed, the effects of those
+modifications on the flat-file formats and C++ schema should be checked by
+selecting the modified classes on a diagram and choosing the <em>C Code</em>
+and <em>Smalltalk Code</em> options from the <em>Run</em> menu (which show you
+the differences in the C++ schema and flat-file formats, respectively).
+
+</BODY>
+</HTML>

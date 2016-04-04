@@ -1,0 +1,6 @@
+main:
+	ICGOption$ = "Diff"
+	GOSUB GenFlat
+END
+
+'$include "genflat.scr"

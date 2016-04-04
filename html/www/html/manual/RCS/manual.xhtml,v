@@ -1,0 +1,1722 @@
+head	1.1;
+access;
+symbols;
+locks
+	neilsen:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	2008.11.10.15.11.24;	author neilsen;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>The SDSS Data Archive Server, Verison 2</title><link rel="stylesheet" href="manual.css" type="text/css" /><meta name="generator" content="DocBook XSL Stylesheets V1.65.1" /></head><body><div class="book" lang="en" xml:lang="en"><div class="titlepage"><div><div><h1 class="title"><a id="id2406159"></a>The SDSS Data Archive Server, Verison 2</h1></div><div></div><div></div></div><div></div><hr /></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#id2466033">1. Concept of Operations</a></span></dt><dd><dl><dt><span class="section"><a href="#id2533555">Introduction</a></span></dt><dt><span class="section"><a href="#id2520254">DAS Version 1</a></span></dt><dt><span class="section"><a href="#id2542881">DAS Version 2</a></span></dt><dt><span class="section"><a href="#id2522035">Alternate approaches</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2489198">2. System Overview</a></span></dt><dd><dl><dt><span class="section"><a href="#id2529299">Physical Layout</a></span></dt><dt><span class="section"><a href="#id2548026">The DAS Server</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2488430">3. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#id2537540">Introduction</a></span></dt><dt><span class="section"><a href="#id2516519">Procedures</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2515424">4. Recovering data from tape</a></span></dt><dt><span class="chapter"><a href="#id2442582">5. Use Cases</a></span></dt><dd><dl><dt><span class="section"><a href="#id2488797">A user specifies a spectroscopic data set and downloads it in bulk</a></span></dt><dd><dl><dt><span class="section"><a href="#id2522752">Overview</a></span></dt><dt><span class="section"><a href="#id2529887">Flow of Events</a></span></dt></dl></dd><dt><span class="section"><a href="#id2481706">A user specifies a imaging data set and downloads it in bulk</a></span></dt><dd><dl><dt><span class="section"><a href="#id2523835">Overview</a></span></dt><dt><span class="section"><a href="#id2546139">Flow of Events</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#id2442600">6. Development</a></span></dt><dd><dl><dt><span class="section"><a href="#id2495023">This Document</a></span></dt><dd><dl><dt><span class="section"><a href="#id2522805">docBook</a></span></dt><dt><span class="section"><a href="#id2506211">File Organization</a></span></dt><dt><span class="section"><a href="#id2538358">Generating the documentation</a></span></dt></dl></dd><dt><span class="section"><a href="#id2442610">Compilation with GNU Autotools</a></span></dt><dt><span class="section"><a href="#id2442622">Static Code Analysis with Splint</a></span></dt><dt><span class="section"><a href="#id2442635">Documenting a Procedure</a></span></dt><dt><span class="section"><a href="#id2442647">Documenting a Use Case</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2442660">7. Files</a></span></dt><dd><dl><dt><span class="section"><a href="#id2442664">Permanent</a></span></dt><dt><span class="section"><a href="#id2488072">Temporary</a></span></dt></dl></dd><dt><span class="chapter"><a href="#id2488109">8. Commands</a></span></dt><dt><span class="chapter"><a href="#id2488163">9. Reference</a></span></dt><dd><dl><dt><span class="glossary"><a href="#id2500521">Glossary</a></span></dt><dt><span class="section"><a href="#id2488174">FAQ</a></span></dt><dt><span class="section"><a href="#id2526703">Trouble shooting</a></span></dt><dt><span class="bibliography"><a href="#id2492839">Bibliography</a></span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>4.1. <a href="#backuplogs">Mass storage directories and corresponding logs</a></dt></dl></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2466033"></a>Chapter 1. Concept of Operations</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id2533555">Introduction</a></span></dt><dt><span class="section"><a href="#id2520254">DAS Version 1</a></span></dt><dt><span class="section"><a href="#id2542881">DAS Version 2</a></span></dt><dt><span class="section"><a href="#id2522035">Alternate approaches</a></span></dt></dl></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2533555"></a>Introduction</h2></div></div><div></div></div><p>
+The Sloan Digital Sky Survey (SDSS) is a survey of over 10,000 square
+dergees of the night sky.  The SDSS technical summary
+[<a href="#ref.tech" title="[York et al. 2000]"><span class="abbrev">York et al. 2000</span></a>] provides a good overview of the project,
+and the early data release (EDR) paper [<a href="#ref.edr" title="[Stoughton et al. 2002]"><span class="abbrev">Stoughton et al. 2002</span></a>]
+paper, updated by the various data release papers, provide the most
+comprehensive reference for the data destributed.
+</p><p>
+The survey collects data using two instruments; first, the imaging
+camera takes images of the sky through five filters, and the imaging
+pipeline analyzes these data and produces images, catalogs of objects,
+and measurements of a variety of parameters of those objects. A second
+piece of software, the target selection pipeline, selects objects from
+these catalogs to be observed by the spectrometers. The telescope then
+collects spectroscopic data from these targets, and the spectrscopic
+pipeline measures additional objects parameters from these
+data. Finally, the sqlLoader data loading pipeline 
+[<a href="#ref.sqlLoader" title="[Szalay et al. 2008]"><span class="abbrev">Szalay et al. 2008</span></a>]
+loads the data
+from the files generated by the pipeline into a database, the Catalag
+Archive Server
+[<a href="#ref.casdbm" title="[Thakar et al. 2008]"><span class="abbrev">Thakar et al. 2008</span></a>], which is then used by astronomers to do science.
+</p><p>
+Although the CAS database best serves the needs of the majority of
+astronomers, many science projects can be better performed using the
+files prodeced by the pipelines. The Data Archive Server (or DAS)
+provides access to the files generated by the pipeline
+themselves. These file include information not loaded into the CAS
+database, and therefore is the only source of some types of data. For
+example, the CAS includes only catalogs and image data suitable for
+display, not the science quality <a href="#fits">FITS</a> images. Models
+of the point spread function and quality assurance plots are other
+examples of data not included in the CAS. Even when the data is
+present in the CAS, downloading the data in the form generated by the
+pipelines can be more convenient.
+</p><p>
+One final motivation for the Data Archive Server is longevity and
+supportability. The CAS is a large software package with many
+dependencies, including specific versions of specific database
+servers, and requires expert labor to support and maintain. A simple
+collection of files, however, can be archived with minimal effort or
+expertise, and can be migrated to new systems and architectures with
+less effort. The DAS, therefore, can be used as to provide fall-back
+access to SDSS data should the CAS ever fall out of service.
+</p><p>
+While some users are capable of locating and retrieving the files they
+need from an unadorned file server, most will require tools to help
+them locate and download the subset of files that interest them. The
+DAS therefore has two elements: a directory structure containing the
+data itself, and a web interface that assists astronomers in finding
+the data useful to them.
+</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2520254"></a>DAS Version 1</h2></div></div><div></div></div><p>
+DAS version 1, the original version described in the SDSS DAS paper
+[<a href="#ref.das1" title="[Neilsen 2008]"><span class="abbrev">Neilsen 2008</span></a>], supports all of the functionality needed
+end users. It contains two important <a href="#cgi">CGI</a>
+scripts. One of these is the data server, which lets users uplead a
+list of frames, plates, or fibers, and returns an container file that
+holds the files of interest, or a list file that can be used by mass
+download tools (such as
+<span class="application">wget</span> or <span class="application">rsync</span>)
+to retrieve all files that match. The other is the footprint server,
+which accepts a list of celestial coordinates from the user and
+returns a table showing what data is available for each coordinate (if
+any), and if so, in what imaging frame.
+</p><p>
+This version of the DAS has several major drawbacks, the most
+important of which is that it was built using the SDSS data processing
+infrastructure. This as acceptable when the DAS server has this
+infrastructure available, but installing and maintaining this
+infrastructure requires significant effort and expertise; the current
+version of the DAS cannot be used outside its present environment,
+the existance of which is temporary.
+</p><p>
+Anather drawback of the original version of the DAS is the layout and
+physical organization of the data files themselves. The SDSS data
+processing cluster stored data on of about 20 nodes serving data disks
+over NFS. The DAS server did not hold any data itself, but rather
+directories of links to the data files stored on these cluster nodes,
+mounted over NFS. Each data release had its own corresponding
+directory of links. Maintenance of this arrangement was challenging,
+requiring regular changes to each of the directories of links as
+cluster nodes were retired, taken offline for maintenance, or data
+moved from one node to another.
+</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2542881"></a>DAS Version 2</h2></div></div><div></div></div><p>
+DAS Version 2 is a rewrite of the web applications that support access
+to the data files. The tools that support access to the DAS needed to be
+rewritten so that they could be installed and maintained by its long
+term custodians, who are unlikely to have significant expertise in
+astronomy, and no resources to install or maintain a complex software
+product. The interface has a minimum of dependencies, and requires a
+minimum of attention to administor.
+</p><p>
+The supporting CGI scripts are replaced in two ways. Some functionalty
+can be supported (or even enhanced) using static html pages, which is
+ideal from a portability perspective. The remaining functionality is
+replaced by programs written in ANSI C carefully written for
+portability, and avoiding the use of external libraries whenever
+possible; the administrator should be able to install the program
+using only a standards compliant C compiler.
+</p><p>
+While the apparent organization of the file system is maintained, all
+data files are stored on a single NFS mounted network file system;
+there are no directories of links that require maintenance. This
+common file system contains all data files for all releases. Instead
+of using link trees to support access to a subset of files
+corresponding to a specific data release, the support scripts allow
+users to limit selection of files to those matching a specific data
+release. 
+</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2522035"></a>Alternate approaches</h2></div></div><div></div></div><p>
+The easiest, most direct appreach would have been to rewrite
+the scripts in either a scripting language or in Java. While these
+appreaches would require less development effort, I am less confident
+that the versions of these languages (or Java virtual machines)
+available five or ten years from now will be able to run scripts
+written for todays versions than I am that a compliant C compiler will
+be available then.
+</p></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2489198"></a>Chapter 2. System Overview</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id2529299">Physical Layout</a></span></dt><dt><span class="section"><a href="#id2548026">The DAS Server</a></span></dt></dl></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2529299"></a>Physical Layout</h2></div></div><div></div></div><p>
+Any use of the DAS requires three systems: the user's computer acting
+an http or rsync client; the DAS server running http and rsync
+servers, supporting CGI executables, configuration, and temporary storage;
+and network attached storage that actually hosts the data. 
+</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2548026"></a>The DAS Server</h2></div></div><div></div></div><p>
+The DAS server mounts the NAS storage and serves files found on it
+using rsync and http (probably Apache) servers. The supporting web
+applications require some additional files and directories. These
+additional files may be stored on the NAS as well, or on a local disk
+on the server. The locations of these files and directories are all
+configurable.
+</p><div class="variablelist"><dl><dt><span class="term">Configuration</span></dt><dd><p>
+The configuration file holds the paths for all other files and
+directories, and the path of the configuration file itself must be
+configured when the CGI application files are compiled. The suggested
+location for the DAS configuration file on a UNIX or linux system is 
+<tt class="filename">/usr/local/etc/sdssdas.conf</tt>, but this can be 
+set to something else when the CGI executables are compiled.
+</p></dd><dt><span class="term">Temporary files</span></dt><dd><p>
+User requests may create temporary files, and these files need a home
+of the DAS server. The 
+<i class="parameter"><tt>scratch_root</tt></i><a id="scratch_root"></a>
+parameter in the configuration file points to this directory. The
+suggested location for this directory on a UNIX or linux system is
+<tt class="filename">/var/lib/das</tt>.
+</p><p>Each time a user uploads a list of spectroscopic fibers, imaging
+  fields, or coordinates, the corresponding post command creates a
+  subdirectory into which it writes the request and tables derived
+  from it. The path of this directory is of the form
+  <a href="#scratch_root"><i class="replaceable"><tt>scratch_root</tt></i></a>/userlist-XXXXXX.
+  This document refers to this temporary directory as 
+  <i class="parameter"><tt>userlist_dir</tt></i><a id="userlist_dir"></a>. These
+  directories should be erased on a periodic basis (perhaps using a
+  cron job) to prevent them from using excessive disk space.
+</p></dd><dt><span class="term">CGI applications</span></dt><dd><p>
+The CGI executables themselves must be stored somewhere, and the http
+server must be configured to serve CGI scripts from that
+directory. Set <i class="parameter"><tt>cgi_url</tt></i> parameter of the
+configuration file designates the base URL at which these scripts can
+be called.  The suggested location for this directory on a UNIX or
+linux system is
+<tt class="filename">/srv/das/www/cgi-bin</tt>, and the suggested
+URL is <tt class="systemitem">http://das.sdss.org/www/cgi-bin</tt>.
+</p></dd><dt><span class="term">Static web pages</span></dt><dd><p> The static web pages must also be stored somewhere.
+The suggested location for this directory on a UNIX or linux system
+is <tt class="filename">/srv/das/www/html</tt>, and
+served from
+<tt class="systemitem">http://das.sdss.org/www/html</tt>, and 
+<tt class="systemitem">http://das.sdss.org</tt> can redirect here. 
+</p></dd><dt><span class="term">Imaging data</span></dt><dd><p>
+The <i class="parameter"><tt>imaging_root</tt></i><a id="imaging_root"></a>
+parameter in the configuration file sets the directory for the root of
+the imaging data, and
+the <i class="parameter"><tt>imaging_url</tt></i><a id="imaging_url"></a>
+parameter sets designates the URL on which this directory is
+served. The web server must be configured to serve the designated
+directory at the designated URL for the applications to work properly.
+The suggested location for this directory on a UNIX or linux system
+is <tt class="filename">/srv/das/imaging</tt>, served from
+<tt class="systemitem">http://das.sdss.org/imaging</tt>.
+</p></dd><dt><span class="term">Spectroscopic data</span></dt><dd><p>
+The <i class="parameter"><tt>spectro_root</tt></i><a id="spectro_root"></a>
+parameter in the configuration file sets the directory for the root of
+the imaging data, and
+the <i class="parameter"><tt>spectro_url</tt></i><a id="spectro_url"></a>
+parameter sets designates the URL on which this directory is
+served. The web server must be configured to serve the designated
+directory at the designated URL for the applications to work properly.
+The suggested location for this directory on a UNIX or linux system
+is <tt class="filename">/srv/das/spectro</tt>,  served from
+<tt class="systemitem">http://das.sdss.org/spectro</tt>.
+</p></dd></dl></div><p>
+</p></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2488430"></a>Chapter 3. Installation</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id2537540">Introduction</a></span></dt><dt><span class="section"><a href="#id2516519">Procedures</a></span></dt></dl></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2537540"></a>Introduction</h2></div></div><div></div></div><p>
+This installation procedure describes the installation in
+several phases. Each phase results in a piece of functionality, such
+that if the procedure is only partially completed, a DAS installation
+you will still have a DAS installation with reduced functionality.
+</p><p>
+In general, the choices of suggested directories have been guided by
+the <a href="http://www.pathname.com/fhs/" target="_top">Filesystem Hierarchy
+Standard</a>.
+</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2516519"></a>Procedures</h2></div></div><div></div></div><div class="procedure"><p class="title"><b>Procedure 3.1. Prepare the server</b></p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Operating systems</h3><p>
+These instructions presume a linux or UNIX server. It may be
+possible to get the DAS running on a Windows server, but this is not
+been attempted, and these installation procedures will have to be
+modified.
+</p></div><ol type="1"><li><p class="title"><b>Prepare disk partitions</b></p><p>In addition to the basic directories required to
+  run <span class="application">apache</span>
+  and <span class="application">rsync</span>, you will want:
+</p><div class="itemizedlist"><ul type="disc"><li><p>a place to put html files and CGI executables. On the
+    DAS server at Fermilab, this
+    is <tt class="filename">/srv/das/www</tt>. These
+    files take about 7GB. It is a good idea to keep these locally
+    rather than on mass storage, so that they may be edited even if
+    the mass storage is mounted read-only.</p></li><li><p>a scratch area. This is only necessary if you will be
+    running the CGI interface. It is a good idea to dedicate a
+    separate partition to the scratch area, so that if the scratch are
+    is filled up, other functionality of the system will be
+    unaffected. The server at Fermilab has a 20GB partition mounted on
+    <tt class="filename">/var/lib/das</tt>. Make sure
+    this directroy is readable by the web server, for example
+    with:
+    </p><pre class="screen">chown -R apache.apache /var/lib/das</pre></li></ul></div><p>
+</p></li><li><p class="title"><b>Obtain a copy of the data</b></p><p>
+At Fermilab, two BlueArc NAS devices hold the DAS data itself. The DAS
+server mounts these disks (read only)
+on <tt class="filename">/das</tt>
+and <tt class="filename">/das2</tt> using NFS. Symbolic
+links link selected subdirectories in these file systems to the
+necessary subdirectories
+of <tt class="filename">/srv/das</tt>.
+</p><p>Deponding on how you mount your mass storage, you can do
+  something similar, or mount you storage directly on the directories
+  to be served. Be aware, however, that you may want to be able to
+  edit files in <tt class="filename">/srv/das/www</tt>,
+  and also mount the file system holding the other files read only;
+  mounting a NAS directly
+  onto <tt class="filename">/srv/das/www</tt> gets in
+  the way of doing this.</p></li><li><p class="title"><b>Install the servers</b></p><p>Install <span class="application">Apache</span>
+and <span class="application">rsync</span>.</p></li></ol></div><div class="procedure"><p class="title"><b>Procedure 3.2. Serving static files</b></p><ol type="1"><li><p class="title"><b>Prepare the directory structure</b></p><p>The static files served by the DAS are distributed among a
+  number of directories:
+</p><div class="variablelist"><dl><dt><span class="term">www (<tt class="filename">/srv/das/www</tt>)</span></dt><dd><p>holds files intended to assist in user interaction
+    and presentation, such as web pages, the css file for the site,
+    and the CGI executables.</p></dd><dt><span class="term">imaging (<tt class="filename">/srv/das/imaging</tt>)</span></dt><dd><p>holds files produced by the imaging data reduction
+    pipeline. First level subdirectories organize the data by run.
+    For
+    example <tt class="filename">/srv/das/imaging/3836</tt>
+    holds data from imaging run 3836.</p></dd><dt><span class="term">spectro (<tt class="filename">/srv/das/spectro</tt>)</span></dt><dd><p>holds files produced by the spectroscopic data
+    reduction pipeline. First level subdirectories organize data by
+    reduction pipeline and rerun, or data organization. For example, 
+<tt class="filename">/srv/das/spectro/1d_26</tt>
+holds data produced by rerun 26 of the 1d pipeline, and 
+<tt class="filename">/srv/das/spectro/ss_tar_26</tt>
+contains tar files of the most importand data products for each plate.
+</p></dd><dt><span class="term">nightly (<tt class="filename">/srv/das/nightly</tt>)</span></dt><dd><p>holds files produced by the observatory on a given
+    night. First level subdirectories are organized by night,
+    designated as a modified Julian date (MJD). For example, 
+<tt class="filename">/srv/das/nightly/52729</tt> contains
+all data for MJD 52729. (The MJD of a date is the number of days since
+November 17, 1858.)
+</p></dd><dt><span class="term">pt (<tt class="filename">/srv/das/pt</tt>)</span></dt><dd><p>holds data products from the photometric telescope.</p></dd><dt><span class="term">va (<tt class="filename">/srv/das/va</tt>)</span></dt><dd><p>holds "value added" catalogs.</p></dd><dt><span class="term">raw (<tt class="filename">/srv/das/raw</tt>)</span></dt><dd><p>hold the raw data from each instrument.</p></dd><dt><span class="term">software (<tt class="filename">/srv/das/software</tt>)</span></dt><dd><p>holds the software used by the
+survey. The <tt class="filename">CVSrepository</tt>
+    subdirectory,
+<tt class="filename">/srv/das/software/CVSrepository</tt>,
+contains tar files of the CVS repository for most products used. Other
+subdirectories contain the source code for the software products users
+are most likely to want to use as a reference.
+</p></dd><dt><span class="term">contents (<tt class="filename">/srv/das/contents</tt>)</span></dt><dd><p>holds a handful of file describing the contents of the
+    DAS. These files are primarily used by the DAS CGI executables,
+    but can also be of use to users.</p></dd><dt><span class="term">sdssmosaic (<tt class="filename">/srv/das/sdssmosaic</tt>)</span></dt><dd><p>contains a (slightly modified) copy of Steve Kent's
+    SDSS Mosaic interface for browsing SDSS imaging data.</p></dd></dl></div><p>
+
+The directories given in parenthesis are only suggestions; the name
+used in the file system can be changed, provided the directory
+structure of the content of each directory is not changed. If the
+locations of these directories are changes relative to each other,
+however, it will complicate the configuration of Apache and rsync, as
+described below, because the relative locations of files in different
+directories as extracted from the URLs must be unchanged. In
+particular, many html files in
+the <tt class="filename">www</tt> directory link to data
+files in the other directories using relative links.
+
+</p></li><li><p class="title"><b>Set up the base directory for the web server</b></p><p>The base directory of the web server needs two files in it: 
+<tt class="filename">robots.txt</tt>
+and <tt class="filename">index.html</tt>. We do not want web crawlers going
+through the entire DAS, bet we do want to allow recursive retrievals
+with <span class="application">wget</span>, so we
+create <tt class="filename">robots.txt</tt> accordingly:
+</p><pre class="programlisting">
+User-agent: *    # applies to all robots
+Disallow: /      # disallow indexing of all pages
+
+User-agent: Wget 
+Disallow: 
+</pre><p>
+</p><p>If this is dedicated web server, we want users going to the
+  base server URL to be redirected to the DAS homepage. So we generate
+  an <tt class="filename">index.html</tt> accordingly:
+</p><pre class="programlisting">
+&lt;head&gt;
+&lt;META HTTP-EQUIV="Refresh"
+      CONTENT="0; URL=/www/html"&gt;
+
+&lt;/head&gt;
+Redirecting to the DR7 DAS...
+</pre><p>
+</p></li><li><p class="title"><b>Configure Apache</b></p><p>Each of the above directories will need to be served by Apache
+  under the name provided. For example, the imaging directory must be
+  served
+  from <tt class="systemitem">http://<i class="replaceable"><tt>hostname/base</tt></i>/imaging</tt>. All
+  if the above directories must appear in the URL an the same
+  level. For example, you can serve imaging
+  on <tt class="systemitem">http://mydas.sdss.org/imaging</tt>
+  and spectro
+  on <tt class="systemitem">http://mydas.sdss.org/spectro</tt>, or
+  imaging on <tt class="systemitem">http://mydas.sdss.org/DAS/imaging</tt>
+  and spectro
+  on <tt class="systemitem">http://mydas.sdss.org/DAS/spectro</tt>, but
+  not imaging
+  on <tt class="systemitem">http://mydas.sdss.org/DAS/imaging</tt> and
+  spectro on <tt class="systemitem">http://mydas.sdss.org/spectro</tt>
+  (or even <tt class="systemitem">http://mydas.sdss.org/otherDAS/spectro</tt>).
+</p><p>Here is a sample from an Apache configuration file for serving
+  the DAS from the suggested directories:
+</p><pre class="programlisting">
+&lt;DirectoryMatch (/srv/das/(www|imaging|spectro|nightly|pt|va|raw|software|contents|sdssmosaic))&gt;
+    Options Indexes
+    AllowOverride None
+    allow from all
+&lt;/DirectoryMatch&gt;
+
+Alias /unprocessed /srv/das/raw
+Alias /imaging /srv/das/imaging
+Alias /spectro /srv/das/spectro
+Alias /nightly /srv/das/nightly
+Alias /contents /srv/das/contents
+Alias /pt /srv/das/pt
+Alias /software /srv/das/software
+Alias /va /srv/das/va
+Alias /www/css /srv/das/www/css
+Alias /www/html /srv/das/www/html
+Alias /sdssmosaic /srv/das/sdssmosaic
+
+</pre><p>You may also want to add the following aliases so that links
+  made to URLs that were made with previous versions the DAS do not
+  break:
+</p><pre class="programlisting">
+Alias /data/dp30.a/data/spectro /srv/das/spectro
+Alias /data/dp30.a/data /srv/das/imaging
+Alias /raw/spectro /srv/das/spectro
+Alias /raw /srv/das/imaging
+Alias /wdcat /srv/das/va/wdcat
+&lt;IfModule mod_rewrite.c&gt;
+RewriteEngine On
+RewriteRule DR./imaging(.*) imaging$1 [redirect]
+RewriteRule dr./imaging(.*) imaging$1 [redirect]
+RewriteRule DRSN/imaging(.*) imaging$1 [redirect]
+RewriteRule DRSN1/imaging(.*) imaging$1 [redirect]
+RewriteRule drsn/imaging(.*) imaging$1 [redirect]
+RewriteRule drsn1/imaging(.*) imaging$1 [redirect]
+RewriteRule DRsup/imaging(.*) imaging$1 [redirect]
+RewriteRule drsup/imaging(.*) imaging$1 [redirect]
+RewriteRule DRsupcol/imaging(.*) imaging$1 [redirect]
+RewriteRule drsupcol/imaging(.*) imaging$1 [redirect]
+RewriteRule DR./spectro(.*) spectro$1 [redirect]
+RewriteRule dr./spectro(.*) spectro$1 [redirect]
+&lt;/IfModule&gt;
+</pre><p>
+
+</p></li><li><p class="title"><b>Configrue <span class="application">Apache</span> to start on bootup</b></p><p>How this is done will vary significantly by system; see the
+documentation for your local installation. On a circa 2008 Linux
+system (<tt class="systemitem">Scientific Linux SLF release 5.2</tt>),
+this command (as root) does the trick:
+</p><pre class="screen">
+# chkconfig --level 35 httpd on
+</pre><p>
+</p></li><li><p class="title"><b>Configure rsync</b></p><p>This is a sample <span class="application">rsync</span> configuration
+  file (typically stored it <tt class="filename">/etc/rsyncd.conf</tt>),
+  made assuming the suggested directories:
+</p><pre class="programlisting">
+#
+# rsyncd.conf
+#
+#
+motd file        = /etc/rsyncd/rsyncd.motd
+read only        = yes
+use chroot       = no
+log file         = /var/run/rsync/usage/rsync.log
+secrets file     = /etc/rsyncd/rsyncd.secrets
+socket options   = SO_SNDBUF=8388608 SO_RCVBUF=8388608
+###################################################################
+[DAS]
+comment          = DR72 SDSS Data Release Seven
+path             = /srv/das
+auth users       = user dr7 sdss
+strict modes     = yes
+transfer logging = yes
+timeout          = 86400
+###################################################################
+[imaging]
+comment          = imaging
+path             = /srv/das/imaging
+auth users       = user dr7 sdss
+strict modes     = yes
+transfer logging = yes
+timeout          = 86400
+###################################################################
+[spectro]
+comment          = spectro
+path             = /srv/das/spectro
+auth users       = user dr7 sdss
+strict modes     = yes
+transfer logging = yes
+timeout          = 86400
+###################################################################
+[pt]
+comment          = pt
+path             = /srv/das/pt
+auth users       = user dr7 sdss
+strict modes     = yes
+transfer logging = yes
+timeout          = 86400
+###################################################################
+[nightly]
+comment          = nightly
+path             = /srv/das/nightly
+auth users       = user dr7 sdss
+strict modes     = yes
+transfer logging = yes
+timeout          = 86400
+###################################################################
+[unprecessed]
+comment          = unprocessed
+path             = /srv/das/raw
+auth users       = user dr7 sdss
+strict modes     = yes
+transfer logging = yes
+timeout          = 86400
+</pre><p>
+You may need to fiddle with the send and receive buffer sizes if users
+are having trouble using <span class="application">rsync</span>.
+</p><p>
+A corresponding secrets file (the path of which should match that
+given in <tt class="filename">/etc/rsyncd.conf</tt>) might look like this:
+</p><pre class="programlisting">
+dr7:dr7
+user:sdss
+sdss:<i class="replaceable"><tt>the_usual</tt></i>
+</pre><p>
+Given that we are making the data public, the user password should be easy
+and well publicized. The dr7/dr7 combination may be what is expected
+by users of the old DAS, and there is no reason not to support
+that. Similarly, there is no reason not to allow access to the public
+data using the old "collaboration only" username and password.
+</p></li><li><p class="title"><b>Configure <span class="application">rsync</span> to start on bootup</b></p><p>How this is done will vary significantly by system; see the
+documentation for your local installation. On a circa 2008 Linux
+system (<tt class="systemitem">Scientific Linux SLF release 5.2</tt>),
+this command (as root) does the trick:
+</p><pre class="screen">
+# chkconfig --level 35 rsync on
+</pre><p>
+</p></li></ol></div><div class="procedure"><p class="title"><b>Procedure 3.3. Monitoring transfer volume</b></p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>It should be easier to simply
+    run <a href="http://www.webalizer.com/" target="_top">webalizer</a>
+    instead, but this approach also works and is backwards compatible
+    with what has been done before.</p></div><ol type="1"><li><p>Write a script to sum up the bytes setup
+    by <span class="application">Apache</span>. This <span class="application">awk</span>
+    script, perhaps
+    named <tt class="filename">/usr/local/bin/das_http_stats</tt>,
+    is one way to start:
+</p><pre class="programlisting">
+#! /bin/awk -f
+
+BEGIN {
+  monthTable["Jan"] = 1;
+  monthTable["Feb"] = 2;
+  monthTable["Mar"] = 3;
+  monthTable["Apr"] = 4;
+  monthTable["May"] = 5;
+  monthTable["Jun"] = 6;
+  monthTable["Jul"] = 7;
+  monthTable["Aug"] = 8;
+  monthTable["Sep"] = 9;
+  monthTable["Oct"] = 10;
+  monthTable["Nov"] = 11;
+  monthTable["Dec"] = 12;
+}
+
+/GET/ {
+  match($0,/^(([[:digit:]|\.])+) - - \[([[:digit:]]+\/[[:alpha:]]+\/[[:digit:]]+):([[:digit:]]+):([[:digit:]]+):([[:digit:]]+) (-[[:digit:]]+)\] \"GET ([[:graph:]]+) ([[:graph:]]+)\" ([[:digit:]]+) ([[:digit:]]+).*/,m);
+  date = m[3];
+  size = m[11];
+  if (date in total)
+    total[date] += size;
+  else
+    total[date] = size;
+}
+
+END {
+  for (date in total) {
+    if (length(date) &gt; 1) {
+      split(date, splitDate,"/");
+      year = splitDate[3];
+      month = monthTable[splitDate[2]];
+      day = splitDate[1];
+      line[date]=sprintf("%4d-%2d-%2d %02d/%02d/%4d\tTotal bytes transfered:\t%0.0f", year, month, day, month, day, year, total[date]);
+    }
+  }
+  numLines = asort(line);
+  for (i = 1; i &lt;= numLines; i++) print substr(line[i],12,length(line[i])-11);
+}
+</pre><p>
+</p></li><li><p>Write a script to sum up the bytes setup
+    by <span class="application">rsync</span>. This <span class="application">awk</span>
+    script, perhaps
+    named <tt class="filename">/usr/local/bin/das_rsync_stats</tt>,
+    is one way to start:
+</p><pre class="programlisting">
+#! /bin/awk -f
+
+$4 ~ /send/ &amp;&amp; $1 ~ /(199[5-9]|2[0-9][0-9][0-9])\/(0[1-9]|10|11|12)\/([0-2][0-9]|3[0-1])/ &amp;&amp; $2 ~ /([01][0-9]|2[0-3]:[0-5][0-9]:[0-5][0-9])/ &amp;&amp; $3 ~ /.[0-9]+./ &amp;&amp; $10 ~ /[1-9][0-9]*/ {
+  date = $1;
+  if (date in total)
+    total[date] += $10;
+  else
+    total[date] = $10;
+}
+
+END {
+  for (date in total) {
+    split(date, splitDate,"/");
+    year = splitDate[1];
+    month = splitDate[2];
+    day = splitDate[3];
+    line[date]=sprintf("%4d-%2d-%2d %02d/%02d/%4d\tTotal bytes transfered:\t%0.0f", year, month, day, month, day, year, total[date]);
+  }
+  numLines = asort(line);
+  for (i = 1; i &lt;= numLines; i++) print substr(line[i],12,length(line[i])-11);
+}
+</pre><p>
+</p></li><li><p class="title"><b>Set up a cron job to generate statistics</b></p><p>One way to do this is to write a
+  short <span class="application">bash</span> script and call it
+  using <span class="application">cron</span>:
+</p><pre class="programlisting">
+#!/bin/sh
+/usr/local/bin/das_http_stats /var/log/httpd/access_log &gt; /var/www/html/apache-volume-$(date --iso).lis
+/usr/local/bin/das_rsync_stats /var/run/rsync/usage/rsync.log &gt; /var/www/html/rsync-volume-$(date --iso).lis
+</pre><p>
+Fancier things are probably desireable, but highly system specific. On
+the Fermilab server, the cron job collects logs from the backup
+servers as well, and takes into account stuff done by logrotate.
+</p></li></ol></div><div class="procedure"><p class="title"><b>Procedure 3.4. Supporting basic CGI executables</b></p><ol type="1"><li><p class="title"><b>Obtain the source code</b></p><p>Download the source code from an existing DAS. Compressed tar
+  files of the source code can be found in
+  the <tt class="filename">sofware</tt> directory of an
+  existing DAS, for
+  example <tt class="systemitem">http://das.sdss.org/software/sdssdas-2.1.tgz</tt>. Download
+  this and untar it in you favorite build directory. For example:
+</p><pre class="screen">
+$ cd ~/src
+$ wget http://das.sdss.org/software/sdssdas-2.1.tgz
+$ tar -xzf sdssdas-2.1.tgz
+</pre><p>
+</p></li><li><p class="title"><b>Configure and compile the executables</b></p><p>The compilation procedure is typical of software using GNU
+  configure tool chain:
+</p><pre class="screen">
+$ cd sdssdas-2.1
+$ ./configure --prefix=/srv/das --sysconfdir=/usr/local/etc
+$ make
+$ make install
+</pre><p>
+</p><p>
+The <tt class="option">--prefix</tt> option sets where the CGI executables 
+and associated css and html files will be installed; in the above example,
+they will be installed in 
+<tt class="filename">/srv/das/cgi-bin</tt>,
+<tt class="filename">/srv/das/css</tt>, and
+<tt class="filename">/srv/das/html</tt> respectively. 
+</p><p>
+The <tt class="option">--sysconfdir</tt> option sets the directory in which 
+the CGI executables will look for the DAS configuration file. In the
+above example, the configuration file will be
+<tt class="filename">/usr/local/etc/sdssdas.conf</tt>. Note that in the
+specific case above, the directory is explicitly set to the default
+location, and so has no effect.
+</p></li><li><p class="title"><b>Create the DAS configuration file</b></p><p>Create the DAS configuration
+file, <tt class="filename">sdssdas.conf</tt>, in
+the <tt class="filename">/usr/local/etc</tt> directory,
+or whatever you set with the <tt class="option">--sysconfdir</tt> option
+above. Further details on this file can be found in
+  <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>. At this stage, it should look something like this:
+</p><pre class="programlisting">
+imaging_root: /srv/das/imaging
+spectro_root: /srv/das/spectro
+scratch_root: /var/lib/das
+drdefs_root: /srv/das/contents/tsv
+astlimits_fname: /srv/das/contents/fits/astlimits.fits
+imaging_url: http://mydas.sdss.org/imaging
+spectro_url: http://mydas.sdss.org/spectro
+cgi_url: http://mydas.sdss.org/www/cgi-bin
+rsync_host: myrsync.sdss.org
+cas_navi_url: none
+cas_obj_url: none
+offer_drC: no
+</pre><p>
+</p><p>At this stage, leave the <i class="parameter"><tt>cas_*_url</tt></i>
+  parameters set to "none" and the <i class="parameter"><tt>offer_drC</tt></i>
+  parameter set to "no".</p></li><li><p class="title"><b>Configure Apache</b></p><p>Configure your <span class="application">Apache</span> to serve the
+  CGI executables. This will probably involve adding entries like this: 
+</p><pre class="programlisting">
+&lt;DirectoryMatch "/srv/das/www/cgi-bin"&gt;
+    Options +ExecCGI
+    AllowOverride None
+    allow from all
+&lt;/DirectoryMatch&gt;
+
+ScriptAlias /www/cgi-bin/ "/srv/das/www/cgi-bin/"
+
+</pre><p>
+to your <tt class="filename">apache.conf</tt> file.
+</p><p>Again, make sure deprecated URLs get redirected someplace
+  reasonable:
+</p><pre class="programlisting">
+&lt;IfModule mod_rewrite.c&gt;
+RewriteEngine On
+RewriteRule DR.*-cgi-bin/DAS www/html/index.html [redirect]
+RewriteRule DR.*-cgi-bin/FOOT www/html/post_coords.html [redirect]
+RewriteRule dr.*-cgi-bin/DAS www/html/index.html [redirect]
+RewriteRule dr.*-cgi-bin/FOOT www/html/post_coords.html [redirect]
+&lt;/IfModule&gt;
+</pre><p>
+</p></li><li><p class="title"><b>Clean up temporary files</b></p><p>The CGI executable will create temporary files in the directory
+  set by <i class="parameter"><tt>scratch_root</tt></i>
+  in <tt class="filename">sdssdas.conf</tt>. You will want to periodically
+  clean these up.</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>These files are not cleaned up automatically by the
+    scripts themselves for two reasons: they are extremely useful for
+    debugging problems, and they allow users to look at the results
+    of old interactions.</p></div><p>One way to do this is to write an
+  appropriate <span class="application">cron</span> job. For example, on the
+  DAS at Fermilab, we use this:
+</p><pre class="screen">
+# crontab -l
+MAILTO=neilsen@@fnal.gov
+57 22 * * * find /var/lib/das/ -mount -user apache -group apache -ctime +7 -type d -name userlist-?????? -exec rm -r {} \;
+</pre><p>
+which cleans up temporary files more than 7 days old.
+</p></li><li><p class="title"><b>Test the CGI web pages</b></p><p>Your pages should now be functional. Go to the DAS front page
+  of your new DAS. It will probably have a URL something like this:
+<tt class="systemitem">http://mydas.sdss.org/www/html/index.html</tt>.</p><p>The first three links in the "Interactive download tools"
+  section of the page go to CGI executables. In each case, the example
+  values should work; just hit the "Submit Request" buttons in each,
+  and check the resultant pages for existance and valid links.</p></li></ol></div><div class="procedure"><p class="title"><b>Procedure 3.5. Enable links to the CAS</b></p><ol type="1"><li><p class="title"><b>Find the CAS</b></p><p>Determine the URLs of the CAS navigator and object explorer you
+  want to link to. At Fermilab, the DAS links to the locally hosted
+  CAS, so the URLs
+  are <tt class="systemitem">http://cas.sdss.org/astro/en/tools/chart/navi.asp</tt>
+  and <tt class="systemitem">http://cas.sdss.org/astro/en/tools/explore/obj.asp</tt>.</p></li><li><p class="title"><b>Update the DAS configuration file</b></p><p>Now set the <i class="parameter"><tt>cas_navi_url</tt></i>
+  and <i class="parameter"><tt>cas_obj_url</tt></i> parameters
+  in <tt class="filename">sdssdas.conf</tt> accordingly:
+</p><pre class="programlisting">
+cas_navi_url: http://cas.sdss.org/astro/en/tools/chart/navi.asp
+cas_obj_url: http://cas.sdss.org/astro/en/tools/explore/obj.asp
+</pre></li></ol></div><div class="procedure"><p class="title"><b>Procedure 3.6. Supporting enhanced corrected frame (drC files)</b></p><p>
+The compilation of the <span class="application">drC</span> CGI executable
+is more fragile than the others, and so I have separated it
+out. There are three forseen complications or possible sources of difficulty:
+</p><div class="itemizedlist"><ul type="disc"><li><p>It depends on <tt class="function">alloca</tt>, which is
+    not supported by all C compilers (it is supported by GCC, which is
+    available on most platforms, however).</p></li><li><p>It depends on
+    the <a href="http://directory.fsf.org/project/popt/" target="_top">GNU <tt class="systemitem">popt</tt></a>
+    library. It isn't actually used by the CGI executable itself, but
+    by supporting executables used for debugging.</p></li><li><p>It depends
+    on <a href="http://heasarc.nasa.gov/lheasoft/fitsio/fitsio.html" target="_top">CFITSIO</a>.
+    </p></li></ul></div><p>
+</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Installing CFITSIO</h3><p>
+You should follow the instructions on
+the <a href="http://heasarc.nasa.gov/lheasoft/fitsio/fitsio.html" target="_top">CFITSIO</a>
+web set, but ultimately 
+the installation of CFITSIO looks something like this:
+</p><pre class="screen">
+$ wget ftp://heasarc.gsfc.nasa.gov/software/fitsio/c/cfitsio3100.tar.gz 
+$ cd cfitsio
+$ ./configure --prefix=/opt/cfitsio
+$ make
+$ make install
+</pre><p>
+</p></div><p>
+
+The first two should be relatively easy to factor out of the
+code. Factoring out the third would be more difficult.
+</p><ol type="1"><li><p class="title"><b>Obtain the source</b></p><p>Download the source code from an existing DAS. Compressed tar
+  files of the source code can be found in
+  the <tt class="filename">sofware</tt> directory of an
+  existing DAS, for
+  example <tt class="systemitem">http://das.sdss.org/software/sdssdas-2.1.tgz</tt>. Download
+  this and untar it in you favorite build directory. For example:
+</p><pre class="screen">
+$ cd ~/src
+$ wget http://das.sdss.org/software/sdssdrc-1.0.tgz
+$ tar -xzf sdssdrc-1.0.tgz
+</pre><p>
+</p></li><li><p class="title"><b>Compile the executable</b></p><p>The compilation procedure is typical of software using GNU
+  configure tool chain, except that:
+</p><div class="itemizedlist"><ul type="disc"><li><p>you may need to include the CFITSIO
+  library and header location, depending on where you put them, and</p></li><li><p>just copy the single CGI executable you need where it
+    goes (do not do a make install):</p></li></ul></div><p>
+</p><pre class="screen">
+$ cd sdssdrc-1.0
+$ ./configure \
+&gt; --with-cfitsio-includedir=/opt/cfitsio/include  \
+&gt; --with-cfitsio-libdir=/opt/cfitsio/lib  \
+&gt; --datadir=/srv/das/imaging
+$ make
+$ cp drC /srv/das/www/cgi-bin
+</pre><p>
+</p></li><li><p class="title"><b>Configure the DAS</b></p><p>Edit <tt class="filename">sdssdas.conf</tt> (probably
+  in <tt class="filename">/usr/local/etc</tt>) so that
+  <i class="parameter"><tt>offer_drC</tt></i> is "yes":
+</p><pre class="screen">
+$ sed -i 's/offer_drC: .*/offer_drC: yes/g' /usr/local/etc/sdssdas.conf
+</pre><p>
+</p></li></ol></div></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2515424"></a>Chapter 4. Recovering data from tape</h2></div></div><div></div></div><p>
+Fermilab's <a href="http://computing.fnal.gov/docs/products/enstore/" target="_top">enstore</a>
+mass storage system holds backup copies of all of the data in the DAS,
+plus many other files not included in the DAS. If DAS files are
+corrupted or othewise lost, DAS administrators can restore copies of
+these files from this system. Additional files not available in the
+DAS can also be found in mass storage at Fermilab. Examples of such
+files include additial imaging and spectroscopic reruns and file types
+of insufficient interest to be included in the DAS.
+</p><p>Enstore currently (2008) stores all SDSS files on tape. A
+<a href="http://www-pnfs.desy.de/" target="_top">pnfs</a> database stores
+metadata on these files, labeling them in a UNIX-like name space and
+presenting the file metadata using an NFS interface. Files can be
+retrieved from tape using the name of the file in this name space
+using a variety of utilities, such as 
+<a href="http://computing.fnal.gov/docs/products/enstore/usingencp.html" target="_top">encp</a>.
+</p><p>The backup files for the DAS can all be found
+under <tt class="filename">/pnfs/sdss/das</tt>, using a
+directory structure that reflects that used in the DAS. For example,
+the file <tt class="filename">40/objcs/3/fpObjc-002882-3-0015.fit</tt> from
+the file in PNFS named <tt class="filename">imaging/2882.tar</tt> is the
+backup of the
+file <tt class="filename">imaging/2882/40/objcs/3/fpObjc-002882-3-0015.fit</tt>
+in the DAS.
+</p><p>The mass storage system often contains additional directories of
+data produced during data processing. This directories contain
+additional copies of the file in the DAS, plus reruns and file types
+not included in the DAS.
+</p><div class="variablelist"><dl><dt><span class="term"><tt class="filename">/pnfs/sdss/exportChunks</tt>, 
+      <tt class="filename">/pnfs/sdss/db2/exportChunks</tt></span></dt><dd><p>These directories hold the exported chunk files (tsField and
+  tsObj files), organized by data release.</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/Imaging</tt></span></dt><dd><p>This directory holds backups of the files produced by
+    the imaging processing pipeline, organized by run and rerun. These
+    directories often contain reruns not included in the DAS.</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/Spectro/final</tt></span></dt><dd><p>This directory holds backups of the files produced by the
+    spectroscopic data processing pipeline, and includes many more
+    reruns than those included in the DAS. The names of the
+    subdirectories correspond to the names of the subdirectories of
+    the <tt class="filename">spectro</tt> directory.</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/mt/</tt>,
+  <tt class="filename">/pnfs/sdss/db2/mt/</tt></span></dt><dd><p>These directories hold the output of the PT
+    processing pipeline, mtpipe.</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/db2/ImagingRaw</tt></span></dt><dd><p>Holds the raw imaging data from the observatory,
+    including runs that were never successfully processed, and "gang"
+    files, which are not included in the DAS.</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/Spectro/raw</tt></span></dt><dd><p>This directory includes raw data from the spectrographs.</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/db2/mtRaw</tt></span></dt><dd><p>This directory includes raw data produced by the
+    Photometric Telescope (PT).</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/db2/apoLogs/</tt></span></dt><dd><p>This directory contains metadata and log file from the
+observatory, including data stored in the DAS under the
+<tt class="filename">nightly</tt> directory plus MCP,
+TPM, and murmur logs for dates later than MJD 53616. (Older files of
+these types can be found in the under 
+<tt class="filename">tpm.<i class="replaceable"><tt>MJD</tt></i>.tar</tt> and
+<tt class="filename">log.<i class="replaceable"><tt>MJD</tt></i>.tar</tt> files in
+the
+<tt class="filename">/pnfs/sdss/db2/glst/</tt> directory.)
+</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/db2/glst/</tt></span></dt><dd><p>This directory contains the contents of the
+"gangs-logs-spectro" tapes. Files of the
+form <tt class="filename">log.<i class="replaceable"><tt>MJD</tt></i>.tar</tt>
+contain log files (as stored in
+the <tt class="filename">nightly</tt> directory in the
+DAS) plus murmur logs, filse of the
+form <tt class="filename">tpm.<i class="replaceable"><tt>MJD</tt></i>.tar</tt>
+contain TPM logs, and raw spectroscopic data is stored in
+the <tt class="filename">tpm.<i class="replaceable"><tt>MJD</tt></i>.tar</tt>
+files.</p></dd><dt><span class="term"><tt class="filename">/pnfs/sdss/db2/coadds</tt></span></dt><dd><p>This directory holds files associated with the coadd
+    "runs" (runs 100006 and 200006).</p></dd></dl></div><p>
+
+</p><p>
+Many of the files on tape are bundled up in tar files, making it
+difficult to determine which file on tape you need; to check whether a
+given tar file contains the file in which you are interested, you need
+to retrieve the whole tar file from tape and look at its
+contents. Fortunately, there is often a way around this. The lists of
+files in the tar files can be found in the recovery subdirectory of
+one of the Fermilab BlueArc NAS file systems, in
+the <tt class="filename">recovery</tt> directory. A table
+of examples of files in mass storage and corresponding lists of tar
+file contents in the sdssdp account can be found in
+<a href="#backuplogs" title="Table&#xA0;4.1.&#xA0;Mass storage directories and corresponding logs">Table 4.1, “Mass storage directories and corresponding logs”</a>. This list is not exhaustive, but should
+give an indication of where to start looking.
+</p><div class="table"><a id="backuplogs"></a><p class="title"><b>Table 4.1. Mass storage directories and corresponding logs</b></p><table summary="Mass storage directories and corresponding logs" border="1"><colgroup><col align="left" /><col align="left" /></colgroup><thead><tr><th align="left">File in mass storage</th><th align="left">List of files</th></tr></thead><tbody><tr><td align="left"><tt class="filename">/pnfs/sdss/exportChunks/DR$NUM/stripe$STRIPE_mu$MU_$FLAVOR/stripe$STRIPE_mu$MU_$FLAVOR.Part-$PARTNUM-of-$NPARTS.tar</tt></td><td align="left"><tt class="filename">recovery/exportChunks/enstore/DR$NUM/stripe$STRIPE_mu$MU_$FLAVOR/$TIMESTAMP/stripe$STRIPE_mu$MU_$FLAVOR.Part-$PARTNUM-of-$NPARTS.lis.gz</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/exportChunks/DR$NUM/stripe$STRIPE_mu$MU_$FLAVOR/stripe$STRIPE_mu$MU_$FLAVOR.Part-$PARTNUM-of-$NPARTS.tar</tt></td><td align="left"><tt class="filename">recovery/exportChunks/enstore/DR$NUM/stripe$STRIPE_mu$MU_$FLAVOR/$TIMESTAMP/stripe$STRIPE_mu$MU_$FLAVOR.Part-$PARTNUM-of-$NPARTS.lis.gz</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/Imaging/$RUN/$RERUN/PID.$RUN.$RERUN.corr.$STARTFIELD-$ENDFIELD.tar</tt></td><td align="left"><tt class="filename">recovery/imaging/enstore/io2e/$RUN/$RERUN/$TIMESTAMP/PID.$RUN.$RERUN.corr.$STARTFIELD-$ENDFIELD.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/Imaging/$RUN/$RERUN/PID.$RUN.$RERUN.objcs.$STARTFIELD-$ENDFIELD.tar</tt></td><td align="left"><tt class="filename">recovery/imaging/enstore/io2e/$RUN/$RERUN/$TIMESTAMP/PID.$RUN.$RERUN.objcs.$STARTFIELD-$ENDFIELD.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/Spectro/final/$PIPE_$RERUN/$PLATE/specFinal.$PIPE_$RERUN.$PLATE.tgz</tt></td><td align="left"><tt class="filename">recovery/spectro/enstore/final/$PIPE_$RERUN/$PLATE/specFinal.$PIPE_$RERUN.$PLATE.lis.gz</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/apoLogs/apologs.MJD.$MJD-$MJD.$TIMESTAMP.tar</tt></td><td align="left"><tt class="filename">recovery/apoLogs/enstore/apoLogs.MJD.$MJD-$MJD.$TIMESTAMP.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/apoLogs/$MJD/apoLogs.$MJD.mcptpm-md5sum-murmur-ppd.tar.gz</tt></td><td align="left"><tt class="filename">recovery/apoLogs/enstore/$MJD/apoLogs.$MJD.mcptpm-md5sum-murmur-ppd.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/ImagingRaw/$RUN/idGang-Run-$RUN-cols-$STARTCOL-$ENDCOL.tar</tt></td><td align="left"><tt class="filename">recovery/imaging/enstore/raw/$RUN/idGang-Run-$RUN-cols-$STARTCOL-$ENDCOL.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/ImagingRaw/$RUN/idGang-Run-$RUN-rows-$STARTROW-$ENDROW.tar</tt></td><td align="left"><tt class="filename">recovery/imaging/enstore/raw/$RUN/idGang-Run-$RUN-rows-$STARTROW-$ENDROW.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/ImagingRaw/$RUN/idR-Run-$RUN-Fields-$STARTFIELD-$ENDFIELD.tar</tt></td><td align="left"><tt class="filename">recovery/imaging/enstore/raw/$RUN/idR-Run-$RUN-Fields-$STARTFIELD-$ENDFIELD.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/mtRaw/$MJD/mtRaw.$MJD.tgz</tt></td><td align="left"><tt class="filename">recovery/mt/enstore/raw/$MJD/mtRaw.$MJD.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/db2/mtRuns/Final/20080915.160018/mtRuns-dp40.c.FINAL.20080915.Part.$PARTNUM-of-$NPARTS.tar</tt></td><td align="left"><tt class="filename">recovery/mt/enstore/runs/FINAL/20080915.160018/mtRuns-dp40.c.FINAL.20080915.Part.$PARTNUM-of-$NPARTS.lis</tt></td></tr><tr><td align="left"><tt class="filename">/pnfs/sdss/Spectro/raw/$MJD/spectroRaw.$MJD.tgz</tt></td><td align="left"><tt class="filename">recovery/spectro/enstore/rawdata/$MJD/spectroRaw.$MJD.lis</tt></td></tr></tbody></table></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2442582"></a>Chapter 5. Use Cases</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id2488797">A user specifies a spectroscopic data set and downloads it in bulk</a></span></dt><dd><dl><dt><span class="section"><a href="#id2522752">Overview</a></span></dt><dt><span class="section"><a href="#id2529887">Flow of Events</a></span></dt></dl></dd><dt><span class="section"><a href="#id2481706">A user specifies a imaging data set and downloads it in bulk</a></span></dt><dd><dl><dt><span class="section"><a href="#id2523835">Overview</a></span></dt><dt><span class="section"><a href="#id2546139">Flow of Events</a></span></dt></dl></dd></dl></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2488797"></a>A user specifies a spectroscopic data set and downloads it in bulk</h2></div></div><div></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="id2522752"></a>Overview</h3></div></div><div></div></div><p>
+A user has a list of spectra, specified by plate, fiber, and MJD, for
+which she wants data files of a specific type. She uploads the list to
+the DAS, and retrieves a file that can then be used by wget (a bulk
+HTTP download application) to execute the bulk download of the
+corresponding data.
+</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="id2529887"></a>Flow of Events</h3></div></div><div></div></div><div class="orderedlist"><ol type="1"><li><p>The user retrieves the User Fiber List submission form
+    from the DAS web server, fills out the form with the desired
+    data release and table of fibers, and submits the form.</p></li><li><p>The DAS web server recievies the (submitted using an
+    http "POST"), and calls the <a href="#commands.post_fibers" title="post_fibers"><span class="refentrytitle">post_fibers</span>(1)</a>
+    CGI program, which creates the
+    <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> file in a
+    new <a href="#userlist_dir">userlist directory</a> and
+    returns a table of the fibers requested with links to pages with
+    detailed information on the specroscopic data from those
+    fibers. </p></li><li><p>The user follows the link to the form for generating
+    file download lists, which submits an HTTP GET command with the
+    link serial number.</p></li><li><p>The DAS web server calls
+    the <a href="#commands.spdl_request_form" title="spdl_request_form"><span class="refentrytitle">spdl_request_form</span>(1)</a> CGI executable with the list
+    serial number, which generates a form from which the user can
+    select file types, and which can submit requests for these file
+    types for the specified list serial number.
+</p></li><li><p>The user selects the desired file types and submits
+    the form.</p></li><li><p>The DAS web server recieves the submission, and HTTP
+    GET request, and calls <a href="#commands.spdownload_list" title="spdownload_list"><span class="refentrytitle">spdownload_list</span>(1)</a>,
+    which reads the the <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> file in
+    the <a href="#userlist_dir">userlist directory</a>
+    corresponding to the list serial number and returns a list of URLs
+    for the desired files.</p></li><li><p>The user saves the list of URLs to a file on the
+    client, and downloads the files pointed to by those URLs using an
+    HTTP client capable of bulk download, such as wget.</p></li></ol></div></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2481706"></a>A user specifies a imaging data set and downloads it in bulk</h2></div></div><div></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="id2523835"></a>Overview</h3></div></div><div></div></div><p>
+A user has a list of imaging segments, specified by run, camera
+column, start field, and number of fields, for which he wants data
+files of a specific type. He uploads the list to the DAS, and
+retrieves a file that can then be used by wget (a bulk HTTP download
+application) to execute the bulk download of the corresponding data.
+</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="id2546139"></a>Flow of Events</h3></div></div><div></div></div><div class="orderedlist"><ol type="1"><li><p>The user retrieves the User Field List submission form
+    from the DAS web server, fills out the form with the desired
+    data release and table of fibers, and submits the form.</p></li><li><p>The DAS web server recievies the (submitted using an
+    http "POST"), and calls the <a href="#commands.post_fields" title="post_fields"><span class="refentrytitle">post_fields</span>(1)</a> CGI executable,
+    which creates the <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> file in a
+    new <a href="#userlist_dir">userlist
+    directory</a> and returns a table of the segments requested with links to
+    pages with detailed information on the imaging data from
+    those segments. </p></li><li><p>The user follows the link to the form for generating
+    file download lists, which submits an HTTP GET command with the
+    link serial number.</p></li><li><p>The DAS web server calls
+    the <a href="#commands.dl_request_form" title="dl_request_form"><span class="refentrytitle">dl_request_form</span>(1)</a> CGI executable with the list
+    serial number, which generates a form from which the user can
+    select file types, and which can submit requests for these file
+    types for the specified list serial number.
+</p></li><li><p>The user selects the desired file types and submits
+    the form.</p></li><li><p>The DAS web server recieves the submission, and HTTP
+    GET request, and calls <a href="#commands.download_list" title="download_list"><span class="refentrytitle">download_list</span>(1)</a>,
+    which reads the <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> file in
+    the <a href="#userlist_dir">userlist
+    directory</a> corresponding to the list serial number and
+    returns a list of URLs for the desired files.</p></li><li><p>The user saves the list of URLs to a file on the
+    client, and downloads the files pointed to by those URLs using an
+    HTTP client capable of bulk download, such as wget.</p></li></ol></div></div></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2442600"></a>Chapter 6. Development</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id2495023">This Document</a></span></dt><dd><dl><dt><span class="section"><a href="#id2522805">docBook</a></span></dt><dt><span class="section"><a href="#id2506211">File Organization</a></span></dt><dt><span class="section"><a href="#id2538358">Generating the documentation</a></span></dt></dl></dd><dt><span class="section"><a href="#id2442610">Compilation with GNU Autotools</a></span></dt><dt><span class="section"><a href="#id2442622">Static Code Analysis with Splint</a></span></dt><dt><span class="section"><a href="#id2442635">Documenting a Procedure</a></span></dt><dt><span class="section"><a href="#id2442647">Documenting a Use Case</a></span></dt></dl></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2495023"></a>This Document</h2></div></div><div></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="id2522805"></a>docBook</h3></div></div><div></div></div><p>The original of this document is maintained in DocBook, an XML
+text markup language similar to html or LaTeX, but which is much more
+rigorous about only marking up content types, never formating or
+style. The Linux kernel documentation, the Linux Documentation Project
+(see the 
+<a href="http://en.tldp.org/LDP/LDP-Author-Guide/html/index.html" target="_top">
+LDP Author Guide</a>), the online GNOME documentation (see the 
+<a href="http://developer.gnome.org/projects/gdp/handbook/gdp-handbook/" target="_top">
+GNOME Handbook of Writing Software Documentation</a>) and KDE
+documentation (see the 
+<a href="http://l10n.kde.org/docs//doc-primer/index.html" target="_top">
+KDE Documentation Primer </a>) are all written in docBook.</p><p>Tools exist to convert docBook to many formats, including html,
+pdf, UNIX man pages, LaTeX and Word. In addition to conversion to a
+plain html page, one can also convert to a web site with navigation
+panel and similar conveniences.</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="id2506211"></a>File Organization</h3></div></div><div></div></div><p>The docsrc directory and its subdirectories contain the docBook
+source files. Each source file contains the text for a single
+section. For use case, data file format documentation, and command
+docementation, each case, format, or command is separated into its own
+file in a subdirectory of docsrc. This will make it easy to, for
+example, automatically generate UNIX man pages for all commands and
+file formats.</p><p>The file manual.txt organizes the sections into a user's
+manual, suitable for printing. Several *-page.xml files organize the
+sections into web pages, which are then organized into a site layout
+by the layout.xml file.</p></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h3 class="title"><a id="id2538358"></a>Generating the documentation</h3></div></div><div></div></div><p>The source files for this documentation will live in the CVS
+product with the appliction. This is version $Revision: 1.3 $, current
+in CVS as of $Date: 2008/10/21 20:02:04 $. You can get the latest
+version using:
+</p><pre class="screen">
+bash$ cvs export -kv -D now -d tmp ${PRODUCT_NAME}/docsrc
+</pre><p>
+
+It can be converted into HTML using utilities that are part of the
+Scientific Linux base installation:
+</p><pre class="screen">
+bash$ XSLFILE=/usr/share/sgml/docbook/xsl-stylesheets/xhtml/docbook.xsl
+bash$ xsltproc --xinclude $XSLFILE manual.xml &gt; manual.html
+</pre><p>
+
+These utilities are supplied by the libxslt and docbook-style-xsl rpm
+packages.
+</p><p>To convert DocBook into pdf, first create an fo file:
+</p><pre class="screen">
+bash$ XSLFILE=/usr/share/sgml/docbook/xsl-stylesheets-1.61.2-2/fo/docbook.xsl
+bash$ xsltproc --stringparam tex.math.in.alt latex --stringparam passivetex.extensions 1 --xinclude $XSLFILE manual.xml &gt; manual.fo
+</pre><p>
+and use passivetex to convert it to pdf:
+</p><pre class="screen">
+bash$ pdfxmltex manual.fo
+</pre><p>
+These commands require that the passivetex and xmltex RPMs be
+installed. They are available in both the scientific linux and Fedora
+yum repositories. For more information, see the
+<a href="http://www.tei-c.org.uk/Software/passivetex/" target="_top">
+passivetex site</a>.
+The options given above allow the inclusion of equations formated
+using TeX markup. See 
+<a href="http://www.sagehill.net/docbookxsl/Math.html" target="_top">
+the math chapter of Stayton's book</a> for more information on
+math formating in docBook. The commands above are to support 
+the "DBTexMath" method described in Stayton's book.
+</p><p>There is also a Makefile in the product that does some of
+this:
+</p><pre class="screen">
+bash$ cvs export -kv -D now -d tmp ${PRODUCT_NAME}/docsrc
+bash$ mkdir tmp/doc
+bash$ cd tmp/docsrc
+bash$ make html
+bash$ make pdf
+</pre><p>
+</p><p>There is also an make target for generating 
+a "chunked" web site, in which different sections are on different web pages:
+</p><pre class="screen">
+bash$ cvs export -kv -D now -d tmp ${PRODUCT_NAME}/docsrc
+bash$ mkdir tmp/doc
+bash$ cd tmp/docsrc
+bash$ make xhtml
+</pre><p>
+This generates the chunked pages in ../doc/chunked. 
+To see these pages formatted properly, start with the
+chunkFrame.html file in that directory.
+</p></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2442610"></a>Compilation with GNU Autotools</h2></div></div><div></div></div><div class="procedure"><a id="procedure.compileWithAutotools"></a><p class="title"><b>Procedure 6.1. Compiling the SDSS DAS programs using GNU Autotools</b></p><p>
+The preferred method for compiling the SDSS C programs is to use the
+<span class="application">GNU Autotools</span> build utilities, which are
+designed to make it easy to white applications that build
+automatically on multiple platforms.
+</p><p>
+The best online resources for a detailed understanding of how these
+tools work are the
+<a href="http://www.gnu.org/software/automake/" target="_top">official GNU automake manual</a> and 
+<a href="http://www.gnu.org/software/autoconf/" target="_top">official GNU autoconf manual</a>.
+Unfortunately, there are very few good tutorials. The best overall
+reference is GNU Autoconf, Automake, and Libtool 
+by Vaughan et al. [<a href="#ref.goat" title="[the goat book]"><span class="abbrev">the goat book</span></a>].
+</p><p>
+The files available from the CVS repository, created by the developer
+and checked into CVS, are 
+</p><div class="variablelist"><dl><dt><span class="term"><tt class="filename">configure.ac</tt></span></dt><dd><p> This file resides in the root directory of the CVS
+product. It defines what needs to be done to generate makefiles
+customized for the local environment, primarily by calling macros
+defined by the build tools.
+</p></dd><dt><span class="term"><tt class="filename">makefile.am</tt></span></dt><dd><p>
+Each directory in which the build must take actions
+contains a <tt class="filename">makefile.am</tt> file, which defines what
+the targets for that directory are and what they depend on. These
+files can be written in <span class="application">make</span> syntax, but
+generally use higher level macros for typical situations.
+</p></dd></dl></div><p>
+</p><p>The CVS repository contains several other files required by the
+tool set, but which do not affect the build for this product. </p><ol type="1"><li><p class="title"><b>Generate <tt class="filename">aclocal.m4</tt></b></p><p>This file contains localized version of M4 macros needed by
+other steps in the build. 
+This step depends on <tt class="filename">configure.ac</tt>.
+</p><pre class="screen">
+bash$ aclocal
+</pre><p>
+
+</p></li><li><p class="title"><b>Generate the <tt class="filename">Makefile.in</tt> files</b></p><p>This file expands many of the macros in the
+<tt class="filename">Makefile.am</tt> files based on values read from
+the <tt class="filename">configure.ac</tt> file. 
+</p><pre class="screen">
+bash$ automake
+</pre><p>
+
+</p></li><li><p class="title"><b>Generate the <tt class="filename">configure</tt> shell script</b></p><p>The <tt class="filename">configure</tt> script is a <span class="application">sh</span>
+script that customizes <tt class="filename">Makefile.in</tt> to create 
+usable <tt class="filename">Makefile</tt>s. The <span class="application">autoconf</span>
+application generates this script automatically based on 
+<tt class="filename">aclocal.m4</tt> and <tt class="filename">configure.in</tt>.
+</p><pre class="screen">
+bash$ autoconf
+</pre><p>
+
+</p></li><li><p class="title"><b>Run <tt class="filename">configure</tt></b></p><p>Actually run the script that generates the usable
+makefiles. Some aspects of the compilation can be controlled using
+arguments to the script. The most likely options to be of interest are
+<tt class="option">--prefix</tt>
+and <tt class="option">--sysconfdir</tt>. 
+
+The <tt class="option">--prefix</tt>
+determines where files are copied when <span><b class="command">make install</b></span>
+is executed. In the example below, CGI application will be copied
+to <tt class="filename">/srv/das/www/cgi-bin</tt>, the
+html files
+into <tt class="filename">/srv/das/www/html</tt>, and the
+css file into <tt class="filename">/srv/das/www/css</tt>.
+
+The <tt class="option">--sysconfdir</tt> option determines where the CGI
+executables look for the DAS configuration file. In the below example,
+they attempt read their configuration
+from <tt class="filename">/usr/local/etc/sdssdas.conf</tt>.
+</p><pre class="screen">
+bash$ ./configure --prefix=/srv/das --sysconfdir=/usr/local/etc
+</pre><p>
+
+</p></li><li><p class="title"><b>Actually build the product</b></p><p>Now that we have custom made <tt class="filename">Makefile</tt>s,
+make the application.
+</p><pre class="screen">
+bash$ make
+</pre><p>
+
+</p></li><li><p class="title"><b>Test the product</b></p><p>Our <tt class="filename">Makefile</tt>s can be used to run test
+the product:
+</p><pre class="screen">
+bash$ make check
+</pre><p>
+
+</p></li><li><p class="title"><b>Install the product</b></p><p>Our <tt class="filename">Makefile</tt>s can be used to install
+  executables and web files into their destination directories:
+</p><pre class="screen">
+bash$ make install
+</pre><p>
+
+</p></li></ol></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2442622"></a>Static Code Analysis with Splint</h2></div></div><div></div></div><div class="procedure"><a id="procedure.checkWithSplint"></a><p class="title"><b>Procedure 6.2. Check source code for errors using <span class="application">splint</span></b></p><p>
+<span class="application">splint</span> is a static source code analysis tool; it analyzes
+C source code for errors and potential security problems. For more
+detailed information, see <a href="http://www.splint.org/" target="_top">the splint homepage</a>.
+</p><ol type="1"><li><p class="title"><b>Determine file dependencies</b></p><p>
+Although <span class="application">splint</span> can analyze individual
+source files in isolation, it is most effective when an application
+and its dependencies are analyzed together. If the code can already be
+compiled using the <span class="application">automake</span> tools, then the
+easiest way to check the dependencies is to look in the <tt class="filename">Makefile.am</tt>
+that compiles the files. For example, to check the dependencies of 
+<tt class="filename">segments.c</tt>, you might do this (from the root of
+the CVS product):
+</p><pre class="screen">
+bash$ grep segments_SOURCES src/Makefile.am
+segments_SOURCES = das_config.c segments.c read_segment.c segment_table.c checked_link.c
+</pre><p>
+</p></li><li><p class="title"><b>Find other compiler parameters used</b></p><p>
+To be most effective, <span class="application">splint</span> needs to
+be provided with arguments that will be given to the compiler. One
+simple way to do this is to compile the application. For example:
+</p><pre class="screen">
+bash$ cd src
+bash$ touch segments.c
+bash$ make | egrep "^gcc.*-o segments"
+gcc  -DDAS_CONFIG_FILE=\"/usr/local/etc/sdssdas.conf\" -g -O2   -o segments  das_config.o segments.o read_segment.o segment_table.o checked_link.o
+</pre><p>
+Note that only some of the options need to (or even can be) fed to 
+<span class="application">splint</span>; see
+the <span class="application">splint</span> manual for more information.
+</p></li><li><p class="title"><b>Run <span class="application">splint</span></b></p><p>
+Run <span class="application">splint</span> with arguments that much like
+those used to compile the program using the C compiler:
+</p><pre class="screen">
+bash$ splint +posixlib -I.. -I../include -DDAS_CONFIG_FILE=\"/usr/local/etc/sdssdas.conf\" das_config.c segments.c read_segment.c segment_table.c checked_link.c
+Splint 3.1.1 --- 17 Feb 2005
+
+Finished checking --- no warnings
+</pre><p>
+Note the explicit need for <span class="application">splint</span> to be
+provided with the include directories and, when POSIX is used, a flag
+that enables it.
+</p></li></ol></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2442635"></a>Documenting a Procedure</h2></div></div><div></div></div><div class="procedure"><p class="title"><b>Procedure 6.3. Document a procedure.</b></p><p>
+To document a procedure, you need to add a DocBook file describing the
+procedure to the CVS product and link it in to the proper place.
+</p><ol type="1"><li><p>
+Check a working copy of sdssdas out of CVS, and go to the procedures
+directory:
+</p><pre class="screen">
+bash$ cvs co sdssdas
+bash$ cd sdssdas/docsrc/procedures
+</pre><p>
+</p></li><li><p>Create the file to hold your procedure by copying it from the
+template:
+</p><pre class="screen">
+bash$ cp procedureTemplate.xml myNewTemplate.xml
+</pre><p>
+</p></li><li><p>Edit your new file. Be sure to choose a unique name for the id 
+attribute of the procedure title. In other words, change the line
+</p><pre class="screen">
+&lt;procedure id="procedure.procedureTemplate"&gt;&lt;title&gt;Put the procedure title here.&lt;/title&gt;
+</pre><p>
+to something appropriate, perhaps:
+</p><pre class="screen">
+&lt;procedure id="procedureTemplate"&gt;&lt;title&gt;My New Procedure&lt;/title&gt;
+</pre><p>
+Add steps as needed.
+</p></li><li><p>Add your new file to the dependencies in the makefile in docsrc.</p></li><li><p>Go up one directory to the docsrc directory, and edit either 
+develProcedures.xml or userProcedures.xml to include the new
+procedure. Do this by adding a line like this:
+</p><pre class="programlisting">
+&lt;xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="procedures/myNewTemplate.xml" /&gt;
+</pre><p>
+where the procedure should appear, probably next to other includes of
+procedures.
+</p></li><li><p>Regenerate the documentation from the docsrc, following the
+instructions on the "This Document" page.
+</p></li><li><p>If everything looks okay, check the changes in to CVS:
+</p><pre class="screen">
+bash$ cvs add procedures/myNewProcedure.xml
+cvs server: scheduling file `procedures/myNewProcedure.xml' for addition
+cvs server: use 'cvs commit' to add this file permanently
+bash$ cvs ci -m "add procedure for myNewProcedure" develProcedures.xml procedures/myNewProcedure.xml
+Checking in develProcedures.xml;
+/cvs/cd/sdssdas/docsrc/develProcedures.xml,v  &lt;--  develProcedures.xml
+new revision: 1.5; previous revision: 1.4
+done
+RCS file: /cvs/cd/sdssdas/docsrc/procedures/myNewProcedure.xml,v
+done
+Checking in procedures/myNewProcedure.xml;
+/cvs/cd/sdssdas/docsrc/procedures/myNewProcedure.xml,v  &lt;--  myNewProcedure.xml
+initial revision: 1.1
+done
+bash$
+</pre><p>
+</p></li></ol></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2442647"></a>Documenting a Use Case</h2></div></div><div></div></div><div class="procedure"><a id="documentAUsecase"></a><p class="title"><b>Procedure 6.4. Document a usecase.</b></p><p>
+To document a usecase, you need to add a DocBook file describing the
+usecase to the CVS product and link it in to the proper place.
+</p><ol type="1"><li><p>
+Check a working copy of sdssdas out of CVS, and go to the usecases
+directory:
+</p><pre class="screen">
+bash$ cvs co sdssdas
+bash$ cd sdssdas/docsrc/useCases
+</pre><p>
+</p></li><li><p>Create the file to hold your usecase by copying it from the
+template:
+</p><pre class="screen">
+bash$ cp useCaseTemplate.xml myNewUseCase.xml
+</pre><p>
+</p></li><li><p>Edit your new file. Be sure to choose a unique name for the id 
+attribute of the usecase title. In other words, change the line
+</p><pre class="programlisting">
+&lt;section&gt;&lt;title&gt;Put the usecase title here.&lt;/title&gt;
+</pre><p>
+to something appropriate, perhaps:
+</p><pre class="programlisting">
+&lt;section id="usecase.myNewUsecase"&gt;&lt;title&gt;My New Usecase&lt;/title&gt;
+</pre><p>
+Fill in the use case elements. When there is a procedure for executing 
+the use case, include a reference to it in the Procedure section like this:
+</p><pre class="programlisting">
+&lt;section&gt;&lt;title&gt;Example&lt;/title&gt;
+&lt;listitem&gt;&lt;para&gt;
+&lt;xref linkend="myNewProcedure"/&gt;
+&lt;/para&gt;&lt;/listitem&gt;
+&lt;/section&gt;
+</pre><p>
+In the "Flow of events" section, you probably want to use an ordered list:
+</p><pre class="programlisting">
+&lt;orderedlist&gt;
+&lt;listitem&gt;&lt;para&gt;This is the first thing that happens.&lt;/para&gt;&lt;/listitem&gt;
+&lt;listitem&gt;&lt;para&gt;This is the second thing that happens.&lt;/para&gt;&lt;/listitem&gt;
+&lt;/orderedlist&gt;
+</pre><p>
+Remove any sections not relavant.
+</p></li><li><p>Go up one directory to the docsrc directory, and edit useCases.xml 
+to include the new procedure. Do this by adding a line like this:
+</p><pre class="programlisting">
+&lt;section&gt;&lt;xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="useCases/myNewUseCasexml" /&gt;&lt;/section&gt;
+</pre><p>
+</p></li><li><p>Add your new file to the dependencies in the makefile in docsrc.</p></li><li><p>Regenerate the documentation from the docsrc, following the
+instructions on the "This Document" page.
+</p></li><li><p>If everything looks okay, check the changes in to CVS.
+</p></li></ol></div></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2442660"></a>Chapter 7. Files</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#id2442664">Permanent</a></span></dt><dt><span class="section"><a href="#id2488072">Temporary</a></span></dt></dl></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2442664"></a>Permanent</h2></div></div><div></div></div><div class="refentry" lang="en" xml:lang="en"><a id="datamodel.sdssdas.conf"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>sdssdas.conf — The SDSS DAS 2 configuration file</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2516196"></a><h2>Description</h2><p>The SDSS DAS configuration file is a simple list of
+  keyword/value pairs. The pairs may be delimeted by white space, a
+  colon, or the equals sign.</p><p>Comments may be included if the first character in the line as
+  hash mark, "#".</p><p>If compiled using default values, the SDSS DAS CGI executables
+  look for this file
+  in <tt class="filename">/usr/local/etc</tt>. This path
+  can be changed when compiling the DAS CGI executables by setting the
+  <tt class="option">--sysconfdir</tt> option when 
+  running <span><b class="command">configure</b></span>, prior compilation.
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2547902"></a><h2>Examples</h2><p>
+Here is an example with all features enabled:
+</p><pre class="programlisting">
+# this is a sample SDSS DAS 2 config file
+imaging_root: /srv/das/imaging
+spectro_root: /srv/das/spectro
+scratch_root: /var/lib/das
+drdefs_root: /srv/das/contents/tsv
+astlimits_fname: /srv/das/contents/fits/astlimits.fits
+imaging_url: http://das.sdss.org/imaging
+spectro_url: http://das.sdss.org/spectro
+scratch_url: http://das.sdss.org/webscratch
+cgi_url: http://das.sdss.org/www/cgi-bin
+rsync_host: rsync.sdss.org
+cas_navi_url: http://cas.sdss.org/astro/en/tools/chart/navi.asp
+cas_obj_url: http://cas.sdss.org/astro/en/tools/explore/obj.asp
+offer_drC: yes
+</pre><p>
+In this example, links to the CAS will not be provided, and the
+<tt class="filename">drC</tt> files will not be offered:
+</p><pre class="programlisting">
+# this is a sample SDSS DAS 2 config file
+imaging_root: /srv/das/imaging
+spectro_root: /srv/das/spectro
+scratch_root: /srv/das/webscratch
+drdefs_root: /srv/das/contents/tsv
+astlimits_fname: /srv/das/contents/fits/astlimits.fits
+imaging_url: http://das.sdss.org/imaging
+spectro_url: http://das.sdss.org/spectro
+scratch_url: http://das.sdss.org/webscratch
+cgi_url: http://das.sdss.org/www/cgi-bin
+rsync_host: rsync.sdss.org
+cas_navi_url: none
+cas_obj_url: none
+offer_drC: no
+</pre><p>
+</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="datamodel.dr-x"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>dr-<i class="replaceable"><tt>x</tt></i>.tsv — Lists the imaging segments included in data release <i class="replaceable"><tt>x</tt></i>.
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2509193"></a><h2>Description</h2><p>The file is a tab-separated-values ASCII table listing the run,
+  rerun, camcol, starting fields, and number of fields in each segment
+  in the data release <i class="replaceable"><tt>x</tt></i>.
+</p><p>Lines beginning with a hash mark (#) are considered
+  comments, and ignored.</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2518670"></a><h2>Construction</h2><p>The data release contents were originally defined in Yanny par
+files, which may be found in 
+<tt class="filename"><i class="replaceable"><tt>$DAS_ROOT</tt></i>/contents/par/DR<i class="replaceable"><tt>x</tt></i></tt>.
+The imaging contents each data release is defined by a set of files
+with names of the form 
+<tt class="filename">tsChunk-<i class="replaceable"><tt>$STRIPE</tt></i>-<i class="replaceable"><tt>$STORTMU</tt></i>-1.par</tt>
+for "best" and <tt class="filename">tsChunk-<i class="replaceable"><tt>$STRIPE</tt></i>-<i class="replaceable"><tt>$STORTMU</tt></i>-0.par</tt>
+for "target" data sets.
+</p><p>If you need to generate
+  a <tt class="filename">dr-<i class="replaceable"><tt>x</tt></i>.tsv</tt> file
+  from these, this simple awk script gives
+  a good first approximation:
+</p><pre class="programlisting">
+  awk '/^TSSEG/ {printf "%d\t%d\t%d\t%d\t%d\n", $2, $4, $3, $9, $10}' \ 
+  tsChunk*.par | sort -n -u &gt; dr-<i class="replaceable"><tt>x</tt></i>-unmerged.tsv
+</pre><p>
+The result won't quite be right, because sometimes segments must be
+merged. The <span><b class="command">merge_segment_pipe</b></span> command in the
+sdssdas product, originally written for testing, can be used to do
+this. If a <span><b class="command">make check</b></span> was performed when sdssdas
+was compiled and installed, this executable will be in the <tt class="filename">test/src</tt>
+subdirectory of the compilation directory tree. It can be used to
+finish generation of
+the <tt class="filename">dr-<i class="replaceable"><tt>x</tt></i>.tsv</tt> file
+thus:
+</p><pre class="screen">
+bash$ <i class="replaceable"><tt>$DAS_COMPILE_ROOT</tt></i>/test/bin/merge_segment_pipe &lt; dr-<i class="replaceable"><tt>x</tt></i>-unmerged.tsv &gt; dr-<i class="replaceable"><tt>x</tt></i>.tsv
+</pre><p>
+
+</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="datamodel.spdr-x"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>spdr-<i class="replaceable"><tt>x</tt></i>.tsv — List of spectroscopic plate observing sequences included in
+data release <i class="replaceable"><tt>x</tt></i>.
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2537160"></a><h2>Description</h2><p>The file is a <i class="glossterm">TSV</i> ASCII table listing the plate,
+  <i class="glossterm">MJD</i>, and <i class="glossterm">rerun</i> for
+  each sequence of observations on a spectroscopic plate included in
+  data release <i class="replaceable"><tt>x</tt></i>.
+</p><p>If you need to generate one of these files from a 
+  <i class="glossterm">Yanny par</i>
+  formatted file, this simple awk script gives a good first
+  approximation:
+</p><pre class="screen">
+awk 'BEGIN {printf "#plate\tmjd\trerun\n"} /^PLATESTOLOAD/ {printf "%d\t%d\t%d\n", $2, $3, 23}' dr5allspectro.par &gt; spdr-5.par
+</pre><p>
+Note that the Yanny par files that define the spectroscopic contents of
+data releases are not the same for all data releases, so the column
+and rerun number in the above example will need to be modified.
+</p><p>Lines beginning with a hash mark (#) are considered
+  comments, and ignored.</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="datamodel.astlimits"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>astlimits.fits — Stores the astrometric limits for imaging runs</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2535869"></a><h2>Description</h2><p>The astlimits.fits file is a fits file with a binary table
+  extension that stores the astrometric limits for segments of
+  imaging runs. The primary HDU of the fits file must be empty, and
+  the first extended HDU must contain the a fits binary table with
+  the following columns:
+</p><div class="variablelist"><dl><dt><span class="term">run</span></dt><dd><p>The run number, stored as a 16 bit integer (TFORM
+    value I)</p></dd><dt><span class="term">rerun</span></dt><dd><p>The rerun number, stored as a 16 bit integer (TFORM
+    value I)</p></dd><dt><span class="term">camcol</span></dt><dd><p>The camera column, stored as a 16 bit integer (TFORM
+    value I)</p></dd><dt><span class="term">node</span></dt><dd><p>The node of the great circle along which the run
+    scanned, stored as a double precision (64 bin) floating point
+    (TFORM D)</p></dd><dt><span class="term">incl</span></dt><dd><p>The inclination of the great circle along which the run
+    scanned, stored as a double precision (64 bin) floating point
+    (TFORM D)</p></dd><dt><span class="term">field0</span></dt><dd><p>The id of the first field included in the data
+    release, stored as a 16 bit integer (TFORM value
+    I)</p></dd><dt><span class="term">nfields</span></dt><dd><p>The number of fields included in the data release,
+    stored as a 16 bit integer (TFORM value I)</p></dd><dt><span class="term">muMin</span></dt><dd><p>The minimum mu value for the sequence of fields, in
+    integer arcseconds, stored as a 32 bit integer (TFORM value J)</p></dd><dt><span class="term">muMax</span></dt><dd><p>The maximum mu value for the sequence of fields, in
+    integer arcseconds, stored as a 32 bit integer (TFORM value J)</p></dd><dt><span class="term">nuMin</span></dt><dd><p>The minimum nu value for the sequence of fields, in
+    integer arcseconds, stored as a 32 bit integer (TFORM value J)</p></dd><dt><span class="term">nuMax</span></dt><dd><p>The maximum nu value for the sequence of fields, in
+    integer arcseconds, stored as a 32 bit integer (TFORM value J)</p></dd></dl></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2508404"></a><h2>Examples</h2><p>
+The fits header of HDU 1 should look something like this:
+</p><pre class="programlisting">
+XTENSION= 'BINTABLE'
+BITPIX  =                    8
+NAXIS   =                    2
+NAXIS1  =                   42
+NAXIS2  =                 3113
+PCOUNT  =                    0
+GCOUNT  =                    1
+TFIELDS =                   11
+TFORM1  = '1I      '
+TTYPE1  = 'run     '
+TFORM2  = '1I      '
+TTYPE2  = 'rerun   '
+TFORM3  = '1I      '
+TTYPE3  = 'camcol  '
+TFORM4  = '1D      '
+TTYPE4  = 'node    '
+TFORM5  = '1D      '
+TTYPE5  = 'incl    '
+TFORM6  = '1I      '
+TTYPE6  = 'field0  '
+TFORM7  = '1I      '
+TTYPE7  = 'nfields '
+TFORM8  = '1J      '
+TTYPE8  = 'muMin   '
+TFORM9  = '1J      '
+TTYPE9  = 'muMax   '
+TFORM10 = '1J      '
+TTYPE10 = 'nuMin   '
+TFORM11 = '1J      '
+TTYPE11 = 'nuMax   '
+END
+</pre><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2502048"></a><h2>See also</h2><p><span class="simplelist">The <a href="http://fits.gsfc.nasa.gov/" target="_top">FITS
+standard</a></span></p></div></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2488072"></a>Temporary</h2></div></div><div></div></div><div class="refentry" lang="en" xml:lang="en"><a id="datamodel.orig_contents"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>orig_contents.tsv — Stores a table with the original contents of the list of
+data requested by the user.
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2521402"></a><h2>Description</h2><p>Several DAS CGI scripts extract a table of values from a table
+  included in the form submitted by the user. The tab-separated-values
+  file stores the content of that table, after it has been extracted
+  from the packaging the form submission embedded it in but before any
+  real processing has taken place.</p><p>Lines beginning with a hash mark (#) are considered
+  comments, and ignored.</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2537708"></a><h2>Examples</h2><p>
+If the user has submited a list of spectroscopic fibers, and included
+rerun numbers in the table (required when asking for all data, not
+just those specific to a data release):
+</p><pre class="programlisting">
+#plate  MJD     rerun   fiber
+1615    53166   26      513
+2500    54178   26      122
+</pre><p>
+If the user had instead chosen a specific data release, no column for
+the rerun would be required (or allowed), and the file would look like
+this:
+</p><pre class="programlisting">
+#plate  MJD     fiber
+1615    53166   513
+2500    54178   122
+</pre><p>
+</p><p>
+The files look similar for imaging data. If a rerun numbers are
+submitted with the request (as is necessary if no data release is
+chosen) the file will look like this:
+</p><pre class="programlisting">
+#run    rerun   camcol  field   nfields
+3836    40      3       250     10
+2739    40      1       44      1
+</pre><p>
+</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="datamodel.full_contents"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>full_contents.tsv — Stores a table with the full contents of the list of
+imaging data requested by the user, but sorted.
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2541858"></a><h2>Description</h2><p>This is an intermediary file produced and consumed by
+  <a href="#commands.post_fields" title="post_fields"><span class="refentrytitle">post_fields</span>(1)</a>. It contains the full
+  contents of the file submitted by the user, but sorted, and with
+  adjacent runs of fields merged into single runs. For example, a
+  request originally submitted as
+</p><pre class="programlisting">
+#run    rerun   camcol  field   nfields
+3836    40      3       250     10
+2739    40      1       44      1
+3836    40      3       260     5
+</pre><p>
+would result in a <tt class="filename">full_contents.tsv</tt> of
+</p><pre class="programlisting">
+#run    rerun   camcol  field   nfields
+2739    40      1       44      1
+3836    40      3       250     15
+</pre><p>
+
+</p><p>Lines beginning with a hash mark (#) are considered
+  comments, and ignored.</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="datamodel.contents"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>contents.tsv — Stores a table with the contents of the list of
+data requested by the user, after it has been sorted and data not part
+of data releases specified by the requester removed.
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2529506"></a><h2>Description</h2><p>This tab-separated-value ASCII table holds a list of data
+  requested by the user. This is the file that is read by other CGI
+  applications that limit their results to files requested by the
+  user. The columns present depend on whether imaging or
+  spectroscopic data was requested.</p><p>Lines beginning with a hash mark (#) are considered
+  comments, and ignored.</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2542646"></a><h2>Examples</h2><p>
+If the user has submited a list of spectroscopic fibers, the file will
+have the following form:
+</p><pre class="programlisting">
+#plate  MJD     rerun   fiber
+1615    53166   26      513
+2500    54178   26      122
+</pre><p>
+</p><p>
+The files look similar for imaging data, but have columns appropriate
+for that data:
+</p><pre class="programlisting">
+#run    rerun   camcol  field   nfields
+3836    40      3       250     10
+2739    40      1       44      1
+</pre><p>
+</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="datamodel.coord_field"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>coord_field.tsv — Stores the coordinates requested by the user and the
+  fields that cover them.</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2551252"></a><h2>Description</h2><p>This file is a tab-separated-values ASCII table storing
+  the coordinates requested by the user, the run, rerun, camcol, and
+  field that contains those coordinates, and the row and column in
+  that frame corresponding to those coordinates.
+</p><p>Lines beginning with a hash mark (#) are considered
+  comments, and ignored. The initial comment with column headings is
+  purely informative; the data columns must be in the order ra, dec,
+  run, rerun, camcol, field, row, and column.</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2530650"></a><h2>Examples</h2><p>
+</p><pre class="programlisting">
+#ra     dec     run     rerun   camcol  field   row     col
+205.547000      28.375000       4646    40      3       81      1068.645490     1790.787331
+187.496000      12.349000       3836    41      3       257     916.389390      731.548489
+</pre><p>
+</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="datamodel.request"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>request.post — A record of the raw HTTP POST sent to generate a user data list</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2524511"></a><h2>Description</h2><p>
+The CGI scripts that generate user lists receive data form the HTTP server in standard input in
+<a href="http://www.ietf.org/rfc/rfc2388.txt" target="_top">multipart/form-data</a>
+format. The file records that raw input for debugging purposes.
+</p></div></div></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2488109"></a>Chapter 8. Commands</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><a href="#commands.post_fibers">post_fibers</a> - Parse a user's submission of list of fibers and generate
+  a table of fibers with data (called by a web server through CGI)</dt><dt><a href="#commands.post_fields">post_fields</a> - Parse a user's submission of list of fields and generate
+  a table of fields with data (called by a web server through CGI)</dt><dt><a href="#commands.post_coords">post_coords</a> - Parse a user's submission of list of coordinates and generate
+  a table of coordinates with data (called by a web server through CGI)</dt><dt><a href="#commands.spdl_request_form">spdl_request_form</a> - Generate a form with which a user can request a list of
+  spectroscopic data files for bulk download (called by a web server through CGI)</dt><dt><a href="#commands.dl_request_form">dl_request_form</a> - Generate a form with which a user can request a list of
+  imaging data files for bulk download (called by a web server through CGI)</dt><dt><a href="#commands.segments">segments</a> - Generate a table with jpeg images and links to imaging data files in a segment (called by a web server through CGI)</dt><dt><a href="#commands.download_list">download_list</a> - Generate a list of URLs suitable for supplying to wget for
+  bulk download of imaging data (called by a web server through CGI)</dt><dt><a href="#commands.spdownload_list">spdownload_list</a> - Generate a list of URLs suitable for supplying to wget for
+  bulk download of specroscopic data (called by a web server through CGI)</dt></dl></div><div class="refentry" lang="en" xml:lang="en"><a id="commands.post_fibers"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>post_fibers — Parse a user's submission of list of fibers and generate
+  a table of fibers with data (called by a web server through CGI)</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2553184"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP POST request containing a list of SDSS
+  spectroscopic fibers. The program
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a> to locate the
+    DAS temporary data directory</p></li><li><p>generates a randam serial number for the request and a 
+	<a href="#userlist_dir">userlist directory</a> named using 
+	this serial number.</p></li><li><p>reads the post from standard input</p></li><li><p>writes the raw data from the post to
+	<a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a> in
+	the <a href="#userlist_dir">userlist directory</a>.
+        </p></li><li><p>writes <a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a>
+        which contains the table extracted from the post,
+    </p></li><li><p>writes <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a>,
+        which is either identical
+        to <a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a>
+        (if no specific data release was requested) or is the subset
+        of <a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a> contained in the
+        data release requested</p></li><li><p>writes an HTML page contianing a link to a form
+    that can be used to download files corresponding to those fibers,
+    and a table of links to pages detailing what is available for
+    each fiber.</p></li></ol></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2517015"></a><h2>Files read</h2><p>
+    <span class="simplelist"><a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>, <a href="#datamodel.spdr-x" title="spdr-x.tsv"><span class="refentrytitle">spdr-<i class="replaceable"><tt>x</tt></i>.tsv</span>(5)</a>, </span>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2517039"></a><h2>Files written</h2><p>This program writes all file in the <a href="#userlist_dir">userlist directory</a>.
+    </p><div class="variablelist"><dl><dt><span class="term"><a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a></span></dt><dd><p>a record of the HTTP POST</p></dd><dt><span class="term"><a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a></span></dt><dd><p>the table of fibers specified by the user</p></dd><dt><span class="term"><a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a></span></dt><dd><p>the table of fibers that fill all the users conditions: the
+	    fibers are in the table they supplied, and also in the requested
+	    data release.</p></dd></dl></div><p>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2517103"></a><h2>Diagnostics</h2><p>If this command seems to be misbehaving, start by looking on 
+<tt class="filename">request.post</tt> and comparing it both what you
+expect to be there and what you find in the other files generated.
+</p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="commands.post_fields"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>post_fields — Parse a user's submission of list of fields and generate
+  a table of fields with data (called by a web server through CGI)</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2539363"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP POST request containing a list of SDSS
+  imaging fields. The program
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a> to locate the
+    DAS temporary data directory</p></li><li><p>generates a randam serial number for the request and a 
+	<a href="#userlist_dir">userlist directory</a> named using 
+	this serial number.</p></li><li><p>reads the post from standard input</p></li><li><p>writes the raw data from the post to
+	<a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a> in
+	the <a href="#userlist_dir">userlist directory</a>.
+        </p></li><li><p>writes <a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a>,
+        which contains the table extracted from the post,
+    </p></li><li><p>writes <a href="#datamodel.full_contents" title="full_contents.tsv"><span class="refentrytitle">full_contents.tsv</span>(5)</a>,
+        which contains the sorted and merged table extracted from the post,
+    </p></li><li><p>writes <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a>, which
+        is either identical to
+        <a href="#datamodel.full_contents" title="full_contents.tsv"><span class="refentrytitle">full_contents.tsv</span>(5)</a> (if no specific data
+        release was requested) or is the subset of
+        <a href="#datamodel.full_contents" title="full_contents.tsv"><span class="refentrytitle">full_contents.tsv</span>(5)</a> contained in the
+        data release requested</p></li><li><p>writes an HTML page containing a link to a form
+    that can be used to download files corresponding to those fields,
+    and a table of links to pages detailing what is available for
+    each field.</p></li></ol></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2521242"></a><h2>Files read</h2><p>
+    <span class="simplelist"><a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>, <a href="#datamodel.dr-x" title="dr-x.tsv"><span class="refentrytitle">dr-<i class="replaceable"><tt>x</tt></i>.tsv</span>(5)</a>, </span>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2521267"></a><h2>Files written</h2><p>This program writes all file in the <a href="#userlist_dir">userlist directory</a>.
+    </p><div class="variablelist"><dl><dt><span class="term"><a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a></span></dt><dd><p>a record of the HTTP POST</p></dd><dt><span class="term"><a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a></span></dt><dd><p>the table of fields specified by the user, as specified by the user</p></dd><dt><span class="term"><a href="#datamodel.full_contents" title="full_contents.tsv"><span class="refentrytitle">full_contents.tsv</span>(5)</a></span></dt><dd><p>the table of fields specified by the user, sorted and with contiguous sets combined</p></dd><dt><span class="term"><a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a></span></dt><dd><p>the table of fields that fill all the users conditions: the
+	    fields are in the table they supplied, and also in the requested
+	    data release.</p></dd></dl></div><p>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2557944"></a><h2>Diagnostics</h2><p>If this command seems to be misbehaving, start by looking on 
+    <a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a> and comparing it both what you
+    expect to be there and what you find in the other files generated.
+  </p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="commands.post_coords"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>post_coords — Parse a user's submission of list of coordinates and generate
+  a table of coordinates with data (called by a web server through CGI)</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2524124"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP POST request containing a list of SDSS
+  spectroscopic coords. The program
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a> to locate the
+    DAS temporary data directory</p></li><li><p>generates a randam serial number for the request and a 
+	<a href="#userlist_dir">userlist directory</a> named using 
+	this serial number.</p></li><li><p>reads the post from standard input</p></li><li><p>writes the raw data from the post to
+	<a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a> in
+	the <a href="#userlist_dir">userlist directory</a>.
+        </p></li><li><p>writes <a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a>,
+        which contains the table extracted from the post,
+    </p></li><li><p>reads <a href="#datamodel.astlimits" title="astlimits.fits"><span class="refentrytitle">astlimits.fits</span>(5)</a>
+    </p></li><li><p>creates <a href="#datamodel.coord_field" title="coord_field.tsv"><span class="refentrytitle">coord_field.tsv</span>(5)</a>
+    </p></li><li><p>for each pair of coordinate, searches the table
+	loaded from <a href="#datamodel.astlimits" title="astlimits.fits"><span class="refentrytitle">astlimits.fits</span>(5)</a> to find runs
+	containing that coordinate and estimate which field the
+	coordinate is in, checks and refines the estimate based on
+	astrometry in tsField files, and writes the matching
+	field specification and pixel coordinate information
+	to <a href="#datamodel.coord_field" title="coord_field.tsv"><span class="refentrytitle">coord_field.tsv</span>(5)</a>,
+    </p></li><li><p>writes <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a>, which
+	lists the fields in which the supplied coordinates
+	fall, and
+    </p></li><li><p>writes an HTML page containing a link to a form
+    that can be used to download files corresponding to those fields,
+    and a table of links to pages detailing what is available for
+    each field.</p></li></ol></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2543335"></a><h2>Files read</h2><p>
+    <span class="simplelist"><a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>, <a href="#datamodel.astlimits" title="astlimits.fits"><span class="refentrytitle">astlimits.fits</span>(5)</a>, </span>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2543359"></a><h2>Files written</h2><p>This program writes all file in the <a href="#userlist_dir">userlist directory</a>.
+    </p><div class="variablelist"><dl><dt><span class="term"><a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a></span></dt><dd><p>a record of the HTTP POST</p></dd><dt><span class="term"><a href="#datamodel.orig_contents" title="orig_contents.tsv"><span class="refentrytitle">orig_contents.tsv</span>(5)</a></span></dt><dd><p>the table of fields specified by the user, as specified by the user</p></dd><dt><span class="term"><a href="#datamodel.coord_field" title="coord_field.tsv"><span class="refentrytitle">coord_field.tsv</span>(5)</a></span></dt><dd><p>contains the field specification and pixel coordinate
+            information for fields containing the supplied coordinates</p></dd><dt><span class="term"><a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a></span></dt><dd><p>the table of fields corresponding to the supplied coordinates</p></dd></dl></div><p>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2558249"></a><h2>Diagnostics</h2><p>If this command seems to be misbehaving, start by looking in 
+    <a href="#datamodel.request" title="request.post"><span class="refentrytitle">request.post</span>(5)</a> and comparing it both what you
+    expect to be there and what you find in the other files generated.
+  </p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="commands.spdl_request_form"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>spdl_request_form — Generate a form with which a user can request a list of
+  spectroscopic data files for bulk download (called by a web server through CGI)</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><tt class="command">http://das.sdss.org/cgi/spdl_request_form?list=4mjlz0</tt> </p></div></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2525303"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP GET requesting a form with which a user can request
+  a list of files for bulk download. It
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <tt class="envar">QUERY_STRING</tt> environment
+	variable, set by the HTTP server in accordance with the CGI
+	standard, and parses it to get the user list serial number,
+    </p></li><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>
+	to determine the base URL for DAS CGI programs, which is needed
+	to create the link generate the mass download list,
+    </p></li><li><p>writes an HTML page with a form that lets the user
+	check which file types are desired, to be submitted to the
+	appropriate CGI script with the requested user list serial
+	number.
+    </p></li></ol></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2558501"></a><h2>Files</h2><p>This program reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>
+  file to find the proper root URL for DAS CGI scripts.</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2558514"></a><h2>Environment</h2><p>Only one environmental variable is used. It is set by the HTTP
+  server in accordance with the CGI standard for GET requests:</p><div class="variablelist"><dl><dt><span class="term">QUERY_STRING</span></dt><dd><p>A string specifing the serial number of the user request,
+    for example:
+      </p><pre class="screen">
+	list=4mjlz0
+    </pre><p>
+    </p></dd></dl></div></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="commands.dl_request_form"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>dl_request_form — Generate a form with which a user can request a list of
+  imaging data files for bulk download (called by a web server through CGI)</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><tt class="command">http://das.sdss.org/cgi/dl_request_form?list=4mjlz0</tt> </p></div></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2517251"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP GET requesting a form with which a user can request
+  a list of files for bulk download. It
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <tt class="envar">QUERY_STRING</tt> environment
+	variable, set by the HTTP server in accordance with the CGI
+	standard, and parses it to get the user list serial number,
+    </p></li><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>
+	to determine the base URL for DAS CGI programs, which is needed
+	to create the link generate the mass download list,
+    </p></li><li><p>writes an HTML page with a form that lets the user
+	check which file types are desired, to be submitted to the
+	appropriate CGI script with the requested user list serial
+	number.
+    </p></li></ol></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2558678"></a><h2>Files</h2><p>This program reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>
+  file to find the proper root URL for DAS CGI scripts.</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2558692"></a><h2>Environment</h2><p>Only one environmental variable is used. It is set by the HTTP
+  server in accordance with the CGI standard for GET requests:</p><div class="variablelist"><dl><dt><span class="term">QUERY_STRING</span></dt><dd><p>A string specifing the serial number of the user request,
+    for example:
+      </p><pre class="screen">
+	list=4mjlz0
+    </pre><p>
+    </p></dd></dl></div></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="commands.segments"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>segments — Generate a table with jpeg images and links to imaging data files in a segment (called by a web server through CGI)</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><tt class="command">http://das.sdss.org/cgi/segments?LIST=KthsuP&amp;RUN=3836&amp;RERUN=41&amp;CAMCOL=3</tt> </p></div></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2503343"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP GET requesting a form with which a user can request
+  a list of files for bulk download. It
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <tt class="envar">QUERY_STRING</tt> environment
+	variable, set by the HTTP server in accordance with the CGI
+	standard, and parses it to get the user list serial number and
+	segment specification,
+    </p></li><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>
+	to determine
+	the <a href="#scratch_root"><i class="replaceable"><tt>scratch_root</tt></i></a>
+	directory, the
+	<a href="#imaging_root">path to the imaging data</a>,
+	and the
+	<a href="#imaging_url"><i class="replaceable"><tt>base URL for the
+	imaging data</tt></i></a>,
+    </p></li><li><p>attempts to read a <tt class="filename">tsField</tt>
+    or <tt class="filename">drField</tt> file in the segment, and derive a
+    strip and stripe from it (if unsuccessful, the executable will
+    return correctly but without reporting a strip and stripe), and</p></li><li><p>writes an HTML page with a table of links and
+    images for data in the requested fields.
+    </p></li></ol></div></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2515849"></a><h2>Files read</h2><p>
+    </p><table class="simplelist" border="0" summary="Simple list"><tr><td><a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a></td></tr><tr><td><a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> (in
+      the <a href="#userlist_dir">userlist directory</a> for
+      the specified serial number)</td></tr></table><p>
+  </p></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="commands.download_list"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>download_list — Generate a list of URLs suitable for supplying to wget for
+  bulk download of imaging data (called by a web server through CGI)</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><tt class="command">http://das.sdss.org/cgi/download-list?list=KthsuP&amp;filter=g&amp;filter=r&amp;type=tsObj&amp;type=corr&amp;dlmethod=wget</tt> </p></div></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2530809"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP GET requesting a list of files or URLs for bulk
+  download. It
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <tt class="envar">QUERY_STRING</tt> environment
+	variable, set by the HTTP server in accordance with the CGI
+	standard, and parses it to get the user list serial number,
+	the filters for which data are to be returned, the file types
+	to be returned, and the type of the list;
+    </p></li><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>
+	to determine the
+	<a href="#userlist_dir">userlist directory</a>
+	(needed to find the user's upleaded list of data) and either
+	the <a href="#imaging_url">base imaging url</a> or
+	the <a href="#imaging_root">base imaging
+	directory</a>, depending on the type of list requested;
+    </p></li><li><p>reads <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> (in
+      the <a href="#userlist_dir">userlist directory</a> for
+      the specified list serial number),
+    </p></li><li><p>writes a list of URLs or file names that the user
+    can use for bulk download.
+    </p></li></ol></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2523291"></a><h2>Files read</h2><p>
+    </p><table class="simplelist" border="0" summary="Simple list"><tr><td><a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a></td></tr><tr><td><a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> (in
+      the <a href="#userlist_dir">userlist directory</a> for
+      the specified serial number)</td></tr></table><p>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2556010"></a><h2>Environment</h2><p>Only one environmental variable is used. It is set by the HTTP
+  server in accordance with the CGI standard for GET requests:</p><div class="variablelist"><dl><dt><span class="term">QUERY_STRING</span></dt><dd><p>A string specifing the serial number of the user request,
+    the desired filter and file types, and the list format:
+      </p><pre class="screen">
+list=KthsuP&amp;filter=g&amp;filter=r&amp;type=tsObj&amp;type=corr&amp;dlmethod=wget
+      </pre><p>
+    </p></dd></dl></div></div></div><div class="refentry" lang="en" xml:lang="en"><div class="refentry.separator"><hr /></div><a id="commands.spdownload_list"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2>Name</h2><p>spdownload_list — Generate a list of URLs suitable for supplying to wget for
+  bulk download of specroscopic data (called by a web server through CGI)</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><tt class="command">http://das.sdss.org/cgi/spdownload_list?list=Zhy6nt&amp;type=spPlate&amp;type=spSpec&amp;dlmethod=wget</tt> </p></div></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2515894"></a><h2>Description</h2><p>This program is designed to be called by a web server using CGI
+  to handle an HTTP GET requesting a list of files or URLs for bulk
+  download. It
+  </p><div class="orderedlist"><ol type="1"><li><p>reads the <tt class="envar">QUERY_STRING</tt> environment
+	variable, set by the HTTP server in accordance with the CGI
+	standard, and parses it to get the user list serial number,
+	the filters for which data are to be returned, the file types
+	to be returned, and the type of the list;
+    </p></li><li><p>reads the <a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a>
+	to determine the
+	<a href="#userlist_dir">userlist directory</a>
+	(needed to find the user's upleaded list of data) and either
+	the <a href="#spectro_url">base spectro url</a> or
+	the <a href="#spectro_root">base spectro
+	directory</a>, depending on the type of list requested;
+    </p></li><li><p>reads <a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> (in
+      the <a href="#userlist_dir">userlist directory</a> for
+      the specified list serial number),
+    </p></li><li><p>writes a list of URLs or file names that the user
+    can use for bulk download.
+    </p></li></ol></div><p>
+</p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2555783"></a><h2>Files read</h2><p>
+    </p><table class="simplelist" border="0" summary="Simple list"><tr><td><a href="#datamodel.sdssdas.conf" title="sdssdas.conf"><span class="refentrytitle">sdssdas.conf</span>(5)</a></td></tr><tr><td><a href="#datamodel.contents" title="contents.tsv"><span class="refentrytitle">contents.tsv</span>(5)</a> (in
+      the <a href="#userlist_dir">userlist directory</a> for
+      the specified serial number)</td></tr></table><p>
+  </p></div><div class="refsect1" lang="en" xml:lang="en"><a id="id2559255"></a><h2>Environment</h2><p>Only one environmental variable is used. It is set by the HTTP
+  server in accordance with the CGI standard for GET requests:</p><div class="variablelist"><dl><dt><span class="term">QUERY_STRING</span></dt><dd><p>A string specifing the serial number of the user request,
+    the desired filter and file types, and the list format:
+      </p><pre class="screen">
+list=Zhy6nt&amp;type=spPlate&amp;type=spSpec&amp;dlmethod=wget
+      </pre><p>
+    </p></dd></dl></div></div></div></div><div class="chapter" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title"><a id="id2488163"></a>Chapter 9. Reference</h2></div></div><div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="glossary"><a href="#id2500521">Glossary</a></span></dt><dt><span class="section"><a href="#id2488174">FAQ</a></span></dt><dt><span class="section"><a href="#id2526703">Trouble shooting</a></span></dt><dt><span class="bibliography"><a href="#id2492839">Bibliography</a></span></dt></dl></div><div class="glossary"><div class="titlepage"><div><div><h2 class="title"><a id="id2500521"></a>Glossary</h2></div></div><div></div></div><div class="glossdiv"><h3 class="title">A</h3><dl><dt><a id="autotools"></a>autotools</dt><dd><p><a href="http://www.gnu.org/software/autoconf/" target="_top">
+Autaconf</a> and 
+<a href="http://www.gnu.org/software/automake/automake.html" target="_top">automake</a>
+are part of GNU autotools, also called the GNU build system. These
+tools help create source code packages that compile on a variety of systems.
+</p></dd></dl></div><div class="glossdiv"><h3 class="title">C</h3><dl><dt><a id="cgi"></a>CGI</dt><dd><p><a href="http://www.w3.org/CGI/" target="_top">Common Gateway
+      Interface</a>, a standard API by which an HTTP server calls
+      external programs to handle HTTP requests.</p></dd><dt><a id="CVS"></a>CVS</dt><dd><p>The <a href="http://www.nongnu.org/cvs/" target="_top">Concurrent Versions System</a></p></dd></dl></div><div class="glossdiv"><h3 class="title">D</h3><dl><dt><a id="docbook"></a>docBook</dt><dd><p>An xml markup for technical documentation.</p></dd></dl></div><div class="glossdiv"><h3 class="title">E</h3><dl><dt><a id="enstore"></a>enstore</dt><dd><p>The <a href="http://computing.fnal.gov/docs/products/enstore/" target="_top">mass
+storage system used at Fermilab</a> to handle data stored in tape
+robots.</p></dd></dl></div><div class="glossdiv"><h3 class="title">F</h3><dl><dt><a id="fits"></a>FITS</dt><dd><p>The <a href="http://fits.gsfc.nasa.gov/" target="_top">Flexible Image Transport System</a>, the 
+standard file format for data in astronomy.</p></dd></dl></div><div class="glossdiv"><h3 class="title">M</h3><dl><dt><a id="mjd"></a>MJD</dt><dd><p>The <a href="http://tycho.usno.navy.mil/mjd.html" target="_top">Modified
+Julian Date</a>, the number of days since November 17, 1858. The
+SDSS uses the integer MJD date to designate a specific night of
+observing.</p></dd></dl></div><div class="glossdiv"><h3 class="title">P</h3><dl><dt><a id="pnfs"></a>pNFS</dt><dd><p>The <a href="http://www-pnfs.desy.de/" target="_top">Perfectly 
+Normal File System</a>, a virtual file system that stores metadata
+on files in a database and presents them using an NFS interface.
+</p></dd></dl></div><div class="glossdiv"><h3 class="title">R</h3><dl><dt><a id="rerun"></a>rerun</dt><dd><p>The rerun of a file produced by a SDSS data reduction
+    pipeline designates the which application of the pipeline produced
+    the files. For example, the first time a given exposure of raw
+    data was processed the output files may be assigned a rerun of
+    1. After a new version of the pipeline is released, the some data
+    may be reprocessed, and the files from the reprocessing may be
+    assigned a rerun of 40. Then, a disk crashes and some of the files
+    from rerun 40 are lost, so the same data gets processed yet again,
+    this time by the same processing software that generated rerun
+    40. Files produced then may be assigned a rerun of 41.
+</p></dd></dl></div><div class="glossdiv"><h3 class="title">S</h3><dl><dt><a id="SDSS"></a>SDSS</dt><dd><p>The <a href="http://sdss.org" target="_top">Sloan Digital Sky
+      Survey</a>. </p></dd><dt><a id="splint"></a>splint</dt><dd><p><a href="http://www.splint.org/" target="_top">splint</a> is
+    a static program analysis tool, a program that analyzes source
+    code for bugs without running it.</p></dd></dl></div><div class="glossdiv"><h3 class="title">T</h3><dl><dt><a id="TSV"></a>TSV</dt><dd><p>An table of values in ASCII format, in which each line
+    corresponds to a row and tab charachers (ASCII code 0x09) delimit
+    the columns. See the
+<a href="http://www.iana.org/assignments/media-types/text/tab-separated-values" target="_top">
+IANA standard</a> for the text/tab-separated-values MIME type.
+</p></dd></dl></div><div class="glossdiv"><h3 class="title">Y</h3><dl><dt><a id="yanny"></a>Yanny par file</dt><dd><p>An informal format used to store data in ASCII within
+    the SDSS collaboration. A Yanny par file generally begins with a
+    squence of keyword / value pairs. These header values are followed
+    by a sequence of declarations whole syntax resembles C typedef
+    statements. Often, these declarations are copied directly from the
+    C header files that declare the structures into which the data in
+    the par file will be loaded. Finally, the data in the file is
+    listed in a sequence of rows. Each row begins with a label
+    declaring which structure the data in that row represents,
+    followed by space delimeted ASCII representations of the data
+    itself.
+</p></dd></dl></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2488174"></a>FAQ</h2></div></div><div></div></div><div class="qandaset"><dl><dt>Q: <a href="#id2560089">What is this?</a></dt></dl><table border="0" summary="Q and A Set"><col align="left" width="1%" /><tbody><tr class="question"><td align="left" valign="top"><a id="id2560089"></a><a id="id2560094"></a><b>Q:</b></td><td align="left" valign="top"><p>What is this?</p></td></tr><tr class="answer"><td align="left" valign="top"><b>A:</b></td><td align="left" valign="top"><p>This is the FAQ.</p></td></tr></tbody></table></div></div><div class="section" lang="en" xml:lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id2526703"></a>Trouble shooting</h2></div></div><div></div></div><p>A reference for frustrated users.</p></div><div class="bibliography"><div class="titlepage"><div><div><h2 class="title"><a id="id2492839"></a>Bibliography</h2></div></div><div></div></div><div class="biblioentry"><a id="ref.das1"></a><p>[<span class="abbrev">Neilsen 2008</span>] <span class="biblioset"><i>Computing in Science and Engineering</i>. <span class="volumenum">10. </span><span class="issuenum">1. </span><span class="pubdate">January/February 2008. </span></span><span class="biblioset">“The Sloan Digital Sky Survey Data Archive Server”. <span class="authorgroup"><span class="firstname">Eric</span> <span class="surname">Neilsen</span>, <span class="lineage">Jr.</span>. </span><span class="pagenums">13-17. </span></span></p></div><div class="biblioentry"><a id="ref.edr"></a><p>[<span class="abbrev">Stoughton et al. 2002</span>] <span class="biblioset"><i>The Astronomical Journal</i>. <span class="volumenum">123. </span><span class="pubdate">January, 2002. </span></span><span class="biblioset">“Sloan Digital Sky Survey: Early Data Release”. <span class="authorgroup"><span class="firstname">Chris</span> <span class="surname">Stoughton</span> and <span class="othername">the SDSS collaboration</span>. </span><span class="pagenums">485. </span></span></p></div><div class="biblioentry"><a id="ref.sqlLoader"></a><p>[<span class="abbrev">Szalay et al. 2008</span>] <span class="biblioset"><i>Computing in Science and Engineering</i>. <span class="volumenum">10. </span><span class="issuenum">1. </span><span class="pubdate">January/February 2008. </span></span><span class="biblioset">“The sqlLoader Data-Loading Pipeline”. <span class="authorgroup"><span class="firstname">Alex</span> <span class="surname">Szalay</span>, <span class="firstname">Ani</span> <span class="surname">Thakar</span>, and <span class="firstname">Jim</span> <span class="surname">Gray</span>. </span><span class="pagenums">38-48. </span></span></p></div><div class="biblioentry"><a id="ref.casdbm"></a><p>[<span class="abbrev">Thakar et al. 2008</span>] <span class="biblioset"><i>Computing in Science and Engineering</i>. <span class="volumenum">10. </span><span class="issuenum">1. </span><span class="pubdate">January/February 2008. </span></span><span class="biblioset">“The Catalog Archive Server Database Management Sysetem”. <span class="authorgroup"><span class="firstname">Ani</span> <span class="surname">Thakar</span>, <span class="firstname">Alex</span> <span class="surname">Szalay</span>, <span class="firstname">George</span> <span class="surname">Fekete</span>, and <span class="firstname">Jim</span> <span class="surname">Gray</span>. </span><span class="pagenums">30-37. </span></span></p></div><div class="biblioentry"><a id="ref.goat"></a><p>[<span class="abbrev">the goat book</span>] <span class="authorgroup"><span class="firstname">Gary</span> <span class="surname">Vaughn</span>, <span class="firstname">Ben</span> <span class="surname">Elliston</span>, <span class="firstname">Tom</span> <span class="surname">Tromey</span>, and <span class="firstname">Ian</span> <span class="surname">Taylor</span>. </span><span class="copyright">Copyright © 2000, 2001, . </span><span class="isbn">1-57870-190-2. </span><span class="publisher"><span class="publishername">New Riders. </span></span><span class="title"><i>GNU Autoconf, Automake, and Libtool</i>. </span></p></div><div class="biblioentry"><a id="ref.tech"></a><p>[<span class="abbrev">York et al. 2000</span>] <span class="biblioset"><i>The Astronomical Journal</i>. <span class="volumenum">120. </span><span class="pubdate">September, 2000. </span></span><span class="biblioset">“The Sloan Digital Sky Survey: Technical Summary”. <span class="authorgroup"><span class="firstname">Don</span> <span class="surname">York</span> and <span class="othername">the SDSS collaboration</span>. </span><span class="pagenums">1579-1587. </span></span></p></div></div></div></div></body></html>
+@

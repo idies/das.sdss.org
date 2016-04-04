@@ -1,0 +1,156 @@
+<link rel="stylesheet" type="text/css" href="../css/sdssdas.css"/>
+<html>
+<head>
+  <title>SDSS DAS User Field List Submission Form</title>
+</head>
+
+<body>
+
+<form method="post" action="/www/cgi-bin/post_fields" enctype="multipart/form-data">
+  <h1>SDSS DAS User Field List Submission Form</h1>
+  
+  <p class="list-upload">
+  <input type="submit" name="Submit" value="Submit Request">
+  or, if you want to start again, 
+  <input type="reset" value="Reset Form" name="Reset">
+  </p>
+
+  <h2>Data Release Choice</h2>
+
+  <div class="data-sets">
+  <table class="data-sets">
+    <thead>
+      <tr class="top">
+	<th></th>
+	<th>Description</th>
+	<th>Columns in the upload table</th>
+      </tr>
+    </thead>
+    <tr>
+      <th><input type="radio" name="dataset" value="0"/>All data</th>
+      <td>Links to all existing or hypothetical data corresponding to your list.</td>
+      <td>Run, rerun, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="71" checked="checked"/>DR6/7 best</th>
+      <td>The DR6 original ("legacy") imaging survey, best reduction.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="72"/>SEGUE best</th>
+      <td>Low latitutde (SEGUE) imaging data.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="74"/>Stripe 82</th>
+      <td>Equatorial repeat scans ("supernova")</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="75"/>Co-add</th>
+      <td>Equatorial stripe co-add</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="70"/>DR6/7 target</th>
+      <td>The DR7 original ("legacy") imaging survey, reduction used for spectroscopic target selection.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="73"/>SEGUE target</th>
+      <td>The SEGUE imaging survey, reduction used for spectroscopic target selection.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="51"/>DR5 best</th>
+      <td>The DR5 original ("legacy") imaging survey, best reduction.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="50"/>DR5 target</th>
+      <td>The DR5 original ("legacy") imaging survey, reduction used for spectroscopic target selection.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="41"/>DR4 best</th>
+      <td>The DR4 original ("legacy") imaging survey, best reduction.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="40"/>DR4 target</th>
+      <td>The DR4 original ("legacy") imaging survey, reduction used for spectroscopic target selection.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="31"/>DR3 best</th>
+      <td>The DR3 original ("legacy") imaging survey, best reduction.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="30"/>DR3 target</th>
+      <td>The DR3 original ("legacy") imaging survey, reduction used for spectroscopic target selection.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="21"/>DR2 best</th>
+      <td>The DR2 original ("legacy") imaging survey, best reduction.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="20"/>DR2 target</th>
+      <td>The DR2 original ("legacy") imaging survey, reduction used for spectroscopic target selection.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="11"/>DR1 best</th>
+      <td>The DR1 original ("legacy") imaging survey, best reduction.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+    <tr>
+      <th><input type="radio" name="dataset" value="10"/>DR1 target</th>
+      <td>The DR1 original ("legacy") imaging survey, reduction used for spectroscopic target selection.</td>
+      <td>Run, camera column, field, number of fields (optional)</td>
+    </tr>
+  </table>    
+  </div>
+
+  <h2>User List Specification</h2>
+
+  <p class="left">Provide your list of fields as tab or comma
+separated value (CSV) lists. The final column, nfields, is optional.
+You may include comments by staring a line with a &#35;
+character. Uploaded tables are limited to 10000 lines or fewer; please
+break up larger tables into multiple submissions. (Note that sets of
+consecutive fields from the same run, rerun, and camera column can be
+combined into a single line using the optional "number of fields"
+column.)</p>
+
+  <p class="left"><em>Unlike previous versions of the DAS, this version does not
+  attempt to interpret column headings; columns must have the content
+  and be in the order specified in the final column of "Data Release
+  Choice" table above. Note that when requesting data from all data
+  releases, you must specify a rerun, but not in any other
+  cases.</em><p>
+
+  <div class="list-upload">
+
+  <p class="list-upload">Either select file to upload
+  <input type="file" name="inputFile"></p>
+
+  <p class="list-upload">or enter the CSV information below.</p>
+
+  <p class="list-upload"><textarea cols="60" rows="6" name="csvIn">#run,camcol,field,nfields 
+#(add rerun as second column if you select "All data" above)
+3836,3,251,10
+  </textarea></p>
+
+  <p class="list-upload">
+  <input type="submit" name="Submit" value="Submit Request"> or, if you want
+  to start again, 
+  <input type="reset" value="Reset Form" name="Reset"></p>
+
+  </div>
+
+</form>
+</body>
+</html>

@@ -1,0 +1,14 @@
+Installation instructions can be found in the INSTALL file.
+
+Here is an outline of the process used to make the installation at FNAL:
+
+aclocal -I m4
+automake
+autoconf
+./configure --prefix=/das2/data --sysconfdir=/usr/local/etc
+make
+make check
+make install
+
+mkdir -p doc/doxygen
+doxygen Doxyfile

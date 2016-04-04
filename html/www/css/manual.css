@@ -1,0 +1,31 @@
+pre.programlisting {
+  text-align:left;
+  border: 1pt solid #A0A0A0;
+  background-color: #F0F0F0;
+  padding: 1ch;
+  display: block;
+  clear: right;
+}
+
+pre.screen {
+  text-align:left;
+  background-color: black;
+  color: white;
+  padding: 1ch;
+  display: block;
+  font-weight:bold;
+  clear: right;
+}
+
+div.book {
+  margin:auto;
+  text-align:left;
+  width:60em;
+  min-width:20em;
+}
+
+div.note {
+  border: 1pt solid #A0A0A0;
+  padding: 1ch;
+  display: block;
+}

@@ -1,0 +1,10 @@
+1209952a6c34c0d8d568a636239fe83c  ./Makefile
+1af8aec49a6603c570c13dcbe3fe9a6f  ./cdf2pp.pl
+6209f6809cbe2bc0c373bdc5c0bbe68e  ./dmStartup.tcl
+a0cce739dac0c2ddfed94e7eccaf98fe  ./fitsCheck.tcl
+169cbc55b2bec2438aee956ee5ef6963  ./imgCheck.tcl
+6f096c9ad27419668b5c42964d374adb  ./mtCheck.tcl
+d9d4e4d7adefbe0b3ef1195bd56edda9  ./param2cdf.pl
+e421893c47ccfb88b188a3abd70543a2  ./paramCheck.tcl
+acf71ac3d2bc9b3567a26ae6c8999424  ./parseDm.pl
+8e71a3f54a532ce787517c2cde5b7554  ./planCheck.tcl

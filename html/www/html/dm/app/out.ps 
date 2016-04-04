@@ -1,0 +1,10066 @@
+%!PS-Adobe-2.0
+%%Title: Imaging
+%%Creator: XVT PostScript Print Driver (mods by Mike Cowley)
+%%CreationDate: Mon Mar 18 10:29:43 1996
+%%BoundingBox: 0 0 3300 2550
+%%Orientation: Landscape
+%%Pages: (atend)
+%%EndComments
+/PROLOGUE 100 dict def
+PROLOGUE begin
+/res 300 def
+% XVT PostScript Driver Prolog
+% Copyright 1990 XVT Software Inc. All rights reserved. May be distributed
+% and used only by applications written with an XVT toolkit supplied by
+% XVT Software Inc.
+%
+% Problems:
+% Text:
+%	- opaque_text not honored; always FALSE (therefore, back_color ignored)
+% Brushes:
+%	- back_color not honored; always white
+% Not done yet:
+%	- draw_aline [l^ fcn is here]
+
+% --------- Prolog ------------------
+
+% Following based on Program 3 in the Blue Book
+%(PostScript Lanuage: Tutorial and Cookbook)
+% Usage: startangle endangle xrad yrad x_center y_center ellipse
+
+/ellipse {
+	/savematrix matrix currentmatrix def
+	translate
+	scale
+	0 0 1 4 index 4 index arc pop pop
+	savematrix setmatrix
+} bind def
+
+% End of Program 3.
+
+% Following taken from Listing 3-4 in Greek Book
+% (PostScript Language: Program Design), except for inclusion of "mul"
+% and arrowheadscale arg in l^
+% Also, coordinates adjusted to put tip of arrow nearer to current point
+
+% "arrowhead" takes these arguments:
+% lineweight prevX prevY
+ /arrowhead { %def
+	gsave
+		currentpoint
+		4 2 roll exch 4 -1 roll exch
+		sub 3 1 roll sub
+		exch atan rotate dup dup 0 rmoveto scale
+%		-1 2 rlineto
+%		7 -2 rlineto
+%		-7 -2 rlineto
+		-7 2 rlineto
+		1 -2 rlineto
+		-1 -2 rlineto
+		closepath fill
+	grestore
+	newpath
+ } bind def
+ % x y arrowheadscale l^
+ /l^ { %def    % lineto-arrow
+	currentlinewidth mul currentpoint 5 3 roll
+	lineto
+	currentpoint stroke moveto
+	arrowhead
+ } bind def
+
+% End of Listing 3-4 extract.
+
+% Following comes from Listing 9-1 of the Green Book
+% (PostScript Language: Program Design). Changes are marked with "MJR".
+
+% width height matrix proc key cache
+% definepattern -\> font
+/definepattern { %def
+	7 dict begin
+		/FontDict 9 dict def
+		FontDict begin
+			/cache exch def
+			/key exch def
+			/proc exch cvx def
+			/mtx exch matrix invertmatrix def
+			/height exch def
+			/width exch def
+			/ctm matrix currentmatrix def
+			/ptm matrix identmatrix def
+			/str
+			(12345678901234567890123456789012)
+			def
+		end
+		/FontBBox [ %def
+			0 0 FontDict /width get
+			FontDict /height get
+		] def
+		/FontMatrix FontDict /mtx get def
+		/Encoding StandardEncoding def
+		/FontType 3 def
+		/BuildChar { %def
+			pop begin
+			FontDict begin
+				width 0 cache { %ifelse
+					0 0 width height setcachedevice
+				}{ %else
+					setcharwidth
+				} ifelse
+				0 0 moveto width 0 lineto
+				width height lineto 0 height lineto
+				closepath clip newpath
+				gsave proc grestore
+			end end
+		} def
+		FontDict /key get currentdict definefont
+	end
+} bind def
+% dict patternpath -
+% dict matrix patternpath -
+/patternpath { %def
+	dup type /dicttype eq { %ifelse
+		begin FontDict /ctm get setmatrix
+	}{ %else
+		exch begin FontDict /ctm get setmatrix
+		concat
+	} ifelse
+	currentdict setfont
+	FontDict begin
+		FontMatrix concat
+		width 0 dtransform
+		round width div exch round width div exch
+		0 height dtransform
+		round height div exch
+		round height div exch
+		0 0 transform round exch round exch
+		ptm astore setmatrix
+		
+		pathbbox
+		height div ceiling height mul 4 1 roll
+		width div ceiling width mul 4 1 roll
+		height div floor height mul 4 1 roll
+		width div floor width mul 4 1 roll
+		
+		2 index sub height div ceiling cvi exch
+		3 index sub width div ceiling cvi exch
+		4 2 roll moveto
+		
+		FontMatrix ptm invertmatrix pop
+		{ %repeat
+			gsave
+				ptm concat
+				dup str length idiv { %repeat
+					str show
+				} repeat
+				dup str length mod str exch
+				0 exch getinterval show
+			grestore
+			0 height rmoveto
+		} repeat
+		pop
+	end end
+} bind def
+
+% dict patternfill -
+% dict matrix patternfill -
+/patternfill { %def
+	gsave
+		clip patternpath
+	grestore
+	newpath
+} bind def
+
+% dict patterneofill -
+% dict matrix patterneofill -
+/patterneofill { %def
+	gsave
+		eoclip patternpath
+	grestore
+	newpath
+} bind def
+
+% dict patternstroke -
+% dict matrix patternstroke -
+/patternstroke { %def
+	gsave
+		strokepath clip patternpath
+	grestore
+	newpath
+} bind def
+
+% dict ax ay string patternashow -
+% dict matrix ax ay string patternashow -
+/patternashow { %def
+	(0) exch { %forall
+		2 copy 0 exch put pop dup
+		false charpath 
+		currentpoint
+		5 index type /dicttype eq { %ifelse
+			5 index patternfill
+		}{ %else
+			6 index 6 index patternfill
+		} ifelse
+		moveto
+		3 copy pop rmoveto
+	} forall
+	pop pop pop
+	dup type /dicttype ne { pop } if pop
+} bind def
+
+% dict string patternshow -
+% dict matrix string patternshow -
+/patternshow { %def
+	0 exch 0 exch patternashow
+} bind def
+
+/opaquepatternfill { %def
+	gsave
+	1 setgray
+	fill
+	grestore
+	patternfill
+} bind def
+
+/square { %def
+	gsave
+		moveto
+		dup 0 rlineto
+		dup 0 exch rlineto
+		neg 0 rlineto
+		closepath
+		findfont  % a pattern font
+		patternfill
+	grestore
+ } bind def
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	7.5 0 moveto 15 7.5 lineto
+	0 7.5 moveto 7.5 15 lineto
+	2 setlinewidth stroke
+} bind
+/RIGHTdiagonal true definepattern pop
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	7.5 0 moveto 0 7.5 lineto
+	15 7.5 moveto 7.5 15 lineto
+	2 setlinewidth stroke
+} bind
+/LEFTdiagonal true definepattern pop
+
+30 30 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 2 scale
+	2 setlinecap
+	7.5 0 moveto 15 7.5 lineto
+	0 7.5 moveto 7.5 15 lineto
+	7.5 0 moveto 0 7.5 lineto
+	15 7.5 moveto 7.5 15 lineto
+	0.5 setlinewidth stroke
+} bind
+/crosshatch true definepattern pop
+
+% End of Listing 9-1.
+
+% Following fonts added by MJR to flesh out XVT's brushes.
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	0 0 moveto 15 0 lineto
+	2 setlinewidth stroke
+} bind
+/horz true definepattern pop
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	0 0 moveto 0 15 lineto
+	2 setlinewidth stroke
+} bind
+/vert true definepattern pop
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	0 0 moveto 0 15 lineto
+	0 0 moveto 15 0 lineto
+	2 setlinewidth stroke
+} bind
+/cross true definepattern pop
+
+% Boolean to control whether stroking is effective -- used for hollow pens.
+/do_stroke true def
+
+% Boolean to control whether filling is effective -- used for hollow brushes.
+/do_fill true def
+
+% Width of dots
+/dotwidth res 50 div def % default is .02 inches
+
+% Width of dashes
+/dashwidth res 10 div def % default is .1 inches
+
+% Default XVT colors, stored as RGB arrays
+/pen_rgb [0 0 0] def
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+
+% Fcns to set colors into the graphics state
+% Usage: pencolor, brushcolor, forecolor, backcolor
+/pencolor {
+	pen_rgb aload pop setrgbcolor
+} bind def
+/brushcolor {
+	brush_rgb aload pop setrgbcolor
+} bind def
+/forecolor {
+	fore_rgb aload pop setrgbcolor
+} bind def
+/backcolor {
+	back_rgb aload pop setrgbcolor
+} bind def
+
+% Conditional stroke, controlled by do_stroke. Used for all pen drawing.
+/cstroke {
+	do_stroke { pencolor stroke } { newpath } ifelse
+} bind def
+
+% Brush pattern functions -- they redefine /brushfill
+%Usage: XXX
+%	where XXX is brush_solid, brush_bdiag, etc.
+% Call one of these whenever the brush pattern changes.
+/brush_hollow {
+	/do_fill false def
+}
+bind def
+/brush_solid {
+	/do_fill true def
+	/brushfill { fill } bind def
+}
+bind def
+/brush_bdiag {
+	/do_fill true def
+	/brushfill { /LEFTdiagonal findfont patternfill } bind def
+}
+bind def
+/brush_fdiag {
+	/do_fill true def
+	/brushfill { /RIGHTdiagonal findfont patternfill } bind def
+}
+bind def
+/brush_diagcross {
+	/do_fill true def
+	/brushfill { /crosshatch findfont patternfill } bind def
+}
+bind def
+/brush_horz {
+	/do_fill true def
+	/brushfill { /horz findfont patternfill } bind def
+}
+bind def
+/brush_vert {
+	/do_fill true def
+	/brushfill { /vert findfont patternfill } bind def
+}
+bind def
+/brush_cross {
+	/do_fill true def
+	/brushfill { /cross findfont patternfill } bind def
+}
+bind def
+
+% Conditional fill, controlled by do_fill. Used for all brush drawing.
+/cfill {
+	do_fill
+		{ brushcolor brushfill }
+		{ newpath }
+	ifelse
+} bind def
+
+% XVT's move_to
+% Usage: x y mv
+/mv {
+	moveto
+} bind def
+
+% XVT's draw_line
+% Usage: x y dl
+/dl {
+	lineto currentpoint cstroke moveto
+} bind def
+
+% Fcns for polylines and polygons.
+% Usage:	x y b
+%			x y l
+%			... repeat as needed ...
+%			x y dl [for polyline]
+%			x y dg [for polygon]
+/b {
+	moveto
+} bind def
+/l {
+	lineto
+} bind def
+/dg {
+	lineto
+	closepath
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_rect
+% Usage: width height LLx LLy dr
+/dr {
+	moveto
+	1 index 0 rlineto
+	0 exch rlineto
+	neg 0 rlineto
+	closepath
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_roundrect
+% Usage: width oval_width/2 height oval_height/2 LLx LLy drr
+/drr {
+	% Can't use gsave/grestore to preserve CTM -- grestore will clobber path
+	/savematrix matrix currentmatrix def
+	translate
+	2 index 1 index scale
+	div /h exch def
+	div /w exch def
+	1 0 moveto
+	w 0 w 1 1 arcto 4 { pop } repeat
+	w h w 1 sub h 1 arcto 4 { pop } repeat
+	0 h 0 h 1 sub 1 arcto 4 { pop } repeat
+	0 0 1 0 1 arcto 4 { pop } repeat
+	closepath
+	savematrix setmatrix
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_oval
+% Usage: xrad yrad x_center y_center do
+/do {
+	newpath
+	0 360 5 index 5 index 5 index 5 index ellipse pop pop pop pop
+	gsave cfill grestore cstroke
+} bind def
+
+% Create path for arcs and pies
+% Usage: xrad yrad x_center y_center x1 y1 x2 y2 arcpath
+/arcpath {
+	/y2 exch def
+	/x2 exch def
+	/y1 exch def
+	/x1 exch def
+	/y0 exch def
+	/x0 exch def
+	/yr exch def
+	/xr exch def
+	y1 y0 sub xr mul x1 x0 sub yr mul atan % leaves start angle on stack
+	y2 y0 sub xr mul x2 x0 sub yr mul atan % leaves stop angle on stack
+	xr yr x0 y0 ellipse
+} bind def
+
+% XVT's draw_arc
+% Usage: xrad yrad x_center y_center x1 y1 x2 y2 da
+/da {
+	newpath
+	arcpath
+	cstroke
+} bind def
+
+% XVT's draw_pie
+% Usage: xrad yrad x_center y_center x1 y1 x2 y2 dp
+/dp {
+	newpath
+	5 index 5 index moveto
+	arcpath
+	closepath
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_text
+% Usage: string x y dt
+% Limitations: ignores backcolor, opaque
+/dt {
+	moveto forecolor show
+} bind def
+
+% Fcn for picture_draw and draw_icon
+% Usage:	rowbits scanlines width height x y  bm
+%			... image data in hex follows ...
+% Image data should be in groups, where each group is (rowbits / 8) bytes,
+% rounded up to the next higher byte. There should be as many groups as
+% scanlines. A value of 1 for a bit is white; 0 is black.
+/bm {
+	gsave
+	translate
+	scale
+	/scanlines exch def
+	/rowbits exch def
+	/DataString rowbits 8 div ceiling cvi string def
+	rowbits scanlines 1 [ rowbits 0 0 scanlines neg 0 scanlines ]
+	{ currentfile DataString readhexstring pop }
+	bind image
+	grestore
+} bind def
+
+% Fcn to set pen width
+% Usage: penwidth pw
+/pw {
+	setlinewidth
+} bind def
+
+% Fcn to set pen style and pattern
+% Usage: style pat psp
+%	where style is 1 for solid, 2 for dot, 3 for dash
+%	where pat is 0 for hollow, 1 for solid, 2 for rubber
+/psp {
+	dup
+	/do_stroke exch 0 ne def % takes care of hollow case
+	2 eq
+		{ [dashwidth] }
+		{
+			dup
+			2 eq
+			{ pop [dotwidth] }
+			{ 3 eq { [dashwidth] } {[]} ifelse }
+			ifelse
+		}
+	ifelse
+	0 setdash
+} bind def
+
+% Fcn to set font
+% Usage pointsize fontname f
+/f {
+%	findfont exch res mul 72 div [ exch 0 0 2 index neg 0 0 ] makefont setfont
+	findfont exch res mul 72 div scalefont setfont
+} bind def
+
+% XVT's set_clip
+% Usage: width height LLx LLy sc
+/sc {
+	moveto
+	1 index 0 rlineto
+	0 exch rlineto
+	neg 0 rlineto
+	closepath
+	clip newpath
+} bind def
+
+% End of XVT PostScript Driver Prolog
+% ProtoSoft: start
+/gs  /gsave load def
+/gr  /grestore load def
+% ProtoSoft: end
+
+end %PROLOGUE
+%%EndProlog
+PROLOGUE begin
+1 pw
+1 1 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+%%Page: 1 1
+72 res div dup scale
+2550 3300 0 0 sc
+2550 0 translate 90 rotate
+gsave
+2120 3157 4959 -896 dr
+brush_solid
+/brush_rgb [0 0 0] def
+7079 2251 b
+7088 2251 l
+7088 -906 l
+4968 -906 l
+4968 -896 l
+7079 -896 l
+7079 2251 dg
+grestore gsave
+1659 2261 3300 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Frames Pipeline) 4989 2199 dt
+brush_solid
+/brush_rgb [1 1 1] def
+2072 3028 169 -757 dr
+brush_solid
+/brush_rgb [0 0 0] def
+2241 2261 b
+2250 2261 l
+2250 -767 l
+178 -767 l
+178 -757 l
+2241 -757 l
+2241 2261 dg
+grestore gsave
+2081 2271 169 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Drift Scan Run) 1931 2209 dt
+brush_solid
+/brush_rgb [1 1 1] def
+506 2102 2513 -279 dr
+brush_solid
+/brush_rgb [0 0 0] def
+3019 1813 b
+3028 1813 l
+3028 -289 l
+2522 -289 l
+2522 -279 l
+3019 -279 l
+3019 1813 dg
+grestore gsave
+515 1823 2513 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(SSC Pipeline) 2642 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+919 2331 3750 -508 dr
+brush_solid
+/brush_rgb [0 0 0] def
+4669 1813 b
+4678 1813 l
+4678 -518 l
+3759 -518 l
+3759 -508 l
+4669 -508 l
+4669 1813 dg
+grestore gsave
+450 1823 3300 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Postage Stamp Pipeline) 3780 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+498 2112 3131 -289 dr
+brush_solid
+/brush_rgb [0 0 0] def
+3629 1813 b
+3638 1813 l
+3638 -299 l
+3140 -299 l
+3140 -289 l
+3629 -289 l
+3629 1813 dg
+grestore gsave
+169 1823 3131 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric Pipelines) 3161 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+225 287 1003 1327 dr
+grestore gsave
+225 287 1003 1327 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1003 1504 mv
+1228 1504 dl
+(filter) 1028 1473 dt
+(pixelMap) 1028 1430 dt
+1003 1398 mv
+1228 1398 dl
+(camRow) 1028 1367 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame) 1066 1558 dt
+542 1912 mv
+1013 1912 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+570 1932 b
+542 1912 l
+570 1893 l
+608 1912 l
+570 1932 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1003 1912 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 360 834 636 dr
+grestore gsave
+225 360 834 636 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+834 876 mv
+1059 876 dl
+(q1) 866 845 dt
+(q2) 866 793 dt
+(q3) 866 741 dt
+(mode) 866 689 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Quartile) 885 940 dt
+252 359 1116 637 dr
+grestore gsave
+252 359 1116 637 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1116 825 mv
+1368 825 dl
+(pixelMap) 1148 794 dt
+(midRow) 1148 742 dt
+(midCol) 1148 690 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 1173 940 dt
+(Stamp) 1191 909 dt
+297 436 3272 550 dr
+grestore gsave
+28 436 3272 550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3272 835 mv
+3569 835 dl
+(a) 3296 804 dt
+(b) 3296 761 dt
+(c) 3296 718 dt
+(d) 3296 675 dt
+(e) 3296 633 dt
+(f) 3296 590 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 3322 930 dt
+(Transformation) 3298 899 dt
+1200 1126 mv
+3319 1126 dl
+3319 986 dl
+1200 1126 mv
+1200 1126 dl
+1200 1327 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3319 996 do
+1031 1327 mv
+1031 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+1013 1297 b
+1031 1327 l
+1050 1297 l
+1031 1257 l
+1013 1297 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1031 1006 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 223 1013 1809 dr
+grestore gsave
+225 223 1013 1809 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1013 1922 mv
+1238 1922 dl
+(id) 1037 1892 dt
+(camCol) 1037 1849 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Field) 1087 1976 dt
+225 371 4134 1332 dr
+grestore gsave
+834 371 3300 1332 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+4134 1509 mv
+4359 1509 dl
+(field0) 4159 1478 dt
+4134 1445 mv
+4359 1445 dl
+(trans) 4159 1414 dt
+(nFields) 4159 1372 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 4178 1648 dt
+(Stamp ) 4192 1617 dt
+(Calibration) 4160 1586 dt
+297 650 4313 336 dr
+grestore gsave
+1013 650 3300 336 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+4313 835 mv
+4610 835 dl
+(sky) 4337 804 dt
+(skySlope) 4337 761 dt
+(lbias) 4337 718 dt
+(rbias) 4337 675 dt
+(mag20) 4337 633 dt
+(mag20err) 4337 590 dt
+(psfSigX1) 4337 547 dt
+(psfSigX2) 4337 504 dt
+(psfSigY1) 4337 461 dt
+(psfSigY2) 4337 418 dt
+(psfB) 4337 376 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Photometric ) 4358 930 dt
+(Transformation) 4339 899 dt
+225 265 6038 1976 dr
+grestore gsave
+2738 265 3300 1976 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6038 2047 mv
+6263 2047 dl
+(field0) 6062 2016 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 6086 2185 dt
+(Pipeline ) 6082 2155 dt
+(Run) 6118 2124 dt
+289 395 6009 900 dr
+grestore gsave
+2709 395 3300 900 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6009 1185 mv
+6298 1185 dl
+(status) 6034 1154 dt
+(id) 6034 1112 dt
+(starLikelyhood) 6034 1069 dt
+(diskLikelihood) 6034 1026 dt
+(ellipLikelihood) 6034 983 dt
+(classification) 6034 940 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object) 6102 1239 dt
+252 361 6006 416 dr
+grestore gsave
+2706 361 3300 416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6006 656 mv
+6258 656 dl
+(filter) 6038 626 dt
+(x) 6038 574 dt
+(y) 6038 522 dt
+(flags) 6038 470 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Detection) 6056 721 dt
+6262 900 mv
+6263 847 dl
+6441 847 dl
+6441 976 dl
+6298 976 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6243 871 b
+6262 900 l
+6280 872 l
+6263 832 l
+6243 871 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 6308 976 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) 6292 822 dt
+6065 900 mv
+6066 847 dl
+5934 847 dl
+5934 966 dl
+6009 966 dl
+15 16 6065 891 do
+15 16 6000 966 do
+6128 900 mv
+6128 777 dl
+brush_solid
+/brush_rgb [1 1 1] def
+6109 871 b
+6128 900 l
+6146 871 l
+6128 831 l
+6109 871 dg
+brush_solid
+/brush_rgb [0 0 0] def
+6146 797 b
+6109 797 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 6158 809 dt
+brush_solid
+/brush_rgb [1 1 1] def
+304 464 6572 313 dr
+grestore gsave
+3272 464 3300 313 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6572 656 mv
+6876 656 dl
+(nCols) 6604 626 dt
+(nRows) 6604 574 dt
+(col0) 6604 522 dt
+(row0) 6604 470 dt
+(pixelMap) 6604 418 dt
+(objectMask) 6604 367 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Atlas Image) 6631 721 dt
+516 723 5873 -444 dr
+grestore gsave
+2573 279 3300 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5873 158 mv
+6389 158 dl
+(apFlux) 5905 127 dt
+(psfFlux) 5905 76 dt
+(totalFlux) 5905 24 dt
+(stoke1) 5905 -28 dt
+(stoke2) 5905 -80 dt
+(stoke3) 5905 -131 dt
+(stoke4) 5905 -183 dt
+(classification) 5905 -235 dt
+(classificationProb) 5905 -287 dt
+(bulgeDisk) 5905 -339 dt
+(bulgeDiskProb) 5905 -390 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Small Object Detection) 5950 223 dt
+6258 609 mv
+6572 609 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6286 629 b
+6258 609 l
+6286 589 l
+6323 609 l
+6286 629 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+563 309 5850 -877 dr
+grestore gsave
+2550 568 3300 -568 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5850 -688 mv
+6413 -688 dl
+(petrosianRadius) 5882 -719 dt
+(petrosianFlux) 5882 -771 dt
+(surfaceBrightness) 5882 -823 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Medium Object Detection) 5932 -624 dt
+6122 279 mv
+6122 416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6075 327 b
+6122 367 l
+6169 327 l
+6075 327 dg
+6122 -568 mv
+6122 -444 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6075 -534 b
+6122 -494 l
+6169 -534 l
+6075 -534 dg
+399 309 6633 -508 dr
+grestore gsave
+3333 199 3300 -199 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6633 -320 mv
+7032 -320 dl
+(meanPixelFlux) 6665 -351 dt
+(medianPixelFlux) 6665 -402 dt
+(variance) 6665 -454 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Radial Bin) 6751 -255 dt
+6389 -247 mv
+6633 -247 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6417 -227 b
+6389 -247 l
+6417 -267 l
+6455 -247 l
+6417 -227 dg
+brush_solid
+/brush_rgb [0 0 0] def
+6614 -227 b
+6614 -267 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({ordered}) 6447 -326 dt
+brush_solid
+/brush_rgb [1 1 1] def
+272 308 5353 977 dr
+grestore gsave
+2053 308 3300 977 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5353 1114 mv
+5625 1114 dl
+(pixelMap) 5385 1083 dt
+(filter) 5385 1031 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Corrected ) 5407 1229 dt
+(Frame) 5439 1198 dt
+1125 1809 mv
+1125 1614 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1106 1779 b
+1125 1809 l
+1144 1779 l
+1125 1739 l
+1106 1779 dg
+brush_solid
+/brush_rgb [0 0 0] def
+1144 1634 b
+1106 1634 dl
+1152 1327 mv
+1153 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+1133 1297 b
+1152 1327 l
+1171 1298 l
+1152 1257 l
+1133 1297 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1152 1007 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 114 3366 2416 dr
+grestore gsave
+66 114 3300 2416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Product) 3416 2474 dt
+497 2181 mv
+497 2326 dl
+3477 2326 dl
+3477 2326 mv
+3477 2326 dl
+3477 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 2326 b
+3477 2366 l
+3524 2326 l
+3430 2326 dg
+289 1057 253 1124 dr
+grestore gsave
+289 1057 253 1124 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+253 2072 mv
+542 2072 dl
+(strip) 278 2041 dt
+(id) 278 1998 dt
+(flavor) 278 1955 dt
+(sys_scn) 278 1912 dt
+(eqnx_scn) 278 1870 dt
+(node) 278 1827 dt
+(incl) 278 1784 dt
+(xBore) 278 1741 dt
+(yBore) 278 1698 dt
+(system) 278 1656 dt
+(equinox) 278 1613 dt
+(c_obs) 278 1570 dt
+(colBin) 278 1527 dt
+(rowBin) 278 1484 dt
+(bias) 278 1441 dt
+(overscan) 278 1399 dt
+(quality) 278 1356 dt
+253 1323 mv
+542 1323 dl
+(zenithDistance) 278 1292 dt
+(airmass) 278 1249 dt
+(tcc) 278 1206 dt
+(nFrames) 278 1163 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Imaging Run) 297 2126 dt
+225 114 197 2416 dr
+grestore gsave
+225 114 197 2416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Stripe) 263 2474 dt
+301 2181 mv
+300 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 300 2192 do
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 300 2406 do
+3441 1223 mv
+3441 986 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3422 1193 b
+3441 1223 l
+3459 1193 l
+3441 1153 l
+3422 1193 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3441 996 do
+3419 1723 mv
+3419 2326 dl
+3477 2326 dl
+3477 2326 mv
+3477 2326 dl
+3477 2416 dl
+brush_solid
+/brush_rgb [1 1 1] def
+3430 2326 b
+3477 2366 l
+3524 2326 l
+3430 2326 dg
+2678 1674 mv
+542 1673 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2668 1674 do
+brush_solid
+/brush_rgb [1 1 1] def
+240 308 3263 -198 dr
+grestore gsave
+37 110 3263 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3263 -85 mv
+3503 -85 dl
+(startField) 3287 -116 dt
+(endField) 3287 -158 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 3285 54 dt
+(Pipeline ) 3314 23 dt
+(Plan) 3348 -8 dt
+225 165 3309 -982 dr
+grestore gsave
+9 817 3300 -817 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Plan Entry) 3340 -873 dt
+3405 -198 mv
+3405 -727 dl
+3418 -727 dl
+3418 -727 mv
+3418 -727 dl
+3418 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 -727 b
+3418 -767 l
+3371 -727 l
+3465 -727 dg
+225 165 4069 821 dr
+grestore gsave
+769 165 3300 821 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Bias ) 4142 930 dt
+(Vector) 4130 899 dt
+256 165 3778 821 dr
+grestore gsave
+478 165 3300 821 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Flat Field ) 3829 930 dt
+(Vector) 3854 899 dt
+4247 1332 mv
+4247 1242 dl
+4247 1242 dl
+4247 1242 mv
+4472 1242 dl
+4472 986 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+4228 1302 b
+4247 1332 l
+4266 1302 l
+4247 1262 l
+4228 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 4472 996 do
+4247 1332 mv
+4247 1242 dl
+4247 1242 dl
+3906 986 mv
+3906 1242 dl
+4247 1242 dl
+brush_solid
+/brush_rgb [1 1 1] def
+4228 1302 b
+4247 1332 l
+4266 1302 l
+4247 1262 l
+4228 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3906 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 393 4069 -403 dr
+grestore gsave
+769 10 3300 -10 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+4069 -247 mv
+4294 -247 dl
+(camCol) 4093 -278 dt
+(startField) 4093 -321 dt
+(endField) 4093 -364 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 4113 -66 dt
+(Stamp ) 4126 -97 dt
+(Pipeline ) 4113 -128 dt
+(Plan) 4147 -158 dt
+3477 2326 mv
+4245 2326 dl
+4245 1703 dl
+3477 2326 mv
+3477 2326 dl
+3477 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 2326 b
+3477 2366 l
+3524 2326 l
+3430 2326 dg
+3418 -727 mv
+4178 -727 dl
+4178 -403 dl
+3418 -727 mv
+3418 -727 dl
+3418 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 -727 b
+3418 -767 l
+3371 -727 l
+3465 -727 dg
+316 256 5531 521 dr
+grestore gsave
+2231 256 3300 521 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5531 606 mv
+5847 606 dl
+(pixelMap) 5563 575 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Binned Noise ) 5578 721 dt
+(Frame) 5639 690 dt
+5578 977 mv
+5578 777 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+5559 947 b
+5578 977 l
+5597 947 l
+5578 907 l
+5559 947 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+368 568 5109 209 dr
+grestore gsave
+1809 568 3300 209 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5109 656 mv
+5477 656 dl
+(minPix) 5141 626 dt
+(maxPix) 5141 574 dt
+(meanPix) 5141 522 dt
+(sigPix) 5141 470 dt
+(sky) 5141 418 dt
+(nBadPix) 5141 367 dt
+(nBrightObj) 5141 315 dt
+(nFaintObj) 5141 263 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame Statistic) 5174 721 dt
+5400 977 mv
+5400 777 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+5381 947 b
+5400 977 l
+5419 947 l
+5400 907 l
+5381 947 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+244 671 272 6 dr
+grestore gsave
+244 671 272 6 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+272 557 mv
+516 557 dl
+(frame) 304 526 dt
+(cpu) 304 474 dt
+(tai) 304 422 dt
+(coord) 304 371 dt
+(spa) 304 319 dt
+(ipa) 304 267 dt
+(ipaRate) 304 215 dt
+(az) 304 163 dt
+(alt) 304 112 dt
+(focus) 304 60 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(TCC Info) 325 622 dt
+317 1422 1622 -715 dr
+grestore gsave
+317 707 1622 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1622 598 mv
+1939 598 dl
+(rowCentroid) 1646 567 dt
+(colCentroid) 1646 524 dt
+(stampThresh) 1646 481 dt
+(nPixOThrsh) 1646 438 dt
+(sumWeights) 1646 395 dt
+(quadMomRR) 1646 353 dt
+(quadMomRC) 1646 310 dt
+(quadMomCC) 1646 267 dt
+(eccentricity) 1646 224 dt
+(rMajor) 1646 181 dt
+(rMinor) 1646 138 dt
+(angMajorAxis) 1646 96 dt
+(angMinorAxis) 1646 53 dt
+(rowAmp) 1646 10 dt
+(rowSky) 1646 -33 dt
+(rowCenter) 1646 -76 dt
+(rowSigma) 1646 -119 dt
+(numRowPixels) 1646 -161 dt
+(rowReducedChi2) 1646 -204 dt
+(colAmp) 1646 -247 dt
+(colSky) 1646 -290 dt
+(colCenter) 1646 -333 dt
+(colSigma) 1646 -376 dt
+(numColPixels) 1646 -418 dt
+(colReducedChi2) 1646 -461 dt
+(statusFit) 1646 -504 dt
+(filterRow) 1646 -547 dt
+(filterCol) 1646 -590 dt
+(filMarRow) 1646 -633 dt
+(filMarCol) 1646 -675 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(DA Star) 1719 651 dt
+394 1124 mv
+394 677 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+375 1094 b
+394 1124 l
+413 1094 l
+394 1054 l
+375 1094 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 394 687 do
+1238 637 mv
+1238 339 dl
+1622 339 dl
+brush_solid
+/brush_rgb [1 1 1] def
+1219 607 b
+1238 637 l
+1256 607 l
+1238 567 l
+1219 607 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 1613 339 do
+2616 -231 mv
+2616 -877 dl
+638 -877 dl
+638 1335 dl
+542 1335 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2616 -241 do
+1200 1126 mv
+3844 1126 dl
+3844 986 dl
+1200 1126 mv
+1200 1126 dl
+1200 1327 dl
+15 16 3844 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 500 2678 1213 dr
+grestore gsave
+225 500 2678 1213 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2678 1519 mv
+2903 1519 dl
+(camCol) 2703 1488 dt
+(field0) 2703 1445 dt
+2678 1412 mv
+2903 1412 dl
+(c0) 2703 1382 dt
+(c2) 2703 1339 dt
+(stars) 2703 1296 dt
+(nFields) 2703 1253 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) 2753 1657 dt
+(Pipeline ) 2723 1627 dt
+(Run) 2759 1596 dt
+2795 1713 mv
+2795 2326 dl
+3477 2326 dl
+3477 2326 mv
+3477 2326 dl
+3477 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 2326 b
+3477 2366 l
+3524 2326 l
+3430 2326 dg
+3477 2326 mv
+6186 2326 dl
+6186 2241 dl
+3477 2326 mv
+3477 2326 dl
+3477 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 2326 b
+3477 2366 l
+3524 2326 l
+3430 2326 dg
+225 351 2569 -231 dr
+grestore gsave
+225 120 2569 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2569 -75 mv
+2794 -75 dl
+(camCol) 2593 -106 dt
+(startField) 2593 -148 dt
+(endField) 2593 -191 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) 2643 64 dt
+(Pipeline ) 2613 33 dt
+(Plan) 2646 2 dt
+2671 -231 mv
+2671 -727 dl
+3418 -727 dl
+3418 -727 mv
+3418 -727 dl
+3418 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 -727 b
+3418 -767 l
+3371 -727 l
+3465 -727 dg
+225 351 5119 -530 dr
+grestore gsave
+1819 179 3300 -179 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5119 -374 mv
+5344 -374 dl
+(camCol) 5143 -404 dt
+(startField) 5143 -447 dt
+(endField) 5143 -490 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 5168 -235 dt
+(Pipeline ) 5163 -266 dt
+(Plan) 5196 -297 dt
+3418 -727 mv
+5231 -727 dl
+5231 -530 dl
+3418 -727 mv
+3418 -727 dl
+3418 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 -727 b
+3418 -767 l
+3371 -727 l
+3465 -727 dg
+237 217 2559 779 dr
+grestore gsave
+237 217 2559 779 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) 2639 940 dt
+(Postage ) 2609 909 dt
+(Stamp) 2627 879 dt
+2559 946 mv
+1368 946 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1452 996 b
+1415 946 l
+1452 896 l
+1452 996 dg
+2559 819 mv
+1368 819 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2550 819 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({same field, different frame}) 1398 740 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) 1398 851 dt
+2719 1213 mv
+2719 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2700 1183 b
+2719 1213 l
+2738 1183 l
+2719 1144 l
+2700 1183 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2719 1006 do
+4247 1332 mv
+4247 1242 dl
+4247 1242 dl
+4175 986 mv
+4175 1242 dl
+4247 1242 dl
+brush_solid
+/brush_rgb [1 1 1] def
+4228 1302 b
+4247 1332 l
+4266 1302 l
+4247 1262 l
+4228 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 4175 996 do
+1200 1126 mv
+4106 1126 dl
+4106 986 dl
+1200 1126 mv
+1200 1126 dl
+1200 1327 dl
+15 16 4106 996 do
+1200 1126 mv
+4364 1126 dl
+4364 986 dl
+1200 1126 mv
+1200 1126 dl
+1200 1327 dl
+15 16 4364 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 394 6028 1409 dr
+grestore gsave
+2728 394 3300 1409 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6028 1652 mv
+6253 1652 dl
+(nObjects) 6053 1621 dt
+(nStars) 6053 1578 dt
+(nGalaxies) 6053 1535 dt
+(status) 6053 1492 dt
+(quality) 6053 1449 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object ) 6084 1747 dt
+(List) 6112 1716 dt
+6143 1976 mv
+6143 1803 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6125 1946 b
+6143 1976 l
+6162 1946 l
+6143 1907 l
+6125 1946 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 6143 1813 do
+6143 1409 mv
+6143 1295 dl
+brush_solid
+/brush_rgb [1 1 1] def
+6124 1380 b
+6143 1409 l
+6161 1380 l
+6143 1340 l
+6124 1380 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 6143 1305 do
+6028 1574 mv
+5503 1574 dl
+5504 1285 dl
+brush_solid
+/brush_rgb [1 1 1] def
+6000 1594 b
+6028 1574 l
+6000 1554 l
+5963 1574 l
+6000 1594 dg
+brush_solid
+/brush_rgb [0 0 0] def
+5522 1306 b
+5484 1305 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 5534 1317 dt
+6084 1803 mv
+6084 1873 dl
+1238 1873 dl
+15 16 6084 1813 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 181 2559 397 dr
+grestore gsave
+225 181 2559 397 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2559 468 mv
+2784 468 dl
+(sscStatus) 2584 437 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC Star) 2602 522 dt
+2559 488 mv
+1939 488 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2023 538 b
+1986 488 l
+2023 438 l
+2023 538 dg
+2681 779 mv
+2681 578 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2663 749 b
+2681 779 l
+2700 749 l
+2681 709 l
+2663 749 dg
+brush_solid
+/brush_rgb [0 0 0] def
+3302 1634 mv
+2903 1634 dl
+15 16 3293 1634 do
+2922 1654 b
+2922 1614 dl
+4191 1703 mv
+4191 1942 dl
+2841 1942 dl
+2841 1713 dl
+15 16 4191 1713 do
+brush_solid
+/brush_rgb [1 1 1] def
+241 500 3302 1223 dr
+grestore gsave
+2 500 3300 1223 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3302 1572 mv
+3543 1572 dl
+(incl) 3326 1541 dt
+(node) 3326 1498 dt
+(equinox) 3326 1455 dt
+(field0) 3326 1412 dt
+3302 1380 mv
+3543 1380 dl
+(trans) 3326 1349 dt
+(nFields) 3326 1306 dt
+(run) 3326 1263 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 3324 1667 dt
+(Calibration) 3335 1637 dt
+4134 1634 mv
+3543 1634 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 4125 1634 do
+6038 2092 mv
+3497 2092 dl
+3497 1723 dl
+15 16 6028 2092 do
+6038 2002 mv
+4313 2002 dl
+4313 1703 dl
+15 16 6028 2002 do
+3263 20 mv
+3103 20 dl
+3103 1494 dl
+2903 1494 dl
+15 16 3253 20 do
+2922 1514 b
+2922 1474 dl
+4069 -329 mv
+3075 -329 dl
+3075 1444 dl
+2903 1446 dl
+15 16 4059 -329 do
+4069 -120 mv
+3684 -120 dl
+3684 1444 dl
+3543 1444 dl
+15 16 4059 -120 do
+grestore gsave
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica-BoldOblique f
+() 0 2504 dt
+() 1650 2504 dt
+() 3300 2504 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica f
+(Mon Mar 18 19960:29:58 ) 0 58 dt
+(Imaging) 1576 58 dt
+(1) 3277 58 dt
+showpage
+%%PageTrailer
+% End of page 1
+%%Page: 1 2
+72 res div dup scale
+2550 3300 0 0 sc
+2550 0 translate 90 rotate
+gsave
+2120 3157 1655 -896 dr
+brush_solid
+/brush_rgb [0 0 0] def
+3775 2251 b
+3784 2251 l
+3784 -906 l
+1664 -906 l
+1664 -896 l
+3775 -896 l
+3775 2251 dg
+grestore gsave
+1645 2261 1655 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Frames Pipeline) 1685 2199 dt
+brush_solid
+/brush_rgb [1 1 1] def
+2072 3028 -3135 -757 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-1063 2261 b
+-1054 2261 l
+-1054 -767 l
+-3126 -767 l
+-3126 -757 l
+-1063 -757 l
+-1063 2261 dg
+grestore gsave
+1054 2271 -1054 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Drift Scan Run) -1373 2209 dt
+brush_solid
+/brush_rgb [1 1 1] def
+506 2102 -791 -279 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-285 1813 b
+-276 1813 l
+-276 -289 l
+-782 -289 l
+-782 -279 l
+-285 -279 l
+-285 1813 dg
+grestore gsave
+276 1823 -276 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(SSC Pipeline) -662 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+919 2331 446 -508 dr
+brush_solid
+/brush_rgb [0 0 0] def
+1365 1813 b
+1374 1813 l
+1374 -518 l
+455 -518 l
+455 -508 l
+1365 -508 l
+1365 1813 dg
+grestore gsave
+928 1823 446 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Postage Stamp Pipeline) 476 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+498 2112 -173 -289 dr
+brush_solid
+/brush_rgb [0 0 0] def
+325 1813 b
+334 1813 l
+334 -299 l
+-164 -299 l
+-164 -289 l
+325 -289 l
+325 1813 dg
+grestore gsave
+334 1823 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric Pipelines) -143 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+225 287 -2301 1327 dr
+grestore gsave
+2076 287 -2076 1327 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2301 1504 mv
+-2076 1504 dl
+(filter) -2276 1473 dt
+(pixelMap) -2276 1430 dt
+-2301 1398 mv
+-2076 1398 dl
+(camRow) -2276 1367 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame) -2238 1558 dt
+-2762 1912 mv
+-2291 1912 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2734 1932 b
+-2762 1912 l
+-2734 1893 l
+-2696 1912 l
+-2734 1932 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2301 1912 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 360 -2470 636 dr
+grestore gsave
+2245 360 -2245 636 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2470 876 mv
+-2245 876 dl
+(q1) -2438 845 dt
+(q2) -2438 793 dt
+(q3) -2438 741 dt
+(mode) -2438 689 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Quartile) -2419 940 dt
+252 359 -2188 637 dr
+grestore gsave
+1936 359 -1936 637 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2188 825 mv
+-1936 825 dl
+(pixelMap) -2156 794 dt
+(midRow) -2156 742 dt
+(midCol) -2156 690 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -2131 940 dt
+(Stamp) -2113 909 dt
+297 436 -32 550 dr
+grestore gsave
+265 436 0 550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-32 835 mv
+265 835 dl
+(a) -8 804 dt
+(b) -8 761 dt
+(c) -8 718 dt
+(d) -8 675 dt
+(e) -8 633 dt
+(f) -8 590 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 18 930 dt
+(Transformation) -6 899 dt
+-2104 1126 mv
+15 1126 dl
+15 986 dl
+-2104 1126 mv
+-2104 1126 dl
+-2104 1327 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 15 996 do
+-2273 1327 mv
+-2273 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2291 1297 b
+-2273 1327 l
+-2254 1297 l
+-2273 1257 l
+-2291 1297 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2273 1006 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 223 -2291 1809 dr
+grestore gsave
+2066 223 -2066 1809 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2291 1922 mv
+-2066 1922 dl
+(id) -2267 1892 dt
+(camCol) -2267 1849 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Field) -2217 1976 dt
+225 371 830 1332 dr
+grestore gsave
+225 371 830 1332 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+830 1509 mv
+1055 1509 dl
+(field0) 855 1478 dt
+830 1445 mv
+1055 1445 dl
+(trans) 855 1414 dt
+(nFields) 855 1372 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 874 1648 dt
+(Stamp ) 888 1617 dt
+(Calibration) 856 1586 dt
+297 650 1009 336 dr
+grestore gsave
+297 650 1009 336 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1009 835 mv
+1306 835 dl
+(sky) 1033 804 dt
+(skySlope) 1033 761 dt
+(lbias) 1033 718 dt
+(rbias) 1033 675 dt
+(mag20) 1033 633 dt
+(mag20err) 1033 590 dt
+(psfSigX1) 1033 547 dt
+(psfSigX2) 1033 504 dt
+(psfSigY1) 1033 461 dt
+(psfSigY2) 1033 418 dt
+(psfB) 1033 376 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Photometric ) 1054 930 dt
+(Transformation) 1035 899 dt
+225 265 2734 1976 dr
+grestore gsave
+225 265 2734 1976 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2734 2047 mv
+2959 2047 dl
+(field0) 2758 2016 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 2782 2185 dt
+(Pipeline ) 2778 2155 dt
+(Run) 2814 2124 dt
+289 395 2705 900 dr
+grestore gsave
+289 395 2705 900 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2705 1185 mv
+2994 1185 dl
+(status) 2730 1154 dt
+(id) 2730 1112 dt
+(starLikelyhood) 2730 1069 dt
+(diskLikelihood) 2730 1026 dt
+(ellipLikelihood) 2730 983 dt
+(classification) 2730 940 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object) 2798 1239 dt
+252 361 2702 416 dr
+grestore gsave
+252 361 2702 416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2702 656 mv
+2954 656 dl
+(filter) 2734 626 dt
+(x) 2734 574 dt
+(y) 2734 522 dt
+(flags) 2734 470 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Detection) 2752 721 dt
+2958 900 mv
+2959 847 dl
+3137 847 dl
+3137 976 dl
+2994 976 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2939 871 b
+2958 900 l
+2976 872 l
+2959 832 l
+2939 871 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3004 976 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) 2988 822 dt
+2761 900 mv
+2762 847 dl
+2630 847 dl
+2630 966 dl
+2705 966 dl
+15 16 2761 891 do
+15 16 2696 966 do
+2824 900 mv
+2824 777 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2805 871 b
+2824 900 l
+2842 871 l
+2824 831 l
+2805 871 dg
+brush_solid
+/brush_rgb [0 0 0] def
+2842 797 b
+2805 797 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 2854 809 dt
+brush_solid
+/brush_rgb [1 1 1] def
+304 464 3268 313 dr
+grestore gsave
+32 464 3268 313 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3268 656 mv
+3572 656 dl
+(nCols) 3300 626 dt
+(nRows) 3300 574 dt
+(col0) 3300 522 dt
+(row0) 3300 470 dt
+(pixelMap) 3300 418 dt
+(objectMask) 3300 367 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Atlas Image) 3327 721 dt
+516 723 2569 -444 dr
+grestore gsave
+516 279 2569 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2569 158 mv
+3085 158 dl
+(apFlux) 2601 127 dt
+(psfFlux) 2601 76 dt
+(totalFlux) 2601 24 dt
+(stoke1) 2601 -28 dt
+(stoke2) 2601 -80 dt
+(stoke3) 2601 -131 dt
+(stoke4) 2601 -183 dt
+(classification) 2601 -235 dt
+(classificationProb) 2601 -287 dt
+(bulgeDisk) 2601 -339 dt
+(bulgeDiskProb) 2601 -390 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Small Object Detection) 2646 223 dt
+2954 609 mv
+3268 609 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2982 629 b
+2954 609 l
+2982 589 l
+3019 609 l
+2982 629 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+563 309 2546 -877 dr
+grestore gsave
+563 568 2546 -568 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2546 -688 mv
+3109 -688 dl
+(petrosianRadius) 2578 -719 dt
+(petrosianFlux) 2578 -771 dt
+(surfaceBrightness) 2578 -823 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Medium Object Detection) 2628 -624 dt
+2818 279 mv
+2818 416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2771 327 b
+2818 367 l
+2865 327 l
+2771 327 dg
+2818 -568 mv
+2818 -444 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2771 -534 b
+2818 -494 l
+2865 -534 l
+2771 -534 dg
+399 309 3329 -508 dr
+grestore gsave
+29 199 3300 -199 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3329 -320 mv
+3728 -320 dl
+(meanPixelFlux) 3361 -351 dt
+(medianPixelFlux) 3361 -402 dt
+(variance) 3361 -454 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Radial Bin) 3447 -255 dt
+3085 -247 mv
+3329 -247 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3113 -227 b
+3085 -247 l
+3113 -267 l
+3151 -247 l
+3113 -227 dg
+brush_solid
+/brush_rgb [0 0 0] def
+3310 -227 b
+3310 -267 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({ordered}) 3143 -326 dt
+brush_solid
+/brush_rgb [1 1 1] def
+272 308 2049 977 dr
+grestore gsave
+272 308 2049 977 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2049 1114 mv
+2321 1114 dl
+(pixelMap) 2081 1083 dt
+(filter) 2081 1031 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Corrected ) 2103 1229 dt
+(Frame) 2135 1198 dt
+-2179 1809 mv
+-2179 1614 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2198 1779 b
+-2179 1809 l
+-2160 1779 l
+-2179 1739 l
+-2198 1779 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-2160 1634 b
+-2198 1634 dl
+-2152 1327 mv
+-2151 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2171 1297 b
+-2152 1327 l
+-2133 1298 l
+-2152 1257 l
+-2171 1297 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2152 1007 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 114 62 2416 dr
+grestore gsave
+225 114 62 2416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Product) 112 2474 dt
+-2807 2181 mv
+-2807 2326 dl
+173 2326 dl
+173 2326 mv
+173 2326 dl
+173 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 2326 b
+173 2366 l
+220 2326 l
+126 2326 dg
+289 1057 -3051 1124 dr
+grestore gsave
+2762 1057 -2762 1124 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3051 2072 mv
+-2762 2072 dl
+(strip) -3026 2041 dt
+(id) -3026 1998 dt
+(flavor) -3026 1955 dt
+(sys_scn) -3026 1912 dt
+(eqnx_scn) -3026 1870 dt
+(node) -3026 1827 dt
+(incl) -3026 1784 dt
+(xBore) -3026 1741 dt
+(yBore) -3026 1698 dt
+(system) -3026 1656 dt
+(equinox) -3026 1613 dt
+(c_obs) -3026 1570 dt
+(colBin) -3026 1527 dt
+(rowBin) -3026 1484 dt
+(bias) -3026 1441 dt
+(overscan) -3026 1399 dt
+(quality) -3026 1356 dt
+-3051 1323 mv
+-2762 1323 dl
+(zenithDistance) -3026 1292 dt
+(airmass) -3026 1249 dt
+(tcc) -3026 1206 dt
+(nFrames) -3026 1163 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Imaging Run) -3007 2126 dt
+225 114 -3107 2416 dr
+grestore gsave
+2882 114 -2882 2416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Stripe) -3041 2474 dt
+-3003 2181 mv
+-3004 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3004 2192 do
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -3004 2406 do
+137 1223 mv
+137 986 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+118 1193 b
+137 1223 l
+155 1193 l
+137 1153 l
+118 1193 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 137 996 do
+115 1723 mv
+115 2326 dl
+173 2326 dl
+173 2326 mv
+173 2326 dl
+173 2416 dl
+brush_solid
+/brush_rgb [1 1 1] def
+126 2326 b
+173 2366 l
+220 2326 l
+126 2326 dg
+-626 1674 mv
+-2762 1673 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -636 1674 do
+brush_solid
+/brush_rgb [1 1 1] def
+240 308 -41 -198 dr
+grestore gsave
+199 110 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-41 -85 mv
+199 -85 dl
+(startField) -17 -116 dt
+(endField) -17 -158 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -19 54 dt
+(Pipeline ) 10 23 dt
+(Plan) 44 -8 dt
+225 165 5 -982 dr
+grestore gsave
+225 817 5 -817 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Plan Entry) 36 -873 dt
+101 -198 mv
+101 -727 dl
+114 -727 dl
+114 -727 mv
+114 -727 dl
+114 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 -727 b
+114 -767 l
+67 -727 l
+161 -727 dg
+225 165 765 821 dr
+grestore gsave
+225 165 765 821 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Bias ) 838 930 dt
+(Vector) 826 899 dt
+256 165 474 821 dr
+grestore gsave
+256 165 474 821 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Flat Field ) 525 930 dt
+(Vector) 550 899 dt
+943 1332 mv
+943 1242 dl
+943 1242 dl
+943 1242 mv
+1168 1242 dl
+1168 986 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+924 1302 b
+943 1332 l
+962 1302 l
+943 1262 l
+924 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1168 996 do
+943 1332 mv
+943 1242 dl
+943 1242 dl
+602 986 mv
+602 1242 dl
+943 1242 dl
+brush_solid
+/brush_rgb [1 1 1] def
+924 1302 b
+943 1332 l
+962 1302 l
+943 1262 l
+924 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 602 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 393 765 -403 dr
+grestore gsave
+225 10 765 -10 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+765 -247 mv
+990 -247 dl
+(camCol) 789 -278 dt
+(startField) 789 -321 dt
+(endField) 789 -364 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 809 -66 dt
+(Stamp ) 822 -97 dt
+(Pipeline ) 809 -128 dt
+(Plan) 843 -158 dt
+173 2326 mv
+941 2326 dl
+941 1703 dl
+173 2326 mv
+173 2326 dl
+173 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 2326 b
+173 2366 l
+220 2326 l
+126 2326 dg
+114 -727 mv
+874 -727 dl
+874 -403 dl
+114 -727 mv
+114 -727 dl
+114 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 -727 b
+114 -767 l
+67 -727 l
+161 -727 dg
+316 256 2227 521 dr
+grestore gsave
+316 256 2227 521 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2227 606 mv
+2543 606 dl
+(pixelMap) 2259 575 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Binned Noise ) 2274 721 dt
+(Frame) 2335 690 dt
+2274 977 mv
+2274 777 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2255 947 b
+2274 977 l
+2293 947 l
+2274 907 l
+2255 947 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+368 568 1805 209 dr
+grestore gsave
+368 568 1805 209 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1805 656 mv
+2173 656 dl
+(minPix) 1837 626 dt
+(maxPix) 1837 574 dt
+(meanPix) 1837 522 dt
+(sigPix) 1837 470 dt
+(sky) 1837 418 dt
+(nBadPix) 1837 367 dt
+(nBrightObj) 1837 315 dt
+(nFaintObj) 1837 263 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame Statistic) 1870 721 dt
+2096 977 mv
+2096 777 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2077 947 b
+2096 977 l
+2115 947 l
+2096 907 l
+2077 947 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+244 671 -3032 6 dr
+grestore gsave
+2788 671 -2788 6 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3032 557 mv
+-2788 557 dl
+(frame) -3000 526 dt
+(cpu) -3000 474 dt
+(tai) -3000 422 dt
+(coord) -3000 371 dt
+(spa) -3000 319 dt
+(ipa) -3000 267 dt
+(ipaRate) -3000 215 dt
+(az) -3000 163 dt
+(alt) -3000 112 dt
+(focus) -3000 60 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(TCC Info) -2979 622 dt
+317 1422 -1682 -715 dr
+grestore gsave
+1365 707 -1365 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1682 598 mv
+-1365 598 dl
+(rowCentroid) -1658 567 dt
+(colCentroid) -1658 524 dt
+(stampThresh) -1658 481 dt
+(nPixOThrsh) -1658 438 dt
+(sumWeights) -1658 395 dt
+(quadMomRR) -1658 353 dt
+(quadMomRC) -1658 310 dt
+(quadMomCC) -1658 267 dt
+(eccentricity) -1658 224 dt
+(rMajor) -1658 181 dt
+(rMinor) -1658 138 dt
+(angMajorAxis) -1658 96 dt
+(angMinorAxis) -1658 53 dt
+(rowAmp) -1658 10 dt
+(rowSky) -1658 -33 dt
+(rowCenter) -1658 -76 dt
+(rowSigma) -1658 -119 dt
+(numRowPixels) -1658 -161 dt
+(rowReducedChi2) -1658 -204 dt
+(colAmp) -1658 -247 dt
+(colSky) -1658 -290 dt
+(colCenter) -1658 -333 dt
+(colSigma) -1658 -376 dt
+(numColPixels) -1658 -418 dt
+(colReducedChi2) -1658 -461 dt
+(statusFit) -1658 -504 dt
+(filterRow) -1658 -547 dt
+(filterCol) -1658 -590 dt
+(filMarRow) -1658 -633 dt
+(filMarCol) -1658 -675 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(DA Star) -1585 651 dt
+-2910 1124 mv
+-2910 677 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2929 1094 b
+-2910 1124 l
+-2891 1094 l
+-2910 1054 l
+-2929 1094 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2910 687 do
+-2066 637 mv
+-2066 339 dl
+-1682 339 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2085 607 b
+-2066 637 l
+-2048 607 l
+-2066 567 l
+-2085 607 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -1691 339 do
+-688 -231 mv
+-688 -877 dl
+-2666 -877 dl
+-2666 1335 dl
+-2762 1335 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -688 -241 do
+-2104 1126 mv
+540 1126 dl
+540 986 dl
+-2104 1126 mv
+-2104 1126 dl
+-2104 1327 dl
+15 16 540 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 500 -626 1213 dr
+grestore gsave
+401 500 -401 1213 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-626 1519 mv
+-401 1519 dl
+(camCol) -601 1488 dt
+(field0) -601 1445 dt
+-626 1412 mv
+-401 1412 dl
+(c0) -601 1382 dt
+(c2) -601 1339 dt
+(stars) -601 1296 dt
+(nFields) -601 1253 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -551 1657 dt
+(Pipeline ) -581 1627 dt
+(Run) -545 1596 dt
+-509 1713 mv
+-509 2326 dl
+173 2326 dl
+173 2326 mv
+173 2326 dl
+173 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 2326 b
+173 2366 l
+220 2326 l
+126 2326 dg
+173 2326 mv
+2882 2326 dl
+2882 2241 dl
+173 2326 mv
+173 2326 dl
+173 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 2326 b
+173 2366 l
+220 2326 l
+126 2326 dg
+225 351 -735 -231 dr
+grestore gsave
+510 120 -510 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-735 -75 mv
+-510 -75 dl
+(camCol) -711 -106 dt
+(startField) -711 -148 dt
+(endField) -711 -191 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -661 64 dt
+(Pipeline ) -691 33 dt
+(Plan) -658 2 dt
+-633 -231 mv
+-633 -727 dl
+114 -727 dl
+114 -727 mv
+114 -727 dl
+114 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 -727 b
+114 -767 l
+67 -727 l
+161 -727 dg
+225 351 1815 -530 dr
+grestore gsave
+225 179 1815 -179 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1815 -374 mv
+2040 -374 dl
+(camCol) 1839 -404 dt
+(startField) 1839 -447 dt
+(endField) 1839 -490 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 1864 -235 dt
+(Pipeline ) 1859 -266 dt
+(Plan) 1892 -297 dt
+114 -727 mv
+1927 -727 dl
+1927 -530 dl
+114 -727 mv
+114 -727 dl
+114 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 -727 b
+114 -767 l
+67 -727 l
+161 -727 dg
+237 217 -745 779 dr
+grestore gsave
+508 217 -508 779 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -665 940 dt
+(Postage ) -695 909 dt
+(Stamp) -677 879 dt
+-745 946 mv
+-1936 946 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1852 996 b
+-1889 946 l
+-1852 896 l
+-1852 996 dg
+-745 819 mv
+-1936 819 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -754 819 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({same field, different frame}) -1906 740 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) -1906 851 dt
+-585 1213 mv
+-585 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-604 1183 b
+-585 1213 l
+-566 1183 l
+-585 1144 l
+-604 1183 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -585 1006 do
+943 1332 mv
+943 1242 dl
+943 1242 dl
+871 986 mv
+871 1242 dl
+943 1242 dl
+brush_solid
+/brush_rgb [1 1 1] def
+924 1302 b
+943 1332 l
+962 1302 l
+943 1262 l
+924 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 871 996 do
+-2104 1126 mv
+802 1126 dl
+802 986 dl
+-2104 1126 mv
+-2104 1126 dl
+-2104 1327 dl
+15 16 802 996 do
+-2104 1126 mv
+1060 1126 dl
+1060 986 dl
+-2104 1126 mv
+-2104 1126 dl
+-2104 1327 dl
+15 16 1060 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 394 2724 1409 dr
+grestore gsave
+225 394 2724 1409 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2724 1652 mv
+2949 1652 dl
+(nObjects) 2749 1621 dt
+(nStars) 2749 1578 dt
+(nGalaxies) 2749 1535 dt
+(status) 2749 1492 dt
+(quality) 2749 1449 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object ) 2780 1747 dt
+(List) 2808 1716 dt
+2839 1976 mv
+2839 1803 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2821 1946 b
+2839 1976 l
+2858 1946 l
+2839 1907 l
+2821 1946 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2839 1813 do
+2839 1409 mv
+2839 1295 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2820 1380 b
+2839 1409 l
+2857 1380 l
+2839 1340 l
+2820 1380 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2839 1305 do
+2724 1574 mv
+2199 1574 dl
+2200 1285 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2696 1594 b
+2724 1574 l
+2696 1554 l
+2659 1574 l
+2696 1594 dg
+brush_solid
+/brush_rgb [0 0 0] def
+2218 1306 b
+2180 1305 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 2230 1317 dt
+2780 1803 mv
+2780 1873 dl
+-2066 1873 dl
+15 16 2780 1813 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 181 -745 397 dr
+grestore gsave
+520 181 -520 397 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-745 468 mv
+-520 468 dl
+(sscStatus) -720 437 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC Star) -702 522 dt
+-745 488 mv
+-1365 488 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1281 538 b
+-1318 488 l
+-1281 438 l
+-1281 538 dg
+-623 779 mv
+-623 578 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-641 749 b
+-623 779 l
+-604 749 l
+-623 709 l
+-641 749 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-2 1634 mv
+-401 1634 dl
+15 16 -11 1634 do
+-382 1654 b
+-382 1614 dl
+887 1703 mv
+887 1942 dl
+-463 1942 dl
+-463 1713 dl
+15 16 887 1713 do
+brush_solid
+/brush_rgb [1 1 1] def
+241 500 -2 1223 dr
+grestore gsave
+239 500 0 1223 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2 1572 mv
+239 1572 dl
+(incl) 22 1541 dt
+(node) 22 1498 dt
+(equinox) 22 1455 dt
+(field0) 22 1412 dt
+-2 1380 mv
+239 1380 dl
+(trans) 22 1349 dt
+(nFields) 22 1306 dt
+(run) 22 1263 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 20 1667 dt
+(Calibration) 31 1637 dt
+830 1634 mv
+239 1634 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 821 1634 do
+2734 2092 mv
+193 2092 dl
+193 1723 dl
+15 16 2724 2092 do
+2734 2002 mv
+1009 2002 dl
+1009 1703 dl
+15 16 2724 2002 do
+-41 20 mv
+-201 20 dl
+-201 1494 dl
+-401 1494 dl
+15 16 -51 20 do
+-382 1514 b
+-382 1474 dl
+765 -329 mv
+-229 -329 dl
+-229 1444 dl
+-401 1446 dl
+15 16 755 -329 do
+765 -120 mv
+380 -120 dl
+380 1444 dl
+239 1444 dl
+15 16 755 -120 do
+grestore gsave
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica-BoldOblique f
+() 0 2504 dt
+() 1650 2504 dt
+() 3300 2504 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica f
+(Mon Mar 18 19960:29:58 ) 0 58 dt
+(Imaging) 1576 58 dt
+(2) 3277 58 dt
+showpage
+%%PageTrailer
+% End of page 2
+%%Page: 1 3
+72 res div dup scale
+2550 3300 0 0 sc
+2550 0 translate 90 rotate
+gsave
+2120 3157 -1641 -896 dr
+brush_solid
+/brush_rgb [0 0 0] def
+479 2251 b
+488 2251 l
+488 -906 l
+-1632 -906 l
+-1632 -896 l
+479 -896 l
+479 2251 dg
+grestore gsave
+488 2261 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Frames Pipeline) -1611 2199 dt
+brush_solid
+/brush_rgb [1 1 1] def
+2072 3028 -6431 -757 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-4359 2261 b
+-4350 2261 l
+-4350 -767 l
+-6422 -767 l
+-6422 -757 l
+-4359 -757 l
+-4359 2261 dg
+grestore gsave
+4350 2271 -4350 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Drift Scan Run) -4669 2209 dt
+brush_solid
+/brush_rgb [1 1 1] def
+506 2102 -4087 -279 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-3581 1813 b
+-3572 1813 l
+-3572 -289 l
+-4078 -289 l
+-4078 -279 l
+-3581 -279 l
+-3581 1813 dg
+grestore gsave
+3572 1823 -3572 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(SSC Pipeline) -3958 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+919 2331 -2850 -508 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-1931 1813 b
+-1922 1813 l
+-1922 -518 l
+-2841 -518 l
+-2841 -508 l
+-1931 -508 l
+-1931 1813 dg
+grestore gsave
+1922 1823 -1922 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Postage Stamp Pipeline) -2820 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+498 2112 -3469 -289 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-2971 1813 b
+-2962 1813 l
+-2962 -299 l
+-3460 -299 l
+-3460 -289 l
+-2971 -289 l
+-2971 1813 dg
+grestore gsave
+2962 1823 -2962 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric Pipelines) -3439 1761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+225 287 -5597 1327 dr
+grestore gsave
+5372 287 -5372 1327 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5597 1504 mv
+-5372 1504 dl
+(filter) -5572 1473 dt
+(pixelMap) -5572 1430 dt
+-5597 1398 mv
+-5372 1398 dl
+(camRow) -5572 1367 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame) -5534 1558 dt
+-6058 1912 mv
+-5587 1912 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-6030 1932 b
+-6058 1912 l
+-6030 1893 l
+-5992 1912 l
+-6030 1932 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -5597 1912 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 360 -5766 636 dr
+grestore gsave
+5541 360 -5541 636 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5766 876 mv
+-5541 876 dl
+(q1) -5734 845 dt
+(q2) -5734 793 dt
+(q3) -5734 741 dt
+(mode) -5734 689 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Quartile) -5715 940 dt
+252 359 -5484 637 dr
+grestore gsave
+5232 359 -5232 637 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5484 825 mv
+-5232 825 dl
+(pixelMap) -5452 794 dt
+(midRow) -5452 742 dt
+(midCol) -5452 690 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -5427 940 dt
+(Stamp) -5409 909 dt
+297 436 -3328 550 dr
+grestore gsave
+3031 436 -3031 550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3328 835 mv
+-3031 835 dl
+(a) -3304 804 dt
+(b) -3304 761 dt
+(c) -3304 718 dt
+(d) -3304 675 dt
+(e) -3304 633 dt
+(f) -3304 590 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -3278 930 dt
+(Transformation) -3302 899 dt
+-5400 1126 mv
+-3281 1126 dl
+-3281 986 dl
+-5400 1126 mv
+-5400 1126 dl
+-5400 1327 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3281 996 do
+-5569 1327 mv
+-5569 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-5587 1297 b
+-5569 1327 l
+-5550 1297 l
+-5569 1257 l
+-5587 1297 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -5569 1006 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 223 -5587 1809 dr
+grestore gsave
+5362 223 -5362 1809 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5587 1922 mv
+-5362 1922 dl
+(id) -5563 1892 dt
+(camCol) -5563 1849 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Field) -5513 1976 dt
+225 371 -2466 1332 dr
+grestore gsave
+2241 371 -2241 1332 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2466 1509 mv
+-2241 1509 dl
+(field0) -2441 1478 dt
+-2466 1445 mv
+-2241 1445 dl
+(trans) -2441 1414 dt
+(nFields) -2441 1372 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -2422 1648 dt
+(Stamp ) -2408 1617 dt
+(Calibration) -2440 1586 dt
+297 650 -2287 336 dr
+grestore gsave
+1990 650 -1990 336 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2287 835 mv
+-1990 835 dl
+(sky) -2263 804 dt
+(skySlope) -2263 761 dt
+(lbias) -2263 718 dt
+(rbias) -2263 675 dt
+(mag20) -2263 633 dt
+(mag20err) -2263 590 dt
+(psfSigX1) -2263 547 dt
+(psfSigX2) -2263 504 dt
+(psfSigY1) -2263 461 dt
+(psfSigY2) -2263 418 dt
+(psfB) -2263 376 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Photometric ) -2242 930 dt
+(Transformation) -2261 899 dt
+225 265 -562 1976 dr
+grestore gsave
+337 265 -337 1976 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-562 2047 mv
+-337 2047 dl
+(field0) -538 2016 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) -514 2185 dt
+(Pipeline ) -518 2155 dt
+(Run) -482 2124 dt
+289 395 -591 900 dr
+grestore gsave
+302 395 -302 900 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-591 1185 mv
+-302 1185 dl
+(status) -566 1154 dt
+(id) -566 1112 dt
+(starLikelyhood) -566 1069 dt
+(diskLikelihood) -566 1026 dt
+(ellipLikelihood) -566 983 dt
+(classification) -566 940 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object) -498 1239 dt
+252 361 -594 416 dr
+grestore gsave
+342 361 -342 416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-594 656 mv
+-342 656 dl
+(filter) -562 626 dt
+(x) -562 574 dt
+(y) -562 522 dt
+(flags) -562 470 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Detection) -544 721 dt
+-338 900 mv
+-337 847 dl
+-159 847 dl
+-159 976 dl
+-302 976 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-357 871 b
+-338 900 l
+-320 872 l
+-337 832 l
+-357 871 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -292 976 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) -308 822 dt
+-535 900 mv
+-534 847 dl
+-666 847 dl
+-666 966 dl
+-591 966 dl
+15 16 -535 891 do
+15 16 -600 966 do
+-472 900 mv
+-472 777 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-491 871 b
+-472 900 l
+-454 871 l
+-472 831 l
+-491 871 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-454 797 b
+-491 797 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) -442 809 dt
+brush_solid
+/brush_rgb [1 1 1] def
+304 464 -28 313 dr
+grestore gsave
+276 464 0 313 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-28 656 mv
+276 656 dl
+(nCols) 4 626 dt
+(nRows) 4 574 dt
+(col0) 4 522 dt
+(row0) 4 470 dt
+(pixelMap) 4 418 dt
+(objectMask) 4 367 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Atlas Image) 31 721 dt
+516 723 -727 -444 dr
+grestore gsave
+211 279 -211 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-727 158 mv
+-211 158 dl
+(apFlux) -695 127 dt
+(psfFlux) -695 76 dt
+(totalFlux) -695 24 dt
+(stoke1) -695 -28 dt
+(stoke2) -695 -80 dt
+(stoke3) -695 -131 dt
+(stoke4) -695 -183 dt
+(classification) -695 -235 dt
+(classificationProb) -695 -287 dt
+(bulgeDisk) -695 -339 dt
+(bulgeDiskProb) -695 -390 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Small Object Detection) -650 223 dt
+-342 609 mv
+-28 609 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-314 629 b
+-342 609 l
+-314 589 l
+-277 609 l
+-314 629 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+563 309 -750 -877 dr
+grestore gsave
+187 568 -187 -568 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-750 -688 mv
+-187 -688 dl
+(petrosianRadius) -718 -719 dt
+(petrosianFlux) -718 -771 dt
+(surfaceBrightness) -718 -823 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Medium Object Detection) -668 -624 dt
+-478 279 mv
+-478 416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-525 327 b
+-478 367 l
+-431 327 l
+-525 327 dg
+-478 -568 mv
+-478 -444 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-525 -534 b
+-478 -494 l
+-431 -534 l
+-525 -534 dg
+399 309 33 -508 dr
+grestore gsave
+399 199 33 -199 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+33 -320 mv
+432 -320 dl
+(meanPixelFlux) 65 -351 dt
+(medianPixelFlux) 65 -402 dt
+(variance) 65 -454 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Radial Bin) 151 -255 dt
+-211 -247 mv
+33 -247 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-183 -227 b
+-211 -247 l
+-183 -267 l
+-145 -247 l
+-183 -227 dg
+brush_solid
+/brush_rgb [0 0 0] def
+14 -227 b
+14 -267 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({ordered}) -153 -326 dt
+brush_solid
+/brush_rgb [1 1 1] def
+272 308 -1247 977 dr
+grestore gsave
+975 308 -975 977 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1247 1114 mv
+-975 1114 dl
+(pixelMap) -1215 1083 dt
+(filter) -1215 1031 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Corrected ) -1193 1229 dt
+(Frame) -1161 1198 dt
+-5475 1809 mv
+-5475 1614 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-5494 1779 b
+-5475 1809 l
+-5456 1779 l
+-5475 1739 l
+-5494 1779 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-5456 1634 b
+-5494 1634 dl
+-5448 1327 mv
+-5447 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-5467 1297 b
+-5448 1327 l
+-5429 1298 l
+-5448 1257 l
+-5467 1297 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -5448 1007 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 114 -3234 2416 dr
+grestore gsave
+3009 114 -3009 2416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Product) -3184 2474 dt
+-6103 2181 mv
+-6103 2326 dl
+-3123 2326 dl
+-3123 2326 mv
+-3123 2326 dl
+-3123 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 2326 b
+-3123 2366 l
+-3076 2326 l
+-3170 2326 dg
+289 1057 -6347 1124 dr
+grestore gsave
+6058 1057 -6058 1124 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-6347 2072 mv
+-6058 2072 dl
+(strip) -6322 2041 dt
+(id) -6322 1998 dt
+(flavor) -6322 1955 dt
+(sys_scn) -6322 1912 dt
+(eqnx_scn) -6322 1870 dt
+(node) -6322 1827 dt
+(incl) -6322 1784 dt
+(xBore) -6322 1741 dt
+(yBore) -6322 1698 dt
+(system) -6322 1656 dt
+(equinox) -6322 1613 dt
+(c_obs) -6322 1570 dt
+(colBin) -6322 1527 dt
+(rowBin) -6322 1484 dt
+(bias) -6322 1441 dt
+(overscan) -6322 1399 dt
+(quality) -6322 1356 dt
+-6347 1323 mv
+-6058 1323 dl
+(zenithDistance) -6322 1292 dt
+(airmass) -6322 1249 dt
+(tcc) -6322 1206 dt
+(nFrames) -6322 1163 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Imaging Run) -6303 2126 dt
+225 114 -6403 2416 dr
+grestore gsave
+6178 114 -6178 2416 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Stripe) -6337 2474 dt
+-6299 2181 mv
+-6300 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -6300 2192 do
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -6300 2406 do
+-3159 1223 mv
+-3159 986 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3178 1193 b
+-3159 1223 l
+-3141 1193 l
+-3159 1153 l
+-3178 1193 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3159 996 do
+-3181 1723 mv
+-3181 2326 dl
+-3123 2326 dl
+-3123 2326 mv
+-3123 2326 dl
+-3123 2416 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 2326 b
+-3123 2366 l
+-3076 2326 l
+-3170 2326 dg
+-3922 1674 mv
+-6058 1673 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3932 1674 do
+brush_solid
+/brush_rgb [1 1 1] def
+240 308 -3337 -198 dr
+grestore gsave
+3097 110 -3097 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3337 -85 mv
+-3097 -85 dl
+(startField) -3313 -116 dt
+(endField) -3313 -158 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -3315 54 dt
+(Pipeline ) -3286 23 dt
+(Plan) -3252 -8 dt
+225 165 -3291 -982 dr
+grestore gsave
+3066 817 -3066 -817 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Plan Entry) -3260 -873 dt
+-3195 -198 mv
+-3195 -727 dl
+-3182 -727 dl
+-3182 -727 mv
+-3182 -727 dl
+-3182 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 -727 b
+-3182 -767 l
+-3229 -727 l
+-3135 -727 dg
+225 165 -2531 821 dr
+grestore gsave
+2306 165 -2306 821 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Bias ) -2458 930 dt
+(Vector) -2470 899 dt
+256 165 -2822 821 dr
+grestore gsave
+2566 165 -2566 821 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Flat Field ) -2771 930 dt
+(Vector) -2746 899 dt
+-2353 1332 mv
+-2353 1242 dl
+-2353 1242 dl
+-2353 1242 mv
+-2128 1242 dl
+-2128 986 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2372 1302 b
+-2353 1332 l
+-2334 1302 l
+-2353 1262 l
+-2372 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2128 996 do
+-2353 1332 mv
+-2353 1242 dl
+-2353 1242 dl
+-2694 986 mv
+-2694 1242 dl
+-2353 1242 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2372 1302 b
+-2353 1332 l
+-2334 1302 l
+-2353 1262 l
+-2372 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2694 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 393 -2531 -403 dr
+grestore gsave
+2306 10 -2306 -10 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2531 -247 mv
+-2306 -247 dl
+(camCol) -2507 -278 dt
+(startField) -2507 -321 dt
+(endField) -2507 -364 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -2487 -66 dt
+(Stamp ) -2474 -97 dt
+(Pipeline ) -2487 -128 dt
+(Plan) -2453 -158 dt
+-3123 2326 mv
+-2355 2326 dl
+-2355 1703 dl
+-3123 2326 mv
+-3123 2326 dl
+-3123 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 2326 b
+-3123 2366 l
+-3076 2326 l
+-3170 2326 dg
+-3182 -727 mv
+-2422 -727 dl
+-2422 -403 dl
+-3182 -727 mv
+-3182 -727 dl
+-3182 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 -727 b
+-3182 -767 l
+-3229 -727 l
+-3135 -727 dg
+316 256 -1069 521 dr
+grestore gsave
+753 256 -753 521 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1069 606 mv
+-753 606 dl
+(pixelMap) -1037 575 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Binned Noise ) -1022 721 dt
+(Frame) -961 690 dt
+-1022 977 mv
+-1022 777 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1041 947 b
+-1022 977 l
+-1003 947 l
+-1022 907 l
+-1041 947 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+368 568 -1491 209 dr
+grestore gsave
+1123 568 -1123 209 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1491 656 mv
+-1123 656 dl
+(minPix) -1459 626 dt
+(maxPix) -1459 574 dt
+(meanPix) -1459 522 dt
+(sigPix) -1459 470 dt
+(sky) -1459 418 dt
+(nBadPix) -1459 367 dt
+(nBrightObj) -1459 315 dt
+(nFaintObj) -1459 263 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame Statistic) -1426 721 dt
+-1200 977 mv
+-1200 777 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1219 947 b
+-1200 977 l
+-1181 947 l
+-1200 907 l
+-1219 947 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+244 671 -6328 6 dr
+grestore gsave
+6084 671 -6084 6 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-6328 557 mv
+-6084 557 dl
+(frame) -6296 526 dt
+(cpu) -6296 474 dt
+(tai) -6296 422 dt
+(coord) -6296 371 dt
+(spa) -6296 319 dt
+(ipa) -6296 267 dt
+(ipaRate) -6296 215 dt
+(az) -6296 163 dt
+(alt) -6296 112 dt
+(focus) -6296 60 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(TCC Info) -6275 622 dt
+317 1422 -4978 -715 dr
+grestore gsave
+4661 707 -4661 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-4978 598 mv
+-4661 598 dl
+(rowCentroid) -4954 567 dt
+(colCentroid) -4954 524 dt
+(stampThresh) -4954 481 dt
+(nPixOThrsh) -4954 438 dt
+(sumWeights) -4954 395 dt
+(quadMomRR) -4954 353 dt
+(quadMomRC) -4954 310 dt
+(quadMomCC) -4954 267 dt
+(eccentricity) -4954 224 dt
+(rMajor) -4954 181 dt
+(rMinor) -4954 138 dt
+(angMajorAxis) -4954 96 dt
+(angMinorAxis) -4954 53 dt
+(rowAmp) -4954 10 dt
+(rowSky) -4954 -33 dt
+(rowCenter) -4954 -76 dt
+(rowSigma) -4954 -119 dt
+(numRowPixels) -4954 -161 dt
+(rowReducedChi2) -4954 -204 dt
+(colAmp) -4954 -247 dt
+(colSky) -4954 -290 dt
+(colCenter) -4954 -333 dt
+(colSigma) -4954 -376 dt
+(numColPixels) -4954 -418 dt
+(colReducedChi2) -4954 -461 dt
+(statusFit) -4954 -504 dt
+(filterRow) -4954 -547 dt
+(filterCol) -4954 -590 dt
+(filMarRow) -4954 -633 dt
+(filMarCol) -4954 -675 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(DA Star) -4881 651 dt
+-6206 1124 mv
+-6206 677 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-6225 1094 b
+-6206 1124 l
+-6187 1094 l
+-6206 1054 l
+-6225 1094 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -6206 687 do
+-5362 637 mv
+-5362 339 dl
+-4978 339 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-5381 607 b
+-5362 637 l
+-5344 607 l
+-5362 567 l
+-5381 607 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -4987 339 do
+-3984 -231 mv
+-3984 -877 dl
+-5962 -877 dl
+-5962 1335 dl
+-6058 1335 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3984 -241 do
+-5400 1126 mv
+-2756 1126 dl
+-2756 986 dl
+-5400 1126 mv
+-5400 1126 dl
+-5400 1327 dl
+15 16 -2756 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 500 -3922 1213 dr
+grestore gsave
+3697 500 -3697 1213 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3922 1519 mv
+-3697 1519 dl
+(camCol) -3897 1488 dt
+(field0) -3897 1445 dt
+-3922 1412 mv
+-3697 1412 dl
+(c0) -3897 1382 dt
+(c2) -3897 1339 dt
+(stars) -3897 1296 dt
+(nFields) -3897 1253 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -3847 1657 dt
+(Pipeline ) -3877 1627 dt
+(Run) -3841 1596 dt
+-3805 1713 mv
+-3805 2326 dl
+-3123 2326 dl
+-3123 2326 mv
+-3123 2326 dl
+-3123 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 2326 b
+-3123 2366 l
+-3076 2326 l
+-3170 2326 dg
+-3123 2326 mv
+-414 2326 dl
+-414 2241 dl
+-3123 2326 mv
+-3123 2326 dl
+-3123 2416 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 2326 b
+-3123 2366 l
+-3076 2326 l
+-3170 2326 dg
+225 351 -4031 -231 dr
+grestore gsave
+3806 120 -3806 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-4031 -75 mv
+-3806 -75 dl
+(camCol) -4007 -106 dt
+(startField) -4007 -148 dt
+(endField) -4007 -191 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -3957 64 dt
+(Pipeline ) -3987 33 dt
+(Plan) -3954 2 dt
+-3929 -231 mv
+-3929 -727 dl
+-3182 -727 dl
+-3182 -727 mv
+-3182 -727 dl
+-3182 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 -727 b
+-3182 -767 l
+-3229 -727 l
+-3135 -727 dg
+225 351 -1481 -530 dr
+grestore gsave
+1256 179 -1256 -179 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1481 -374 mv
+-1256 -374 dl
+(camCol) -1457 -404 dt
+(startField) -1457 -447 dt
+(endField) -1457 -490 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) -1432 -235 dt
+(Pipeline ) -1437 -266 dt
+(Plan) -1404 -297 dt
+-3182 -727 mv
+-1369 -727 dl
+-1369 -530 dl
+-3182 -727 mv
+-3182 -727 dl
+-3182 -817 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 -727 b
+-3182 -767 l
+-3229 -727 l
+-3135 -727 dg
+237 217 -4041 779 dr
+grestore gsave
+3804 217 -3804 779 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -3961 940 dt
+(Postage ) -3991 909 dt
+(Stamp) -3973 879 dt
+-4041 946 mv
+-5232 946 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-5148 996 b
+-5185 946 l
+-5148 896 l
+-5148 996 dg
+-4041 819 mv
+-5232 819 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -4050 819 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({same field, different frame}) -5202 740 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) -5202 851 dt
+-3881 1213 mv
+-3881 996 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-3900 1183 b
+-3881 1213 l
+-3862 1183 l
+-3881 1144 l
+-3900 1183 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3881 1006 do
+-2353 1332 mv
+-2353 1242 dl
+-2353 1242 dl
+-2425 986 mv
+-2425 1242 dl
+-2353 1242 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2372 1302 b
+-2353 1332 l
+-2334 1302 l
+-2353 1262 l
+-2372 1302 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2425 996 do
+-5400 1126 mv
+-2494 1126 dl
+-2494 986 dl
+-5400 1126 mv
+-5400 1126 dl
+-5400 1327 dl
+15 16 -2494 996 do
+-5400 1126 mv
+-2236 1126 dl
+-2236 986 dl
+-5400 1126 mv
+-5400 1126 dl
+-5400 1327 dl
+15 16 -2236 996 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 394 -572 1409 dr
+grestore gsave
+347 394 -347 1409 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-572 1652 mv
+-347 1652 dl
+(nObjects) -547 1621 dt
+(nStars) -547 1578 dt
+(nGalaxies) -547 1535 dt
+(status) -547 1492 dt
+(quality) -547 1449 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object ) -516 1747 dt
+(List) -488 1716 dt
+-457 1976 mv
+-457 1803 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-475 1946 b
+-457 1976 l
+-438 1946 l
+-457 1907 l
+-475 1946 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -457 1813 do
+-457 1409 mv
+-457 1295 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-476 1380 b
+-457 1409 l
+-439 1380 l
+-457 1340 l
+-476 1380 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -457 1305 do
+-572 1574 mv
+-1097 1574 dl
+-1096 1285 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-600 1594 b
+-572 1574 l
+-600 1554 l
+-637 1574 l
+-600 1594 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-1078 1306 b
+-1116 1305 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) -1066 1317 dt
+-516 1803 mv
+-516 1873 dl
+-5362 1873 dl
+15 16 -516 1813 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 181 -4041 397 dr
+grestore gsave
+3816 181 -3816 397 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-4041 468 mv
+-3816 468 dl
+(sscStatus) -4016 437 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC Star) -3998 522 dt
+-4041 488 mv
+-4661 488 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-4577 538 b
+-4614 488 l
+-4577 438 l
+-4577 538 dg
+-3919 779 mv
+-3919 578 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3937 749 b
+-3919 779 l
+-3900 749 l
+-3919 709 l
+-3937 749 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-3298 1634 mv
+-3697 1634 dl
+15 16 -3307 1634 do
+-3678 1654 b
+-3678 1614 dl
+-2409 1703 mv
+-2409 1942 dl
+-3759 1942 dl
+-3759 1713 dl
+15 16 -2409 1713 do
+brush_solid
+/brush_rgb [1 1 1] def
+241 500 -3298 1223 dr
+grestore gsave
+3057 500 -3057 1223 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3298 1572 mv
+-3057 1572 dl
+(incl) -3274 1541 dt
+(node) -3274 1498 dt
+(equinox) -3274 1455 dt
+(field0) -3274 1412 dt
+-3298 1380 mv
+-3057 1380 dl
+(trans) -3274 1349 dt
+(nFields) -3274 1306 dt
+(run) -3274 1263 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -3276 1667 dt
+(Calibration) -3265 1637 dt
+-2466 1634 mv
+-3057 1634 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2475 1634 do
+-562 2092 mv
+-3103 2092 dl
+-3103 1723 dl
+15 16 -572 2092 do
+-562 2002 mv
+-2287 2002 dl
+-2287 1703 dl
+15 16 -572 2002 do
+-3337 20 mv
+-3497 20 dl
+-3497 1494 dl
+-3697 1494 dl
+15 16 -3347 20 do
+-3678 1514 b
+-3678 1474 dl
+-2531 -329 mv
+-3525 -329 dl
+-3525 1444 dl
+-3697 1446 dl
+15 16 -2541 -329 do
+-2531 -120 mv
+-2916 -120 dl
+-2916 1444 dl
+-3057 1444 dl
+15 16 -2541 -120 do
+grestore gsave
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica-BoldOblique f
+() 0 2504 dt
+() 1650 2504 dt
+() 3300 2504 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica f
+(Mon Mar 18 19960:29:58 ) 0 58 dt
+(Imaging) 1576 58 dt
+(3) 3277 58 dt
+showpage
+%%PageTrailer
+% End of page 3
+%%Page: 1 4
+72 res div dup scale
+2550 3300 0 0 sc
+2550 0 translate 90 rotate
+gsave
+2120 3157 4959 1656 dr
+brush_solid
+/brush_rgb [0 0 0] def
+7079 4803 b
+7088 4803 l
+7088 1646 l
+4968 1646 l
+4968 1656 l
+7079 1656 l
+7079 4803 dg
+grestore gsave
+1659 904 3300 1646 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Frames Pipeline) 4989 4751 dt
+brush_solid
+/brush_rgb [1 1 1] def
+2072 3028 169 1795 dr
+brush_solid
+/brush_rgb [0 0 0] def
+2241 4813 b
+2250 4813 l
+2250 1785 l
+178 1785 l
+178 1795 l
+2241 1795 l
+2241 4813 dg
+grestore gsave
+2081 765 169 1785 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Drift Scan Run) 1931 4761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+506 2102 2513 2273 dr
+brush_solid
+/brush_rgb [0 0 0] def
+3019 4365 b
+3028 4365 l
+3028 2263 l
+2522 2263 l
+2522 2273 l
+3019 2273 l
+3019 4365 dg
+grestore gsave
+515 287 2513 2263 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(SSC Pipeline) 2642 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+919 2331 3750 2044 dr
+brush_solid
+/brush_rgb [0 0 0] def
+4669 4365 b
+4678 4365 l
+4678 2034 l
+3759 2034 l
+3759 2044 l
+4669 2044 l
+4669 4365 dg
+grestore gsave
+450 516 3300 2034 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Postage Stamp Pipeline) 3780 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+498 2112 3131 2263 dr
+brush_solid
+/brush_rgb [0 0 0] def
+3629 4365 b
+3638 4365 l
+3638 2253 l
+3140 2253 l
+3140 2263 l
+3629 2263 l
+3629 4365 dg
+grestore gsave
+169 297 3131 2253 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric Pipelines) 3161 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+225 287 1003 3879 dr
+grestore gsave
+225 1329 1003 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1003 4056 mv
+1228 4056 dl
+(filter) 1028 4025 dt
+(pixelMap) 1028 3982 dt
+1003 3950 mv
+1228 3950 dl
+(camRow) 1028 3919 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame) 1066 4110 dt
+542 4464 mv
+1013 4464 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+570 4484 b
+542 4464 l
+570 4445 l
+608 4464 l
+570 4484 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1003 4464 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 360 834 3188 dr
+grestore gsave
+225 638 834 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+834 3428 mv
+1059 3428 dl
+(q1) 866 3397 dt
+(q2) 866 3345 dt
+(q3) 866 3293 dt
+(mode) 866 3241 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Quartile) 885 3492 dt
+252 359 1116 3189 dr
+grestore gsave
+252 639 1116 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1116 3377 mv
+1368 3377 dl
+(pixelMap) 1148 3346 dt
+(midRow) 1148 3294 dt
+(midCol) 1148 3242 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 1173 3492 dt
+(Stamp) 1191 3461 dt
+297 436 3272 3102 dr
+grestore gsave
+28 552 3272 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3272 3387 mv
+3569 3387 dl
+(a) 3296 3356 dt
+(b) 3296 3313 dt
+(c) 3296 3270 dt
+(d) 3296 3227 dt
+(e) 3296 3185 dt
+(f) 3296 3142 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 3322 3482 dt
+(Transformation) 3298 3451 dt
+1200 3678 mv
+3319 3678 dl
+3319 3538 dl
+1200 3678 mv
+1200 3678 dl
+1200 3879 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3319 3548 do
+1031 3879 mv
+1031 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+1013 3849 b
+1031 3879 l
+1050 3849 l
+1031 3809 l
+1013 3849 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1031 3558 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 223 1013 4361 dr
+grestore gsave
+225 1811 1013 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1013 4474 mv
+1238 4474 dl
+(id) 1037 4444 dt
+(camCol) 1037 4401 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Field) 1087 4528 dt
+225 371 4134 3884 dr
+grestore gsave
+834 1334 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+4134 4061 mv
+4359 4061 dl
+(field0) 4159 4030 dt
+4134 3997 mv
+4359 3997 dl
+(trans) 4159 3966 dt
+(nFields) 4159 3924 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 4178 4200 dt
+(Stamp ) 4192 4169 dt
+(Calibration) 4160 4138 dt
+297 650 4313 2888 dr
+grestore gsave
+1013 338 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+4313 3387 mv
+4610 3387 dl
+(sky) 4337 3356 dt
+(skySlope) 4337 3313 dt
+(lbias) 4337 3270 dt
+(rbias) 4337 3227 dt
+(mag20) 4337 3185 dt
+(mag20err) 4337 3142 dt
+(psfSigX1) 4337 3099 dt
+(psfSigX2) 4337 3056 dt
+(psfSigY1) 4337 3013 dt
+(psfSigY2) 4337 2970 dt
+(psfB) 4337 2928 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Photometric ) 4358 3482 dt
+(Transformation) 4339 3451 dt
+225 265 6038 4528 dr
+grestore gsave
+2738 1978 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6038 4599 mv
+6263 4599 dl
+(field0) 6062 4568 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 6086 4737 dt
+(Pipeline ) 6082 4707 dt
+(Run) 6118 4676 dt
+289 395 6009 3452 dr
+grestore gsave
+2709 902 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6009 3737 mv
+6298 3737 dl
+(status) 6034 3706 dt
+(id) 6034 3664 dt
+(starLikelyhood) 6034 3621 dt
+(diskLikelihood) 6034 3578 dt
+(ellipLikelihood) 6034 3535 dt
+(classification) 6034 3492 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object) 6102 3791 dt
+252 361 6006 2968 dr
+grestore gsave
+2706 418 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6006 3208 mv
+6258 3208 dl
+(filter) 6038 3178 dt
+(x) 6038 3126 dt
+(y) 6038 3074 dt
+(flags) 6038 3022 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Detection) 6056 3273 dt
+6262 3452 mv
+6263 3399 dl
+6441 3399 dl
+6441 3528 dl
+6298 3528 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6243 3423 b
+6262 3452 l
+6280 3424 l
+6263 3384 l
+6243 3423 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 6308 3528 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) 6292 3374 dt
+6065 3452 mv
+6066 3399 dl
+5934 3399 dl
+5934 3518 dl
+6009 3518 dl
+15 16 6065 3443 do
+15 16 6000 3518 do
+6128 3452 mv
+6128 3329 dl
+brush_solid
+/brush_rgb [1 1 1] def
+6109 3423 b
+6128 3452 l
+6146 3423 l
+6128 3383 l
+6109 3423 dg
+brush_solid
+/brush_rgb [0 0 0] def
+6146 3349 b
+6109 3349 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 6158 3361 dt
+brush_solid
+/brush_rgb [1 1 1] def
+304 464 6572 2865 dr
+grestore gsave
+3272 315 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6572 3208 mv
+6876 3208 dl
+(nCols) 6604 3178 dt
+(nRows) 6604 3126 dt
+(col0) 6604 3074 dt
+(row0) 6604 3022 dt
+(pixelMap) 6604 2970 dt
+(objectMask) 6604 2919 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Atlas Image) 6631 3273 dt
+516 723 5873 2108 dr
+grestore gsave
+2573 442 3300 2108 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5873 2710 mv
+6389 2710 dl
+(apFlux) 5905 2679 dt
+(psfFlux) 5905 2628 dt
+(totalFlux) 5905 2576 dt
+(stoke1) 5905 2524 dt
+(stoke2) 5905 2472 dt
+(stoke3) 5905 2421 dt
+(stoke4) 5905 2369 dt
+(classification) 5905 2317 dt
+(classificationProb) 5905 2265 dt
+(bulgeDisk) 5905 2213 dt
+(bulgeDiskProb) 5905 2162 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Small Object Detection) 5950 2775 dt
+6258 3161 mv
+6572 3161 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6286 3181 b
+6258 3161 l
+6286 3141 l
+6323 3161 l
+6286 3181 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+563 309 5850 1675 dr
+grestore gsave
+2550 309 3300 1675 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5850 1864 mv
+6413 1864 dl
+(petrosianRadius) 5882 1833 dt
+(petrosianFlux) 5882 1781 dt
+(surfaceBrightness) 5882 1729 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Medium Object Detection) 5932 1928 dt
+6122 2831 mv
+6122 2968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6075 2879 b
+6122 2919 l
+6169 2879 l
+6075 2879 dg
+6122 1984 mv
+6122 2108 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6075 2018 b
+6122 2058 l
+6169 2018 l
+6075 2018 dg
+399 309 6633 2044 dr
+grestore gsave
+3333 309 3300 2044 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6633 2232 mv
+7032 2232 dl
+(meanPixelFlux) 6665 2201 dt
+(medianPixelFlux) 6665 2150 dt
+(variance) 6665 2098 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Radial Bin) 6751 2297 dt
+6389 2305 mv
+6633 2305 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6417 2325 b
+6389 2305 l
+6417 2285 l
+6455 2305 l
+6417 2325 dg
+brush_solid
+/brush_rgb [0 0 0] def
+6614 2325 b
+6614 2285 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({ordered}) 6447 2226 dt
+brush_solid
+/brush_rgb [1 1 1] def
+272 308 5353 3529 dr
+grestore gsave
+2053 979 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5353 3666 mv
+5625 3666 dl
+(pixelMap) 5385 3635 dt
+(filter) 5385 3583 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Corrected ) 5407 3781 dt
+(Frame) 5439 3750 dt
+1125 4361 mv
+1125 4166 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1106 4331 b
+1125 4361 l
+1144 4331 l
+1125 4291 l
+1106 4331 dg
+brush_solid
+/brush_rgb [0 0 0] def
+1144 4186 b
+1106 4186 dl
+1152 3879 mv
+1153 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+1133 3849 b
+1152 3879 l
+1171 3850 l
+1152 3809 l
+1133 3849 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1152 3559 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 114 3366 4968 dr
+grestore gsave
+66 2418 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Product) 3416 5026 dt
+497 4733 mv
+497 4878 dl
+3477 4878 dl
+3477 4878 mv
+3477 4878 dl
+3477 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 4878 b
+3477 4918 l
+3524 4878 l
+3430 4878 dg
+289 1057 253 3676 dr
+grestore gsave
+289 1126 253 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+253 4624 mv
+542 4624 dl
+(strip) 278 4593 dt
+(id) 278 4550 dt
+(flavor) 278 4507 dt
+(sys_scn) 278 4464 dt
+(eqnx_scn) 278 4422 dt
+(node) 278 4379 dt
+(incl) 278 4336 dt
+(xBore) 278 4293 dt
+(yBore) 278 4250 dt
+(system) 278 4208 dt
+(equinox) 278 4165 dt
+(c_obs) 278 4122 dt
+(colBin) 278 4079 dt
+(rowBin) 278 4036 dt
+(bias) 278 3993 dt
+(overscan) 278 3951 dt
+(quality) 278 3908 dt
+253 3875 mv
+542 3875 dl
+(zenithDistance) 278 3844 dt
+(airmass) 278 3801 dt
+(tcc) 278 3758 dt
+(nFrames) 278 3715 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Imaging Run) 297 4678 dt
+225 114 197 4968 dr
+grestore gsave
+225 2418 197 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Stripe) 263 5026 dt
+301 4733 mv
+300 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 300 4744 do
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 300 4958 do
+3441 3775 mv
+3441 3538 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3422 3745 b
+3441 3775 l
+3459 3745 l
+3441 3705 l
+3422 3745 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3441 3548 do
+3419 4275 mv
+3419 4878 dl
+3477 4878 dl
+3477 4878 mv
+3477 4878 dl
+3477 4968 dl
+brush_solid
+/brush_rgb [1 1 1] def
+3430 4878 b
+3477 4918 l
+3524 4878 l
+3430 4878 dg
+2678 4226 mv
+542 4225 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2668 4226 do
+brush_solid
+/brush_rgb [1 1 1] def
+240 308 3263 2354 dr
+grestore gsave
+37 196 3263 2354 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3263 2467 mv
+3503 2467 dl
+(startField) 3287 2436 dt
+(endField) 3287 2394 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 3285 2606 dt
+(Pipeline ) 3314 2575 dt
+(Plan) 3348 2544 dt
+225 165 3309 1570 dr
+grestore gsave
+9 165 3300 1570 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Plan Entry) 3340 1679 dt
+3405 2354 mv
+3405 1825 dl
+3418 1825 dl
+3418 1825 mv
+3418 1825 dl
+3418 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 1825 b
+3418 1785 l
+3371 1825 l
+3465 1825 dg
+225 165 4069 3373 dr
+grestore gsave
+769 823 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Bias ) 4142 3482 dt
+(Vector) 4130 3451 dt
+256 165 3778 3373 dr
+grestore gsave
+478 823 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Flat Field ) 3829 3482 dt
+(Vector) 3854 3451 dt
+4247 3884 mv
+4247 3794 dl
+4247 3794 dl
+4247 3794 mv
+4472 3794 dl
+4472 3538 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+4228 3854 b
+4247 3884 l
+4266 3854 l
+4247 3814 l
+4228 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 4472 3548 do
+4247 3884 mv
+4247 3794 dl
+4247 3794 dl
+3906 3538 mv
+3906 3794 dl
+4247 3794 dl
+brush_solid
+/brush_rgb [1 1 1] def
+4228 3854 b
+4247 3884 l
+4266 3854 l
+4247 3814 l
+4228 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3906 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 393 4069 2149 dr
+grestore gsave
+769 393 3300 2149 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+4069 2305 mv
+4294 2305 dl
+(camCol) 4093 2274 dt
+(startField) 4093 2231 dt
+(endField) 4093 2188 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 4113 2486 dt
+(Stamp ) 4126 2455 dt
+(Pipeline ) 4113 2424 dt
+(Plan) 4147 2394 dt
+3477 4878 mv
+4245 4878 dl
+4245 4255 dl
+3477 4878 mv
+3477 4878 dl
+3477 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 4878 b
+3477 4918 l
+3524 4878 l
+3430 4878 dg
+3418 1825 mv
+4178 1825 dl
+4178 2149 dl
+3418 1825 mv
+3418 1825 dl
+3418 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 1825 b
+3418 1785 l
+3371 1825 l
+3465 1825 dg
+316 256 5531 3073 dr
+grestore gsave
+2231 523 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5531 3158 mv
+5847 3158 dl
+(pixelMap) 5563 3127 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Binned Noise ) 5578 3273 dt
+(Frame) 5639 3242 dt
+5578 3529 mv
+5578 3329 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+5559 3499 b
+5578 3529 l
+5597 3499 l
+5578 3459 l
+5559 3499 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+368 568 5109 2761 dr
+grestore gsave
+1809 211 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5109 3208 mv
+5477 3208 dl
+(minPix) 5141 3178 dt
+(maxPix) 5141 3126 dt
+(meanPix) 5141 3074 dt
+(sigPix) 5141 3022 dt
+(sky) 5141 2970 dt
+(nBadPix) 5141 2919 dt
+(nBrightObj) 5141 2867 dt
+(nFaintObj) 5141 2815 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame Statistic) 5174 3273 dt
+5400 3529 mv
+5400 3329 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+5381 3499 b
+5400 3529 l
+5419 3499 l
+5400 3459 l
+5381 3499 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+244 671 272 2558 dr
+grestore gsave
+244 8 272 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+272 3109 mv
+516 3109 dl
+(frame) 304 3078 dt
+(cpu) 304 3026 dt
+(tai) 304 2974 dt
+(coord) 304 2923 dt
+(spa) 304 2871 dt
+(ipa) 304 2819 dt
+(ipaRate) 304 2767 dt
+(az) 304 2715 dt
+(alt) 304 2664 dt
+(focus) 304 2612 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(TCC Info) 325 3174 dt
+317 1422 1622 1837 dr
+grestore gsave
+317 713 1622 1837 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1622 3150 mv
+1939 3150 dl
+(rowCentroid) 1646 3119 dt
+(colCentroid) 1646 3076 dt
+(stampThresh) 1646 3033 dt
+(nPixOThrsh) 1646 2990 dt
+(sumWeights) 1646 2947 dt
+(quadMomRR) 1646 2905 dt
+(quadMomRC) 1646 2862 dt
+(quadMomCC) 1646 2819 dt
+(eccentricity) 1646 2776 dt
+(rMajor) 1646 2733 dt
+(rMinor) 1646 2690 dt
+(angMajorAxis) 1646 2648 dt
+(angMinorAxis) 1646 2605 dt
+(rowAmp) 1646 2562 dt
+(rowSky) 1646 2519 dt
+(rowCenter) 1646 2476 dt
+(rowSigma) 1646 2433 dt
+(numRowPixels) 1646 2391 dt
+(rowReducedChi2) 1646 2348 dt
+(colAmp) 1646 2305 dt
+(colSky) 1646 2262 dt
+(colCenter) 1646 2219 dt
+(colSigma) 1646 2176 dt
+(numColPixels) 1646 2134 dt
+(colReducedChi2) 1646 2091 dt
+(statusFit) 1646 2048 dt
+(filterRow) 1646 2005 dt
+(filterCol) 1646 1962 dt
+(filMarRow) 1646 1919 dt
+(filMarCol) 1646 1877 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(DA Star) 1719 3203 dt
+394 3676 mv
+394 3229 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+375 3646 b
+394 3676 l
+413 3646 l
+394 3606 l
+375 3646 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 394 3239 do
+1238 3189 mv
+1238 2891 dl
+1622 2891 dl
+brush_solid
+/brush_rgb [1 1 1] def
+1219 3159 b
+1238 3189 l
+1256 3159 l
+1238 3119 l
+1219 3159 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 1613 2891 do
+2616 2321 mv
+2616 1675 dl
+638 1675 dl
+638 3887 dl
+542 3887 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2616 2311 do
+1200 3678 mv
+3844 3678 dl
+3844 3538 dl
+1200 3678 mv
+1200 3678 dl
+1200 3879 dl
+15 16 3844 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 500 2678 3765 dr
+grestore gsave
+225 1215 2678 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2678 4071 mv
+2903 4071 dl
+(camCol) 2703 4040 dt
+(field0) 2703 3997 dt
+2678 3964 mv
+2903 3964 dl
+(c0) 2703 3934 dt
+(c2) 2703 3891 dt
+(stars) 2703 3848 dt
+(nFields) 2703 3805 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) 2753 4209 dt
+(Pipeline ) 2723 4179 dt
+(Run) 2759 4148 dt
+2795 4265 mv
+2795 4878 dl
+3477 4878 dl
+3477 4878 mv
+3477 4878 dl
+3477 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 4878 b
+3477 4918 l
+3524 4878 l
+3430 4878 dg
+3477 4878 mv
+6186 4878 dl
+6186 4793 dl
+3477 4878 mv
+3477 4878 dl
+3477 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3430 4878 b
+3477 4918 l
+3524 4878 l
+3430 4878 dg
+225 351 2569 2321 dr
+grestore gsave
+225 229 2569 2321 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2569 2477 mv
+2794 2477 dl
+(camCol) 2593 2446 dt
+(startField) 2593 2404 dt
+(endField) 2593 2361 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) 2643 2616 dt
+(Pipeline ) 2613 2585 dt
+(Plan) 2646 2554 dt
+2671 2321 mv
+2671 1825 dl
+3418 1825 dl
+3418 1825 mv
+3418 1825 dl
+3418 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 1825 b
+3418 1785 l
+3371 1825 l
+3465 1825 dg
+225 351 5119 2022 dr
+grestore gsave
+1819 351 3300 2022 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+5119 2178 mv
+5344 2178 dl
+(camCol) 5143 2148 dt
+(startField) 5143 2105 dt
+(endField) 5143 2062 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 5168 2317 dt
+(Pipeline ) 5163 2286 dt
+(Plan) 5196 2255 dt
+3418 1825 mv
+5231 1825 dl
+5231 2022 dl
+3418 1825 mv
+3418 1825 dl
+3418 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3465 1825 b
+3418 1785 l
+3371 1825 l
+3465 1825 dg
+237 217 2559 3331 dr
+grestore gsave
+237 781 2559 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) 2639 3492 dt
+(Postage ) 2609 3461 dt
+(Stamp) 2627 3431 dt
+2559 3498 mv
+1368 3498 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1452 3548 b
+1415 3498 l
+1452 3448 l
+1452 3548 dg
+2559 3371 mv
+1368 3371 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2550 3371 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({same field, different frame}) 1398 3292 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) 1398 3403 dt
+2719 3765 mv
+2719 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2700 3735 b
+2719 3765 l
+2738 3735 l
+2719 3696 l
+2700 3735 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2719 3558 do
+4247 3884 mv
+4247 3794 dl
+4247 3794 dl
+4175 3538 mv
+4175 3794 dl
+4247 3794 dl
+brush_solid
+/brush_rgb [1 1 1] def
+4228 3854 b
+4247 3884 l
+4266 3854 l
+4247 3814 l
+4228 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 4175 3548 do
+1200 3678 mv
+4106 3678 dl
+4106 3538 dl
+1200 3678 mv
+1200 3678 dl
+1200 3879 dl
+15 16 4106 3548 do
+1200 3678 mv
+4364 3678 dl
+4364 3538 dl
+1200 3678 mv
+1200 3678 dl
+1200 3879 dl
+15 16 4364 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 394 6028 3961 dr
+grestore gsave
+2728 1411 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+6028 4204 mv
+6253 4204 dl
+(nObjects) 6053 4173 dt
+(nStars) 6053 4130 dt
+(nGalaxies) 6053 4087 dt
+(status) 6053 4044 dt
+(quality) 6053 4001 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object ) 6084 4299 dt
+(List) 6112 4268 dt
+6143 4528 mv
+6143 4355 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+6125 4498 b
+6143 4528 l
+6162 4498 l
+6143 4459 l
+6125 4498 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 6143 4365 do
+6143 3961 mv
+6143 3847 dl
+brush_solid
+/brush_rgb [1 1 1] def
+6124 3932 b
+6143 3961 l
+6161 3932 l
+6143 3892 l
+6124 3932 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 6143 3857 do
+6028 4126 mv
+5503 4126 dl
+5504 3837 dl
+brush_solid
+/brush_rgb [1 1 1] def
+6000 4146 b
+6028 4126 l
+6000 4106 l
+5963 4126 l
+6000 4146 dg
+brush_solid
+/brush_rgb [0 0 0] def
+5522 3858 b
+5484 3857 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 5534 3869 dt
+6084 4355 mv
+6084 4425 dl
+1238 4425 dl
+15 16 6084 4365 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 181 2559 2949 dr
+grestore gsave
+225 399 2559 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2559 3020 mv
+2784 3020 dl
+(sscStatus) 2584 2989 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC Star) 2602 3074 dt
+2559 3040 mv
+1939 3040 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2023 3090 b
+1986 3040 l
+2023 2990 l
+2023 3090 dg
+2681 3331 mv
+2681 3130 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2663 3301 b
+2681 3331 l
+2700 3301 l
+2681 3261 l
+2663 3301 dg
+brush_solid
+/brush_rgb [0 0 0] def
+3302 4186 mv
+2903 4186 dl
+15 16 3293 4186 do
+2922 4206 b
+2922 4166 dl
+4191 4255 mv
+4191 4494 dl
+2841 4494 dl
+2841 4265 dl
+15 16 4191 4265 do
+brush_solid
+/brush_rgb [1 1 1] def
+241 500 3302 3775 dr
+grestore gsave
+2 1225 3300 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3302 4124 mv
+3543 4124 dl
+(incl) 3326 4093 dt
+(node) 3326 4050 dt
+(equinox) 3326 4007 dt
+(field0) 3326 3964 dt
+3302 3932 mv
+3543 3932 dl
+(trans) 3326 3901 dt
+(nFields) 3326 3858 dt
+(run) 3326 3815 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 3324 4219 dt
+(Calibration) 3335 4189 dt
+4134 4186 mv
+3543 4186 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 4125 4186 do
+6038 4644 mv
+3497 4644 dl
+3497 4275 dl
+15 16 6028 4644 do
+6038 4554 mv
+4313 4554 dl
+4313 4255 dl
+15 16 6028 4554 do
+3263 2572 mv
+3103 2572 dl
+3103 4046 dl
+2903 4046 dl
+15 16 3253 2572 do
+2922 4066 b
+2922 4026 dl
+4069 2223 mv
+3075 2223 dl
+3075 3996 dl
+2903 3998 dl
+15 16 4059 2223 do
+4069 2432 mv
+3684 2432 dl
+3684 3996 dl
+3543 3996 dl
+15 16 4059 2432 do
+grestore gsave
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica-BoldOblique f
+() 0 2504 dt
+() 1650 2504 dt
+() 3300 2504 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica f
+(Mon Mar 18 19960:31:07 ) 0 58 dt
+(Imaging) 1576 58 dt
+(4) 3277 58 dt
+showpage
+%%PageTrailer
+% End of page 4
+%%Page: 1 5
+72 res div dup scale
+2550 3300 0 0 sc
+2550 0 translate 90 rotate
+gsave
+2120 3157 1655 1656 dr
+brush_solid
+/brush_rgb [0 0 0] def
+3775 4803 b
+3784 4803 l
+3784 1646 l
+1664 1646 l
+1664 1656 l
+3775 1656 l
+3775 4803 dg
+grestore gsave
+1645 904 1655 1646 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Frames Pipeline) 1685 4751 dt
+brush_solid
+/brush_rgb [1 1 1] def
+2072 3028 -3135 1795 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-1063 4813 b
+-1054 4813 l
+-1054 1785 l
+-3126 1785 l
+-3126 1795 l
+-1063 1795 l
+-1063 4813 dg
+grestore gsave
+1054 765 -1054 1785 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Drift Scan Run) -1373 4761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+506 2102 -791 2273 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-285 4365 b
+-276 4365 l
+-276 2263 l
+-782 2263 l
+-782 2273 l
+-285 2273 l
+-285 4365 dg
+grestore gsave
+276 287 -276 2263 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(SSC Pipeline) -662 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+919 2331 446 2044 dr
+brush_solid
+/brush_rgb [0 0 0] def
+1365 4365 b
+1374 4365 l
+1374 2034 l
+455 2034 l
+455 2044 l
+1365 2044 l
+1365 4365 dg
+grestore gsave
+928 516 446 2034 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Postage Stamp Pipeline) 476 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+498 2112 -173 2263 dr
+brush_solid
+/brush_rgb [0 0 0] def
+325 4365 b
+334 4365 l
+334 2253 l
+-164 2253 l
+-164 2263 l
+325 2263 l
+325 4365 dg
+grestore gsave
+334 297 0 2253 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric Pipelines) -143 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+225 287 -2301 3879 dr
+grestore gsave
+2076 1329 -2076 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2301 4056 mv
+-2076 4056 dl
+(filter) -2276 4025 dt
+(pixelMap) -2276 3982 dt
+-2301 3950 mv
+-2076 3950 dl
+(camRow) -2276 3919 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame) -2238 4110 dt
+-2762 4464 mv
+-2291 4464 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2734 4484 b
+-2762 4464 l
+-2734 4445 l
+-2696 4464 l
+-2734 4484 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2301 4464 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 360 -2470 3188 dr
+grestore gsave
+2245 638 -2245 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2470 3428 mv
+-2245 3428 dl
+(q1) -2438 3397 dt
+(q2) -2438 3345 dt
+(q3) -2438 3293 dt
+(mode) -2438 3241 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Quartile) -2419 3492 dt
+252 359 -2188 3189 dr
+grestore gsave
+1936 639 -1936 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2188 3377 mv
+-1936 3377 dl
+(pixelMap) -2156 3346 dt
+(midRow) -2156 3294 dt
+(midCol) -2156 3242 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -2131 3492 dt
+(Stamp) -2113 3461 dt
+297 436 -32 3102 dr
+grestore gsave
+265 552 0 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-32 3387 mv
+265 3387 dl
+(a) -8 3356 dt
+(b) -8 3313 dt
+(c) -8 3270 dt
+(d) -8 3227 dt
+(e) -8 3185 dt
+(f) -8 3142 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 18 3482 dt
+(Transformation) -6 3451 dt
+-2104 3678 mv
+15 3678 dl
+15 3538 dl
+-2104 3678 mv
+-2104 3678 dl
+-2104 3879 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 15 3548 do
+-2273 3879 mv
+-2273 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2291 3849 b
+-2273 3879 l
+-2254 3849 l
+-2273 3809 l
+-2291 3849 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2273 3558 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 223 -2291 4361 dr
+grestore gsave
+2066 1811 -2066 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2291 4474 mv
+-2066 4474 dl
+(id) -2267 4444 dt
+(camCol) -2267 4401 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Field) -2217 4528 dt
+225 371 830 3884 dr
+grestore gsave
+225 1334 830 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+830 4061 mv
+1055 4061 dl
+(field0) 855 4030 dt
+830 3997 mv
+1055 3997 dl
+(trans) 855 3966 dt
+(nFields) 855 3924 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 874 4200 dt
+(Stamp ) 888 4169 dt
+(Calibration) 856 4138 dt
+297 650 1009 2888 dr
+grestore gsave
+297 338 1009 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1009 3387 mv
+1306 3387 dl
+(sky) 1033 3356 dt
+(skySlope) 1033 3313 dt
+(lbias) 1033 3270 dt
+(rbias) 1033 3227 dt
+(mag20) 1033 3185 dt
+(mag20err) 1033 3142 dt
+(psfSigX1) 1033 3099 dt
+(psfSigX2) 1033 3056 dt
+(psfSigY1) 1033 3013 dt
+(psfSigY2) 1033 2970 dt
+(psfB) 1033 2928 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Photometric ) 1054 3482 dt
+(Transformation) 1035 3451 dt
+225 265 2734 4528 dr
+grestore gsave
+225 1978 2734 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2734 4599 mv
+2959 4599 dl
+(field0) 2758 4568 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 2782 4737 dt
+(Pipeline ) 2778 4707 dt
+(Run) 2814 4676 dt
+289 395 2705 3452 dr
+grestore gsave
+289 902 2705 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2705 3737 mv
+2994 3737 dl
+(status) 2730 3706 dt
+(id) 2730 3664 dt
+(starLikelyhood) 2730 3621 dt
+(diskLikelihood) 2730 3578 dt
+(ellipLikelihood) 2730 3535 dt
+(classification) 2730 3492 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object) 2798 3791 dt
+252 361 2702 2968 dr
+grestore gsave
+252 418 2702 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2702 3208 mv
+2954 3208 dl
+(filter) 2734 3178 dt
+(x) 2734 3126 dt
+(y) 2734 3074 dt
+(flags) 2734 3022 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Detection) 2752 3273 dt
+2958 3452 mv
+2959 3399 dl
+3137 3399 dl
+3137 3528 dl
+2994 3528 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2939 3423 b
+2958 3452 l
+2976 3424 l
+2959 3384 l
+2939 3423 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 3004 3528 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) 2988 3374 dt
+2761 3452 mv
+2762 3399 dl
+2630 3399 dl
+2630 3518 dl
+2705 3518 dl
+15 16 2761 3443 do
+15 16 2696 3518 do
+2824 3452 mv
+2824 3329 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2805 3423 b
+2824 3452 l
+2842 3423 l
+2824 3383 l
+2805 3423 dg
+brush_solid
+/brush_rgb [0 0 0] def
+2842 3349 b
+2805 3349 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 2854 3361 dt
+brush_solid
+/brush_rgb [1 1 1] def
+304 464 3268 2865 dr
+grestore gsave
+32 315 3268 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3268 3208 mv
+3572 3208 dl
+(nCols) 3300 3178 dt
+(nRows) 3300 3126 dt
+(col0) 3300 3074 dt
+(row0) 3300 3022 dt
+(pixelMap) 3300 2970 dt
+(objectMask) 3300 2919 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Atlas Image) 3327 3273 dt
+516 723 2569 2108 dr
+grestore gsave
+516 442 2569 2108 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2569 2710 mv
+3085 2710 dl
+(apFlux) 2601 2679 dt
+(psfFlux) 2601 2628 dt
+(totalFlux) 2601 2576 dt
+(stoke1) 2601 2524 dt
+(stoke2) 2601 2472 dt
+(stoke3) 2601 2421 dt
+(stoke4) 2601 2369 dt
+(classification) 2601 2317 dt
+(classificationProb) 2601 2265 dt
+(bulgeDisk) 2601 2213 dt
+(bulgeDiskProb) 2601 2162 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Small Object Detection) 2646 2775 dt
+2954 3161 mv
+3268 3161 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2982 3181 b
+2954 3161 l
+2982 3141 l
+3019 3161 l
+2982 3181 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+563 309 2546 1675 dr
+grestore gsave
+563 309 2546 1675 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2546 1864 mv
+3109 1864 dl
+(petrosianRadius) 2578 1833 dt
+(petrosianFlux) 2578 1781 dt
+(surfaceBrightness) 2578 1729 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Medium Object Detection) 2628 1928 dt
+2818 2831 mv
+2818 2968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2771 2879 b
+2818 2919 l
+2865 2879 l
+2771 2879 dg
+2818 1984 mv
+2818 2108 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2771 2018 b
+2818 2058 l
+2865 2018 l
+2771 2018 dg
+399 309 3329 2044 dr
+grestore gsave
+29 309 3300 2044 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+3329 2232 mv
+3728 2232 dl
+(meanPixelFlux) 3361 2201 dt
+(medianPixelFlux) 3361 2150 dt
+(variance) 3361 2098 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Radial Bin) 3447 2297 dt
+3085 2305 mv
+3329 2305 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+3113 2325 b
+3085 2305 l
+3113 2285 l
+3151 2305 l
+3113 2325 dg
+brush_solid
+/brush_rgb [0 0 0] def
+3310 2325 b
+3310 2285 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({ordered}) 3143 2226 dt
+brush_solid
+/brush_rgb [1 1 1] def
+272 308 2049 3529 dr
+grestore gsave
+272 979 2049 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2049 3666 mv
+2321 3666 dl
+(pixelMap) 2081 3635 dt
+(filter) 2081 3583 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Corrected ) 2103 3781 dt
+(Frame) 2135 3750 dt
+-2179 4361 mv
+-2179 4166 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2198 4331 b
+-2179 4361 l
+-2160 4331 l
+-2179 4291 l
+-2198 4331 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-2160 4186 b
+-2198 4186 dl
+-2152 3879 mv
+-2151 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2171 3849 b
+-2152 3879 l
+-2133 3850 l
+-2152 3809 l
+-2171 3849 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2152 3559 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 114 62 4968 dr
+grestore gsave
+225 2418 62 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Product) 112 5026 dt
+-2807 4733 mv
+-2807 4878 dl
+173 4878 dl
+173 4878 mv
+173 4878 dl
+173 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 4878 b
+173 4918 l
+220 4878 l
+126 4878 dg
+289 1057 -3051 3676 dr
+grestore gsave
+2762 1126 -2762 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3051 4624 mv
+-2762 4624 dl
+(strip) -3026 4593 dt
+(id) -3026 4550 dt
+(flavor) -3026 4507 dt
+(sys_scn) -3026 4464 dt
+(eqnx_scn) -3026 4422 dt
+(node) -3026 4379 dt
+(incl) -3026 4336 dt
+(xBore) -3026 4293 dt
+(yBore) -3026 4250 dt
+(system) -3026 4208 dt
+(equinox) -3026 4165 dt
+(c_obs) -3026 4122 dt
+(colBin) -3026 4079 dt
+(rowBin) -3026 4036 dt
+(bias) -3026 3993 dt
+(overscan) -3026 3951 dt
+(quality) -3026 3908 dt
+-3051 3875 mv
+-2762 3875 dl
+(zenithDistance) -3026 3844 dt
+(airmass) -3026 3801 dt
+(tcc) -3026 3758 dt
+(nFrames) -3026 3715 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Imaging Run) -3007 4678 dt
+225 114 -3107 4968 dr
+grestore gsave
+2882 2418 -2882 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Stripe) -3041 5026 dt
+-3003 4733 mv
+-3004 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3004 4744 do
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -3004 4958 do
+137 3775 mv
+137 3538 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+118 3745 b
+137 3775 l
+155 3745 l
+137 3705 l
+118 3745 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 137 3548 do
+115 4275 mv
+115 4878 dl
+173 4878 dl
+173 4878 mv
+173 4878 dl
+173 4968 dl
+brush_solid
+/brush_rgb [1 1 1] def
+126 4878 b
+173 4918 l
+220 4878 l
+126 4878 dg
+-626 4226 mv
+-2762 4225 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -636 4226 do
+brush_solid
+/brush_rgb [1 1 1] def
+240 308 -41 2354 dr
+grestore gsave
+199 196 0 2354 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-41 2467 mv
+199 2467 dl
+(startField) -17 2436 dt
+(endField) -17 2394 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -19 2606 dt
+(Pipeline ) 10 2575 dt
+(Plan) 44 2544 dt
+225 165 5 1570 dr
+grestore gsave
+225 165 5 1570 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Plan Entry) 36 1679 dt
+101 2354 mv
+101 1825 dl
+114 1825 dl
+114 1825 mv
+114 1825 dl
+114 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 1825 b
+114 1785 l
+67 1825 l
+161 1825 dg
+225 165 765 3373 dr
+grestore gsave
+225 823 765 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Bias ) 838 3482 dt
+(Vector) 826 3451 dt
+256 165 474 3373 dr
+grestore gsave
+256 823 474 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Flat Field ) 525 3482 dt
+(Vector) 550 3451 dt
+943 3884 mv
+943 3794 dl
+943 3794 dl
+943 3794 mv
+1168 3794 dl
+1168 3538 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+924 3854 b
+943 3884 l
+962 3854 l
+943 3814 l
+924 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 1168 3548 do
+943 3884 mv
+943 3794 dl
+943 3794 dl
+602 3538 mv
+602 3794 dl
+943 3794 dl
+brush_solid
+/brush_rgb [1 1 1] def
+924 3854 b
+943 3884 l
+962 3854 l
+943 3814 l
+924 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 602 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 393 765 2149 dr
+grestore gsave
+225 393 765 2149 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+765 2305 mv
+990 2305 dl
+(camCol) 789 2274 dt
+(startField) 789 2231 dt
+(endField) 789 2188 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) 809 2486 dt
+(Stamp ) 822 2455 dt
+(Pipeline ) 809 2424 dt
+(Plan) 843 2394 dt
+173 4878 mv
+941 4878 dl
+941 4255 dl
+173 4878 mv
+173 4878 dl
+173 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 4878 b
+173 4918 l
+220 4878 l
+126 4878 dg
+114 1825 mv
+874 1825 dl
+874 2149 dl
+114 1825 mv
+114 1825 dl
+114 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 1825 b
+114 1785 l
+67 1825 l
+161 1825 dg
+316 256 2227 3073 dr
+grestore gsave
+316 523 2227 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2227 3158 mv
+2543 3158 dl
+(pixelMap) 2259 3127 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Binned Noise ) 2274 3273 dt
+(Frame) 2335 3242 dt
+2274 3529 mv
+2274 3329 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2255 3499 b
+2274 3529 l
+2293 3499 l
+2274 3459 l
+2255 3499 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+368 568 1805 2761 dr
+grestore gsave
+368 211 1805 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1805 3208 mv
+2173 3208 dl
+(minPix) 1837 3178 dt
+(maxPix) 1837 3126 dt
+(meanPix) 1837 3074 dt
+(sigPix) 1837 3022 dt
+(sky) 1837 2970 dt
+(nBadPix) 1837 2919 dt
+(nBrightObj) 1837 2867 dt
+(nFaintObj) 1837 2815 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame Statistic) 1870 3273 dt
+2096 3529 mv
+2096 3329 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2077 3499 b
+2096 3529 l
+2115 3499 l
+2096 3459 l
+2077 3499 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+244 671 -3032 2558 dr
+grestore gsave
+2788 8 -2788 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3032 3109 mv
+-2788 3109 dl
+(frame) -3000 3078 dt
+(cpu) -3000 3026 dt
+(tai) -3000 2974 dt
+(coord) -3000 2923 dt
+(spa) -3000 2871 dt
+(ipa) -3000 2819 dt
+(ipaRate) -3000 2767 dt
+(az) -3000 2715 dt
+(alt) -3000 2664 dt
+(focus) -3000 2612 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(TCC Info) -2979 3174 dt
+317 1422 -1682 1837 dr
+grestore gsave
+1365 713 -1365 1837 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1682 3150 mv
+-1365 3150 dl
+(rowCentroid) -1658 3119 dt
+(colCentroid) -1658 3076 dt
+(stampThresh) -1658 3033 dt
+(nPixOThrsh) -1658 2990 dt
+(sumWeights) -1658 2947 dt
+(quadMomRR) -1658 2905 dt
+(quadMomRC) -1658 2862 dt
+(quadMomCC) -1658 2819 dt
+(eccentricity) -1658 2776 dt
+(rMajor) -1658 2733 dt
+(rMinor) -1658 2690 dt
+(angMajorAxis) -1658 2648 dt
+(angMinorAxis) -1658 2605 dt
+(rowAmp) -1658 2562 dt
+(rowSky) -1658 2519 dt
+(rowCenter) -1658 2476 dt
+(rowSigma) -1658 2433 dt
+(numRowPixels) -1658 2391 dt
+(rowReducedChi2) -1658 2348 dt
+(colAmp) -1658 2305 dt
+(colSky) -1658 2262 dt
+(colCenter) -1658 2219 dt
+(colSigma) -1658 2176 dt
+(numColPixels) -1658 2134 dt
+(colReducedChi2) -1658 2091 dt
+(statusFit) -1658 2048 dt
+(filterRow) -1658 2005 dt
+(filterCol) -1658 1962 dt
+(filMarRow) -1658 1919 dt
+(filMarCol) -1658 1877 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(DA Star) -1585 3203 dt
+-2910 3676 mv
+-2910 3229 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2929 3646 b
+-2910 3676 l
+-2891 3646 l
+-2910 3606 l
+-2929 3646 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2910 3239 do
+-2066 3189 mv
+-2066 2891 dl
+-1682 2891 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2085 3159 b
+-2066 3189 l
+-2048 3159 l
+-2066 3119 l
+-2085 3159 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -1691 2891 do
+-688 2321 mv
+-688 1675 dl
+-2666 1675 dl
+-2666 3887 dl
+-2762 3887 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -688 2311 do
+-2104 3678 mv
+540 3678 dl
+540 3538 dl
+-2104 3678 mv
+-2104 3678 dl
+-2104 3879 dl
+15 16 540 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 500 -626 3765 dr
+grestore gsave
+401 1215 -401 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-626 4071 mv
+-401 4071 dl
+(camCol) -601 4040 dt
+(field0) -601 3997 dt
+-626 3964 mv
+-401 3964 dl
+(c0) -601 3934 dt
+(c2) -601 3891 dt
+(stars) -601 3848 dt
+(nFields) -601 3805 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -551 4209 dt
+(Pipeline ) -581 4179 dt
+(Run) -545 4148 dt
+-509 4265 mv
+-509 4878 dl
+173 4878 dl
+173 4878 mv
+173 4878 dl
+173 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 4878 b
+173 4918 l
+220 4878 l
+126 4878 dg
+173 4878 mv
+2882 4878 dl
+2882 4793 dl
+173 4878 mv
+173 4878 dl
+173 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+126 4878 b
+173 4918 l
+220 4878 l
+126 4878 dg
+225 351 -735 2321 dr
+grestore gsave
+510 229 -510 2321 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-735 2477 mv
+-510 2477 dl
+(camCol) -711 2446 dt
+(startField) -711 2404 dt
+(endField) -711 2361 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -661 2616 dt
+(Pipeline ) -691 2585 dt
+(Plan) -658 2554 dt
+-633 2321 mv
+-633 1825 dl
+114 1825 dl
+114 1825 mv
+114 1825 dl
+114 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 1825 b
+114 1785 l
+67 1825 l
+161 1825 dg
+225 351 1815 2022 dr
+grestore gsave
+225 351 1815 2022 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1815 2178 mv
+2040 2178 dl
+(camCol) 1839 2148 dt
+(startField) 1839 2105 dt
+(endField) 1839 2062 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) 1864 2317 dt
+(Pipeline ) 1859 2286 dt
+(Plan) 1892 2255 dt
+114 1825 mv
+1927 1825 dl
+1927 2022 dl
+114 1825 mv
+114 1825 dl
+114 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+161 1825 b
+114 1785 l
+67 1825 l
+161 1825 dg
+237 217 -745 3331 dr
+grestore gsave
+508 781 -508 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -665 3492 dt
+(Postage ) -695 3461 dt
+(Stamp) -677 3431 dt
+-745 3498 mv
+-1936 3498 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1852 3548 b
+-1889 3498 l
+-1852 3448 l
+-1852 3548 dg
+-745 3371 mv
+-1936 3371 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -754 3371 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({same field, different frame}) -1906 3292 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) -1906 3403 dt
+-585 3765 mv
+-585 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-604 3735 b
+-585 3765 l
+-566 3735 l
+-585 3696 l
+-604 3735 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -585 3558 do
+943 3884 mv
+943 3794 dl
+943 3794 dl
+871 3538 mv
+871 3794 dl
+943 3794 dl
+brush_solid
+/brush_rgb [1 1 1] def
+924 3854 b
+943 3884 l
+962 3854 l
+943 3814 l
+924 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 871 3548 do
+-2104 3678 mv
+802 3678 dl
+802 3538 dl
+-2104 3678 mv
+-2104 3678 dl
+-2104 3879 dl
+15 16 802 3548 do
+-2104 3678 mv
+1060 3678 dl
+1060 3538 dl
+-2104 3678 mv
+-2104 3678 dl
+-2104 3879 dl
+15 16 1060 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 394 2724 3961 dr
+grestore gsave
+225 1411 2724 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+2724 4204 mv
+2949 4204 dl
+(nObjects) 2749 4173 dt
+(nStars) 2749 4130 dt
+(nGalaxies) 2749 4087 dt
+(status) 2749 4044 dt
+(quality) 2749 4001 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object ) 2780 4299 dt
+(List) 2808 4268 dt
+2839 4528 mv
+2839 4355 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+2821 4498 b
+2839 4528 l
+2858 4498 l
+2839 4459 l
+2821 4498 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2839 4365 do
+2839 3961 mv
+2839 3847 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2820 3932 b
+2839 3961 l
+2857 3932 l
+2839 3892 l
+2820 3932 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 2839 3857 do
+2724 4126 mv
+2199 4126 dl
+2200 3837 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2696 4146 b
+2724 4126 l
+2696 4106 l
+2659 4126 l
+2696 4146 dg
+brush_solid
+/brush_rgb [0 0 0] def
+2218 3858 b
+2180 3857 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) 2230 3869 dt
+2780 4355 mv
+2780 4425 dl
+-2066 4425 dl
+15 16 2780 4365 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 181 -745 2949 dr
+grestore gsave
+520 399 -520 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-745 3020 mv
+-520 3020 dl
+(sscStatus) -720 2989 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC Star) -702 3074 dt
+-745 3040 mv
+-1365 3040 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1281 3090 b
+-1318 3040 l
+-1281 2990 l
+-1281 3090 dg
+-623 3331 mv
+-623 3130 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-641 3301 b
+-623 3331 l
+-604 3301 l
+-623 3261 l
+-641 3301 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-2 4186 mv
+-401 4186 dl
+15 16 -11 4186 do
+-382 4206 b
+-382 4166 dl
+887 4255 mv
+887 4494 dl
+-463 4494 dl
+-463 4265 dl
+15 16 887 4265 do
+brush_solid
+/brush_rgb [1 1 1] def
+241 500 -2 3775 dr
+grestore gsave
+239 1225 0 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2 4124 mv
+239 4124 dl
+(incl) 22 4093 dt
+(node) 22 4050 dt
+(equinox) 22 4007 dt
+(field0) 22 3964 dt
+-2 3932 mv
+239 3932 dl
+(trans) 22 3901 dt
+(nFields) 22 3858 dt
+(run) 22 3815 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) 20 4219 dt
+(Calibration) 31 4189 dt
+830 4186 mv
+239 4186 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 821 4186 do
+2734 4644 mv
+193 4644 dl
+193 4275 dl
+15 16 2724 4644 do
+2734 4554 mv
+1009 4554 dl
+1009 4255 dl
+15 16 2724 4554 do
+-41 2572 mv
+-201 2572 dl
+-201 4046 dl
+-401 4046 dl
+15 16 -51 2572 do
+-382 4066 b
+-382 4026 dl
+765 2223 mv
+-229 2223 dl
+-229 3996 dl
+-401 3998 dl
+15 16 755 2223 do
+765 2432 mv
+380 2432 dl
+380 3996 dl
+239 3996 dl
+15 16 755 2432 do
+grestore gsave
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica-BoldOblique f
+() 0 2504 dt
+() 1650 2504 dt
+() 3300 2504 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica f
+(Mon Mar 18 19960:31:07 ) 0 58 dt
+(Imaging) 1576 58 dt
+(5) 3277 58 dt
+showpage
+%%PageTrailer
+% End of page 5
+%%Page: 1 6
+72 res div dup scale
+2550 3300 0 0 sc
+2550 0 translate 90 rotate
+gsave
+2120 3157 -1641 1656 dr
+brush_solid
+/brush_rgb [0 0 0] def
+479 4803 b
+488 4803 l
+488 1646 l
+-1632 1646 l
+-1632 1656 l
+479 1656 l
+479 4803 dg
+grestore gsave
+488 904 0 1646 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Frames Pipeline) -1611 4751 dt
+brush_solid
+/brush_rgb [1 1 1] def
+2072 3028 -6431 1795 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-4359 4813 b
+-4350 4813 l
+-4350 1785 l
+-6422 1785 l
+-6422 1795 l
+-4359 1795 l
+-4359 4813 dg
+grestore gsave
+4350 765 -4350 1785 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Drift Scan Run) -4669 4761 dt
+brush_solid
+/brush_rgb [1 1 1] def
+506 2102 -4087 2273 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-3581 4365 b
+-3572 4365 l
+-3572 2263 l
+-4078 2263 l
+-4078 2273 l
+-3581 2273 l
+-3581 4365 dg
+grestore gsave
+3572 287 -3572 2263 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(SSC Pipeline) -3958 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+919 2331 -2850 2044 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-1931 4365 b
+-1922 4365 l
+-1922 2034 l
+-2841 2034 l
+-2841 2044 l
+-1931 2044 l
+-1931 4365 dg
+grestore gsave
+1922 516 -1922 2034 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Postage Stamp Pipeline) -2820 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+498 2112 -3469 2263 dr
+brush_solid
+/brush_rgb [0 0 0] def
+-2971 4365 b
+-2962 4365 l
+-2962 2253 l
+-3460 2253 l
+-3460 2263 l
+-2971 2263 l
+-2971 4365 dg
+grestore gsave
+2962 297 -2962 2253 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric Pipelines) -3439 4313 dt
+brush_solid
+/brush_rgb [1 1 1] def
+225 287 -5597 3879 dr
+grestore gsave
+5372 1329 -5372 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5597 4056 mv
+-5372 4056 dl
+(filter) -5572 4025 dt
+(pixelMap) -5572 3982 dt
+-5597 3950 mv
+-5372 3950 dl
+(camRow) -5572 3919 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame) -5534 4110 dt
+-6058 4464 mv
+-5587 4464 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-6030 4484 b
+-6058 4464 l
+-6030 4445 l
+-5992 4464 l
+-6030 4484 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -5597 4464 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 360 -5766 3188 dr
+grestore gsave
+5541 638 -5541 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5766 3428 mv
+-5541 3428 dl
+(q1) -5734 3397 dt
+(q2) -5734 3345 dt
+(q3) -5734 3293 dt
+(mode) -5734 3241 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Quartile) -5715 3492 dt
+252 359 -5484 3189 dr
+grestore gsave
+5232 639 -5232 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5484 3377 mv
+-5232 3377 dl
+(pixelMap) -5452 3346 dt
+(midRow) -5452 3294 dt
+(midCol) -5452 3242 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -5427 3492 dt
+(Stamp) -5409 3461 dt
+297 436 -3328 3102 dr
+grestore gsave
+3031 552 -3031 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3328 3387 mv
+-3031 3387 dl
+(a) -3304 3356 dt
+(b) -3304 3313 dt
+(c) -3304 3270 dt
+(d) -3304 3227 dt
+(e) -3304 3185 dt
+(f) -3304 3142 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -3278 3482 dt
+(Transformation) -3302 3451 dt
+-5400 3678 mv
+-3281 3678 dl
+-3281 3538 dl
+-5400 3678 mv
+-5400 3678 dl
+-5400 3879 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3281 3548 do
+-5569 3879 mv
+-5569 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-5587 3849 b
+-5569 3879 l
+-5550 3849 l
+-5569 3809 l
+-5587 3849 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -5569 3558 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 223 -5587 4361 dr
+grestore gsave
+5362 1811 -5362 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-5587 4474 mv
+-5362 4474 dl
+(id) -5563 4444 dt
+(camCol) -5563 4401 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Field) -5513 4528 dt
+225 371 -2466 3884 dr
+grestore gsave
+2241 1334 -2241 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2466 4061 mv
+-2241 4061 dl
+(field0) -2441 4030 dt
+-2466 3997 mv
+-2241 3997 dl
+(trans) -2441 3966 dt
+(nFields) -2441 3924 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -2422 4200 dt
+(Stamp ) -2408 4169 dt
+(Calibration) -2440 4138 dt
+297 650 -2287 2888 dr
+grestore gsave
+1990 338 -1990 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2287 3387 mv
+-1990 3387 dl
+(sky) -2263 3356 dt
+(skySlope) -2263 3313 dt
+(lbias) -2263 3270 dt
+(rbias) -2263 3227 dt
+(mag20) -2263 3185 dt
+(mag20err) -2263 3142 dt
+(psfSigX1) -2263 3099 dt
+(psfSigX2) -2263 3056 dt
+(psfSigY1) -2263 3013 dt
+(psfSigY2) -2263 2970 dt
+(psfB) -2263 2928 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Photometric ) -2242 3482 dt
+(Transformation) -2261 3451 dt
+225 265 -562 4528 dr
+grestore gsave
+337 1978 -337 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-562 4599 mv
+-337 4599 dl
+(field0) -538 4568 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) -514 4737 dt
+(Pipeline ) -518 4707 dt
+(Run) -482 4676 dt
+289 395 -591 3452 dr
+grestore gsave
+302 902 -302 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-591 3737 mv
+-302 3737 dl
+(status) -566 3706 dt
+(id) -566 3664 dt
+(starLikelyhood) -566 3621 dt
+(diskLikelihood) -566 3578 dt
+(ellipLikelihood) -566 3535 dt
+(classification) -566 3492 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object) -498 3791 dt
+252 361 -594 2968 dr
+grestore gsave
+342 418 -342 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-594 3208 mv
+-342 3208 dl
+(filter) -562 3178 dt
+(x) -562 3126 dt
+(y) -562 3074 dt
+(flags) -562 3022 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Detection) -544 3273 dt
+-338 3452 mv
+-337 3399 dl
+-159 3399 dl
+-159 3528 dl
+-302 3528 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-357 3423 b
+-338 3452 l
+-320 3424 l
+-337 3384 l
+-357 3423 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -292 3528 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) -308 3374 dt
+-535 3452 mv
+-534 3399 dl
+-666 3399 dl
+-666 3518 dl
+-591 3518 dl
+15 16 -535 3443 do
+15 16 -600 3518 do
+-472 3452 mv
+-472 3329 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-491 3423 b
+-472 3452 l
+-454 3423 l
+-472 3383 l
+-491 3423 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-454 3349 b
+-491 3349 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) -442 3361 dt
+brush_solid
+/brush_rgb [1 1 1] def
+304 464 -28 2865 dr
+grestore gsave
+276 315 0 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-28 3208 mv
+276 3208 dl
+(nCols) 4 3178 dt
+(nRows) 4 3126 dt
+(col0) 4 3074 dt
+(row0) 4 3022 dt
+(pixelMap) 4 2970 dt
+(objectMask) 4 2919 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Atlas Image) 31 3273 dt
+516 723 -727 2108 dr
+grestore gsave
+211 442 -211 2108 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-727 2710 mv
+-211 2710 dl
+(apFlux) -695 2679 dt
+(psfFlux) -695 2628 dt
+(totalFlux) -695 2576 dt
+(stoke1) -695 2524 dt
+(stoke2) -695 2472 dt
+(stoke3) -695 2421 dt
+(stoke4) -695 2369 dt
+(classification) -695 2317 dt
+(classificationProb) -695 2265 dt
+(bulgeDisk) -695 2213 dt
+(bulgeDiskProb) -695 2162 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Small Object Detection) -650 2775 dt
+-342 3161 mv
+-28 3161 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-314 3181 b
+-342 3161 l
+-314 3141 l
+-277 3161 l
+-314 3181 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+563 309 -750 1675 dr
+grestore gsave
+187 309 -187 1675 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-750 1864 mv
+-187 1864 dl
+(petrosianRadius) -718 1833 dt
+(petrosianFlux) -718 1781 dt
+(surfaceBrightness) -718 1729 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Medium Object Detection) -668 1928 dt
+-478 2831 mv
+-478 2968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-525 2879 b
+-478 2919 l
+-431 2879 l
+-525 2879 dg
+-478 1984 mv
+-478 2108 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-525 2018 b
+-478 2058 l
+-431 2018 l
+-525 2018 dg
+399 309 33 2044 dr
+grestore gsave
+399 309 33 2044 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+33 2232 mv
+432 2232 dl
+(meanPixelFlux) 65 2201 dt
+(medianPixelFlux) 65 2150 dt
+(variance) 65 2098 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Radial Bin) 151 2297 dt
+-211 2305 mv
+33 2305 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-183 2325 b
+-211 2305 l
+-183 2285 l
+-145 2305 l
+-183 2325 dg
+brush_solid
+/brush_rgb [0 0 0] def
+14 2325 b
+14 2285 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({ordered}) -153 2226 dt
+brush_solid
+/brush_rgb [1 1 1] def
+272 308 -1247 3529 dr
+grestore gsave
+975 979 -975 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1247 3666 mv
+-975 3666 dl
+(pixelMap) -1215 3635 dt
+(filter) -1215 3583 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Corrected ) -1193 3781 dt
+(Frame) -1161 3750 dt
+-5475 4361 mv
+-5475 4166 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-5494 4331 b
+-5475 4361 l
+-5456 4331 l
+-5475 4291 l
+-5494 4331 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-5456 4186 b
+-5494 4186 dl
+-5448 3879 mv
+-5447 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-5467 3849 b
+-5448 3879 l
+-5429 3850 l
+-5448 3809 l
+-5467 3849 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -5448 3559 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 114 -3234 4968 dr
+grestore gsave
+3009 2418 -3009 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Product) -3184 5026 dt
+-6103 4733 mv
+-6103 4878 dl
+-3123 4878 dl
+-3123 4878 mv
+-3123 4878 dl
+-3123 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 4878 b
+-3123 4918 l
+-3076 4878 l
+-3170 4878 dg
+289 1057 -6347 3676 dr
+grestore gsave
+6058 1126 -6058 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-6347 4624 mv
+-6058 4624 dl
+(strip) -6322 4593 dt
+(id) -6322 4550 dt
+(flavor) -6322 4507 dt
+(sys_scn) -6322 4464 dt
+(eqnx_scn) -6322 4422 dt
+(node) -6322 4379 dt
+(incl) -6322 4336 dt
+(xBore) -6322 4293 dt
+(yBore) -6322 4250 dt
+(system) -6322 4208 dt
+(equinox) -6322 4165 dt
+(c_obs) -6322 4122 dt
+(colBin) -6322 4079 dt
+(rowBin) -6322 4036 dt
+(bias) -6322 3993 dt
+(overscan) -6322 3951 dt
+(quality) -6322 3908 dt
+-6347 3875 mv
+-6058 3875 dl
+(zenithDistance) -6322 3844 dt
+(airmass) -6322 3801 dt
+(tcc) -6322 3758 dt
+(nFrames) -6322 3715 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Imaging Run) -6303 4678 dt
+225 114 -6403 4968 dr
+grestore gsave
+6178 2418 -6178 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Stripe) -6337 5026 dt
+-6299 4733 mv
+-6300 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -6300 4744 do
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -6300 4958 do
+-3159 3775 mv
+-3159 3538 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3178 3745 b
+-3159 3775 l
+-3141 3745 l
+-3159 3705 l
+-3178 3745 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3159 3548 do
+-3181 4275 mv
+-3181 4878 dl
+-3123 4878 dl
+-3123 4878 mv
+-3123 4878 dl
+-3123 4968 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 4878 b
+-3123 4918 l
+-3076 4878 l
+-3170 4878 dg
+-3922 4226 mv
+-6058 4225 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3932 4226 do
+brush_solid
+/brush_rgb [1 1 1] def
+240 308 -3337 2354 dr
+grestore gsave
+3097 196 -3097 2354 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3337 2467 mv
+-3097 2467 dl
+(startField) -3313 2436 dt
+(endField) -3313 2394 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -3315 2606 dt
+(Pipeline ) -3286 2575 dt
+(Plan) -3252 2544 dt
+225 165 -3291 1570 dr
+grestore gsave
+3066 165 -3066 1570 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Plan Entry) -3260 1679 dt
+-3195 2354 mv
+-3195 1825 dl
+-3182 1825 dl
+-3182 1825 mv
+-3182 1825 dl
+-3182 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 1825 b
+-3182 1785 l
+-3229 1825 l
+-3135 1825 dg
+225 165 -2531 3373 dr
+grestore gsave
+2306 823 -2306 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Bias ) -2458 3482 dt
+(Vector) -2470 3451 dt
+256 165 -2822 3373 dr
+grestore gsave
+2566 823 -2566 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Flat Field ) -2771 3482 dt
+(Vector) -2746 3451 dt
+-2353 3884 mv
+-2353 3794 dl
+-2353 3794 dl
+-2353 3794 mv
+-2128 3794 dl
+-2128 3538 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-2372 3854 b
+-2353 3884 l
+-2334 3854 l
+-2353 3814 l
+-2372 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2128 3548 do
+-2353 3884 mv
+-2353 3794 dl
+-2353 3794 dl
+-2694 3538 mv
+-2694 3794 dl
+-2353 3794 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2372 3854 b
+-2353 3884 l
+-2334 3854 l
+-2353 3814 l
+-2372 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2694 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 393 -2531 2149 dr
+grestore gsave
+2306 393 -2306 2149 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-2531 2305 mv
+-2306 2305 dl
+(camCol) -2507 2274 dt
+(startField) -2507 2231 dt
+(endField) -2507 2188 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Postage ) -2487 2486 dt
+(Stamp ) -2474 2455 dt
+(Pipeline ) -2487 2424 dt
+(Plan) -2453 2394 dt
+-3123 4878 mv
+-2355 4878 dl
+-2355 4255 dl
+-3123 4878 mv
+-3123 4878 dl
+-3123 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 4878 b
+-3123 4918 l
+-3076 4878 l
+-3170 4878 dg
+-3182 1825 mv
+-2422 1825 dl
+-2422 2149 dl
+-3182 1825 mv
+-3182 1825 dl
+-3182 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 1825 b
+-3182 1785 l
+-3229 1825 l
+-3135 1825 dg
+316 256 -1069 3073 dr
+grestore gsave
+753 523 -753 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1069 3158 mv
+-753 3158 dl
+(pixelMap) -1037 3127 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Binned Noise ) -1022 3273 dt
+(Frame) -961 3242 dt
+-1022 3529 mv
+-1022 3329 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1041 3499 b
+-1022 3529 l
+-1003 3499 l
+-1022 3459 l
+-1041 3499 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+368 568 -1491 2761 dr
+grestore gsave
+1123 211 -1123 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1491 3208 mv
+-1123 3208 dl
+(minPix) -1459 3178 dt
+(maxPix) -1459 3126 dt
+(meanPix) -1459 3074 dt
+(sigPix) -1459 3022 dt
+(sky) -1459 2970 dt
+(nBadPix) -1459 2919 dt
+(nBrightObj) -1459 2867 dt
+(nFaintObj) -1459 2815 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frame Statistic) -1426 3273 dt
+-1200 3529 mv
+-1200 3329 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-1219 3499 b
+-1200 3529 l
+-1181 3499 l
+-1200 3459 l
+-1219 3499 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+244 671 -6328 2558 dr
+grestore gsave
+6084 8 -6084 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-6328 3109 mv
+-6084 3109 dl
+(frame) -6296 3078 dt
+(cpu) -6296 3026 dt
+(tai) -6296 2974 dt
+(coord) -6296 2923 dt
+(spa) -6296 2871 dt
+(ipa) -6296 2819 dt
+(ipaRate) -6296 2767 dt
+(az) -6296 2715 dt
+(alt) -6296 2664 dt
+(focus) -6296 2612 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(TCC Info) -6275 3174 dt
+317 1422 -4978 1837 dr
+grestore gsave
+4661 713 -4661 1837 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-4978 3150 mv
+-4661 3150 dl
+(rowCentroid) -4954 3119 dt
+(colCentroid) -4954 3076 dt
+(stampThresh) -4954 3033 dt
+(nPixOThrsh) -4954 2990 dt
+(sumWeights) -4954 2947 dt
+(quadMomRR) -4954 2905 dt
+(quadMomRC) -4954 2862 dt
+(quadMomCC) -4954 2819 dt
+(eccentricity) -4954 2776 dt
+(rMajor) -4954 2733 dt
+(rMinor) -4954 2690 dt
+(angMajorAxis) -4954 2648 dt
+(angMinorAxis) -4954 2605 dt
+(rowAmp) -4954 2562 dt
+(rowSky) -4954 2519 dt
+(rowCenter) -4954 2476 dt
+(rowSigma) -4954 2433 dt
+(numRowPixels) -4954 2391 dt
+(rowReducedChi2) -4954 2348 dt
+(colAmp) -4954 2305 dt
+(colSky) -4954 2262 dt
+(colCenter) -4954 2219 dt
+(colSigma) -4954 2176 dt
+(numColPixels) -4954 2134 dt
+(colReducedChi2) -4954 2091 dt
+(statusFit) -4954 2048 dt
+(filterRow) -4954 2005 dt
+(filterCol) -4954 1962 dt
+(filMarRow) -4954 1919 dt
+(filMarCol) -4954 1877 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(DA Star) -4881 3203 dt
+-6206 3676 mv
+-6206 3229 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-6225 3646 b
+-6206 3676 l
+-6187 3646 l
+-6206 3606 l
+-6225 3646 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -6206 3239 do
+-5362 3189 mv
+-5362 2891 dl
+-4978 2891 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-5381 3159 b
+-5362 3189 l
+-5344 3159 l
+-5362 3119 l
+-5381 3159 dg
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+15 16 -4987 2891 do
+-3984 2321 mv
+-3984 1675 dl
+-5962 1675 dl
+-5962 3887 dl
+-6058 3887 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3984 2311 do
+-5400 3678 mv
+-2756 3678 dl
+-2756 3538 dl
+-5400 3678 mv
+-5400 3678 dl
+-5400 3879 dl
+15 16 -2756 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 500 -3922 3765 dr
+grestore gsave
+3697 1215 -3697 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3922 4071 mv
+-3697 4071 dl
+(camCol) -3897 4040 dt
+(field0) -3897 3997 dt
+-3922 3964 mv
+-3697 3964 dl
+(c0) -3897 3934 dt
+(c2) -3897 3891 dt
+(stars) -3897 3848 dt
+(nFields) -3897 3805 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -3847 4209 dt
+(Pipeline ) -3877 4179 dt
+(Run) -3841 4148 dt
+-3805 4265 mv
+-3805 4878 dl
+-3123 4878 dl
+-3123 4878 mv
+-3123 4878 dl
+-3123 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 4878 b
+-3123 4918 l
+-3076 4878 l
+-3170 4878 dg
+-3123 4878 mv
+-414 4878 dl
+-414 4793 dl
+-3123 4878 mv
+-3123 4878 dl
+-3123 4968 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3170 4878 b
+-3123 4918 l
+-3076 4878 l
+-3170 4878 dg
+225 351 -4031 2321 dr
+grestore gsave
+3806 229 -3806 2321 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-4031 2477 mv
+-3806 2477 dl
+(camCol) -4007 2446 dt
+(startField) -4007 2404 dt
+(endField) -4007 2361 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -3957 2616 dt
+(Pipeline ) -3987 2585 dt
+(Plan) -3954 2554 dt
+-3929 2321 mv
+-3929 1825 dl
+-3182 1825 dl
+-3182 1825 mv
+-3182 1825 dl
+-3182 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 1825 b
+-3182 1785 l
+-3229 1825 l
+-3135 1825 dg
+225 351 -1481 2022 dr
+grestore gsave
+1256 351 -1256 2022 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-1481 2178 mv
+-1256 2178 dl
+(camCol) -1457 2148 dt
+(startField) -1457 2105 dt
+(endField) -1457 2062 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Frames ) -1432 2317 dt
+(Pipeline ) -1437 2286 dt
+(Plan) -1404 2255 dt
+-3182 1825 mv
+-1369 1825 dl
+-1369 2022 dl
+-3182 1825 mv
+-3182 1825 dl
+-3182 1735 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3135 1825 b
+-3182 1785 l
+-3229 1825 l
+-3135 1825 dg
+237 217 -4041 3331 dr
+grestore gsave
+3804 781 -3804 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC ) -3961 3492 dt
+(Postage ) -3991 3461 dt
+(Stamp) -3973 3431 dt
+-4041 3498 mv
+-5232 3498 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-5148 3548 b
+-5185 3498 l
+-5148 3448 l
+-5148 3548 dg
+-4041 3371 mv
+-5232 3371 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -4050 3371 do
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({same field, different frame}) -5202 3292 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(parent) -5202 3403 dt
+-3881 3765 mv
+-3881 3548 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-3900 3735 b
+-3881 3765 l
+-3862 3735 l
+-3881 3696 l
+-3900 3735 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -3881 3558 do
+-2353 3884 mv
+-2353 3794 dl
+-2353 3794 dl
+-2425 3538 mv
+-2425 3794 dl
+-2353 3794 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-2372 3854 b
+-2353 3884 l
+-2334 3854 l
+-2353 3814 l
+-2372 3854 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2425 3548 do
+-5400 3678 mv
+-2494 3678 dl
+-2494 3538 dl
+-5400 3678 mv
+-5400 3678 dl
+-5400 3879 dl
+15 16 -2494 3548 do
+-5400 3678 mv
+-2236 3678 dl
+-2236 3538 dl
+-5400 3678 mv
+-5400 3678 dl
+-5400 3879 dl
+15 16 -2236 3548 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 394 -572 3961 dr
+grestore gsave
+347 1411 -347 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-572 4204 mv
+-347 4204 dl
+(nObjects) -547 4173 dt
+(nStars) -547 4130 dt
+(nGalaxies) -547 4087 dt
+(status) -547 4044 dt
+(quality) -547 4001 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Object ) -516 4299 dt
+(List) -488 4268 dt
+-457 4528 mv
+-457 4355 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-475 4498 b
+-457 4528 l
+-438 4498 l
+-457 4459 l
+-475 4498 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -457 4365 do
+-457 3961 mv
+-457 3847 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-476 3932 b
+-457 3961 l
+-439 3932 l
+-457 3892 l
+-476 3932 dg
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -457 3857 do
+-572 4126 mv
+-1097 4126 dl
+-1096 3837 dl
+brush_solid
+/brush_rgb [1 1 1] def
+-600 4146 b
+-572 4126 l
+-600 4106 l
+-637 4126 l
+-600 4146 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-1078 3858 b
+-1116 3857 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+({5}) -1066 3869 dt
+-516 4355 mv
+-516 4425 dl
+-5362 4425 dl
+15 16 -516 4365 do
+brush_solid
+/brush_rgb [1 1 1] def
+225 181 -4041 2949 dr
+grestore gsave
+3816 399 -3816 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-4041 3020 mv
+-3816 3020 dl
+(sscStatus) -4016 2989 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(SSC Star) -3998 3074 dt
+-4041 3040 mv
+-4661 3040 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-4577 3090 b
+-4614 3040 l
+-4577 2990 l
+-4577 3090 dg
+-3919 3331 mv
+-3919 3130 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+-3937 3301 b
+-3919 3331 l
+-3900 3301 l
+-3919 3261 l
+-3937 3301 dg
+brush_solid
+/brush_rgb [0 0 0] def
+-3298 4186 mv
+-3697 4186 dl
+15 16 -3307 4186 do
+-3678 4206 b
+-3678 4166 dl
+-2409 4255 mv
+-2409 4494 dl
+-3759 4494 dl
+-3759 4265 dl
+15 16 -2409 4265 do
+brush_solid
+/brush_rgb [1 1 1] def
+241 500 -3298 3775 dr
+grestore gsave
+3057 1225 -3057 2550 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+-3298 4124 mv
+-3057 4124 dl
+(incl) -3274 4093 dt
+(node) -3274 4050 dt
+(equinox) -3274 4007 dt
+(field0) -3274 3964 dt
+-3298 3932 mv
+-3057 3932 dl
+(trans) -3274 3901 dt
+(nFields) -3274 3858 dt
+(run) -3274 3815 dt
+grestore gsave
+3300 2550 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+8 /Helvetica-Bold f
+(Astrometric ) -3276 4219 dt
+(Calibration) -3265 4189 dt
+-2466 4186 mv
+-3057 4186 dl
+brush_solid
+/brush_rgb [0 0 0] def
+15 16 -2475 4186 do
+-562 4644 mv
+-3103 4644 dl
+-3103 4275 dl
+15 16 -572 4644 do
+-562 4554 mv
+-2287 4554 dl
+-2287 4255 dl
+15 16 -572 4554 do
+-3337 2572 mv
+-3497 2572 dl
+-3497 4046 dl
+-3697 4046 dl
+15 16 -3347 2572 do
+-3678 4066 b
+-3678 4026 dl
+-2531 2223 mv
+-3525 2223 dl
+-3525 3996 dl
+-3697 3998 dl
+15 16 -2541 2223 do
+-2531 2432 mv
+-2916 2432 dl
+-2916 3996 dl
+-3057 3996 dl
+15 16 -2541 2432 do
+grestore gsave
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica-BoldOblique f
+() 0 2504 dt
+() 1650 2504 dt
+() 3300 2504 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica f
+(Mon Mar 18 19960:31:07 ) 0 58 dt
+(Imaging) 1576 58 dt
+(6) 3277 58 dt
+showpage
+%%PageTrailer
+% End of page 6
+%%Trailer
+%%DocumentFonts:
+%%+ Times-Roman
+%%+ Helvetica-Bold
+%%+ Helvetica
+%%+ Helvetica-BoldOblique
+%%Pages: 6
+end %%PROLOGUE
+%% End of PostScript file
+%%EOF

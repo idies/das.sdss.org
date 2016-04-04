@@ -1,0 +1,28 @@
+#+TITLE:     DAS data volume
+#+AUTHOR:    Eric H. Neilsen, Jr.
+#+EMAIL:     neilsen@fnal.gov
+#+LANGUAGE:  en
+#+OPTIONS:   H:1 num:t toc:t \n:nil @:t ::t |:t ^:t *:t TeX:t LaTeX:nil
+
+* results
+
+| directory           | volume            |
+|---------------------+-------------------|
+| imaging/*           | 42.5 TB (44.9 TB) |
+| imaging/*/*/corr    | 15.7 TB (18.1 TB) |
+| spectro/1d\_25      | 344 GB            |
+| spectro/1d\_26      | 451 GB            |
+| spectro/2d\_25      | 765 GB            |
+| spectro/2d\_26      | 3.36 TB           |
+| spectro/ss\_25      | 650 GB            |
+| spectro/ss\_26      | 737 GB            |
+| spectro/sspp\_25    | 290 GB            |
+| spectro/sspp\_26    | 483 GB            |
+| spectro/ss\_tar\_23 | 105 GB            | 
+| spectro/ss\_tar\_25 | 184 GB            | 
+| spectro/ss\_tar\_26 | 244 GB            | 
+| nightly             | 1.07 TB           |
+| pt                  | 770 MB            |
+| raw/imaging         | 17.4 TB           |
+| raw/spectro         | 1.09 TB           |
+| raw/pt              | 1.38 TB           |
