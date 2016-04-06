@@ -1,0 +1,327 @@
+<pre>
+
+A meeting was held at FNAL Friday August 4th to discuss 
+exactly what the DA was supposed to do, and if there were tasks
+the DA could not do, where these tasks would land.
+
+==============
+
+Attending:
+Petravick, Kent, Bartlett, Bakken, Rechenmacher, Knapp, Lupton,
+Ellman, Yanny, Kron, Pier, Stoughton.
+
+===============
+
+This is my draft of the meeting summary, please read over and
+send corrections or comments, I will then post on the sdss-web-page for
+further reference.
+
+=============
+The general theme of the meeting was that closure needs to be reached
+on what the DA is required to do.  We cannot continue to add
+more and more tasks to the ONLINE DA (VME 68040 boards) system between
+now and the time that the survey begins.  Because of CPU limitations
+on the boards and because of the difficulty in getting at and modifying 
+the code in the DA system, especially once it is sent to the 
+mountain, it is important to define the base DA tasks well in advance.  
+Also, since there will be unforeseen tasks that the DA may be called 
+upon to perform as the
+actual survey begins, some 'reserve CPU overhead percentage' should 
+be left free for unforeseen emergency DA processing, and we will also
+need a lot of flexibility during the test year.  These problems concern
+only PhotoDA - the astrometricDA has plenty of capacity.
+
+Kent reviewed the history of the DA system.  Its basic tasks are to acquire
+the fata from the photometric CCDs, write them to tape, write bookkeping
+and header information and perform enough real-time analysis to
+monitor the data quality.  The two QA tasks currently performed are:
+(1) quartile every row of data and (2) find something like 30 stars
+per frame, clip postage stamps and measure the PSF.  The purpose of (1)
+is to monitor sky noise and dark current and of (2) to monitor the
+seeing and general image quality.  Both of these output data products are
+used by the postage stamp pipeline, the quartile data for flattening and the
+postage stamps for calculation of the PSF.  The combination of these derived
+data products and the raw photometric frames means that the data can be
+read from tape and fully processed by PHOTO in a single pass through the 
+tapes.
+
+As pipeline development has proceeded, several more outputs have been requested
+from the DA.  First, Astro has requested that, rather than PhotoDA finding
+bright stars and cutting postage stamps, that stamps be cut at pre-
+determined locations, at the locations of _all_ stars found by AstroDA.
+This would be done while the data are on disk, before writing out to tape.
+Astro and Photo enthusiastically endorse this plan: it would improve
+the astrometry, provide more postage stamps to Photo with more overlap
+with MT standards, provide postage stamps matched in all 5 colors and
+(maybe) provide more stars in the u band.  This scheme is complete overkill
+for QA, though.  The code for star finding in PhotoDA could be removed.
+The second request, from Photo, is for complete frames containing all 
+bright stars (brighter than 7m - these are catalogue objects, and we
+expect something like one every half hour), and for one large postage
+stamp (200 x 200 pixels) per frame roughly every half hour, of a star
+brighter than 15m but unsaturated, to characterize the PSF wings and
+primary and secondary ghosts.  It was estimated that the current DA code 
+uses 80 - 85% of its tuime budget, and these requests would bring the 
+CPU budget over 100% unless we give up
+full quartile sampling.  If one sampled the quartiles every 2nd or 3rd
+or 5th row, one has more time to play with.  The general feeling, however,
+was that while these undersampled quartiles were good enough for QA
+purposes, they were not good enough for photo pipe reductions.
+The possibility of electronic periodic noise and low signal-to-noise 
+in the quartiles were the considerations.
+
+It was noted that for about $50k-$100k the DA 68040 CPUs could
+be possibly upgraded to 68060 CPUs which would run
+approximately twice as fast, but this option was not readily endorsed, since
+the DA code is still 'hard to get to'.
+
+The above discussion led to the proposal that the DA tasks be essentially
+fixed 'at the status quo', and that further tasks such as cutouts and
+large postage stamps be handled down stream in another pipeline which
+would run at FNAL on the production system.  It was shown how
+this could be arranged so that the tapes still would only
+need to be read once if $50k more worth of disk was purchased. If we
+do not make the extra disk purchase the system could still work by
+reading the tapes twice.
+
+There were advantages and disadvantages to this new pipeline:
+
+The main advantage was it gave more flexibility to allow fancy code and
+processing to be inserted at the front end of the pipeline
+system without stripping apart and rewriting the very time critical and 
+hard to get at DA online system.
+
+The main disadvantage was that it would require yet another pipeline
+to be written and maintained by someone.  Pieces of the code
+do exist, but it will require effort to put it together, and we are
+already busy with too many other things.
+
+Other advantages and disadvantages were discussed and a consensus was
+reached (though not unanimously) that 'closing' the DA and adding this 
+extra pipeline was a reasonable way to go.
+
+Task lists for the ONLINE DA (MC68040 side of the DA), 
+the IOP (unix side of DA, also known as the Imaging Observers Program), and
+the new pipeline (called the Serial Stamp Collection (Pipe)line) were
+drawn up, they are as follows:
+
+A star indicates that the task is (more or less) done in the
+existing software system.
+
+A. ONLINE DA (MC68040 CPUs boards, 10 of them):
+	Jon Bakken, Ron Rechenmacher, Tom Nicinski, OLS group
+
+1. Lock the frame boundaries of the Astro CCDs to the Photo CCDs by
+providing a software programmable offset of a fixed number of rows to each
+rank of astrometric CCDs.   This syncs the frames read by the photo CCDs
+and astro CCDs so that whole 1354 row frames from both photo and astro
+cameras are seeing the same piece of sky (though at different times). Without
+this syncing, the astrometric frames, for example, would see sky 
+corresponding to 2/3 of one photo frame and 1/3 of the next photo frame.
+
+*2. Quartiles for the photometric CCDs are generated with 200 histogram 
+bins.  Every line is scanned (no undersampling). This is the status quo.
+
+If it turns out that it the DA cannot do this in time, than
+the quartiling is relaxed to every 5th row and these quartiles are then used
+only for QA on the mountain and a separate full quartiling will be done in the
+sscPipeline. This is not expected to be necessary.
+
+*3. Up to 30 stars per photo CCD are detected independently
+on each photo CCD, 29x29 postage stamps are
+cut and the 'Kent' set of params (x,y,Ixx,Iyy,Ixy,...) are measured for each
+of these stars.
+
+3.1  Quartiles from 2. and stamps and params from 3. are bundled together
+into a legal binary FITS Frame Gang file containing 15 HDUs (5 chips
+per dewar for 3 files).  The IOP program polls the DA to
+see when this gang file is ready to be transferred over to the Unix sdsshost
+machine.
+
+*4.  Up to 100 stars per Astro CCD are detected independently on
+each astro CCD, 29x29 stamps are cut, 'Kent' params and 'Monet' params 
+(x,y,FWHM=sigma, peak of marginal fit, ....) are measured for these stars.
+These stamps and params are assembled into gang files simlilar to those
+in 3.1 except they have more params and no quartiles.
+
+4.1 Caveat:  There may be a flat field provided independently to astroline
+to set the detection thresholds. It may be possible to work without a
+flat field for the astrometrics.
+
+4.2 Leading and trailing astrometrics may have some cross talk
+added to cut matching stars. This code will only be added if necessary.
+
+*5. There is no delay waiting for a whole 'FIELD' of frames to build up
+before gang files can be pulled over to the IOP. The gang files
+are organized on a FRAME basis and are available almost immediately
+to IOP after each frame boundary is hit.
+
+6.  If the DA hits a particularly nasty region of sky with wildly
+varying sky background levels, or with zillions of stars, a situation
+ still could occur where it was not possible to complete the quartiling,
+postage stamp cutting and param measuring.  This is expected to
+occur no more than once per 10^4 frames.  If it does occur a "NULL gang
+file" with header information only, containing frame number and TCC
+status values (RA, DEC, TAI, etc), will still be created so that
+the IOP has a 'complete set' of gang files corresponding the
+raw data frames on tape with no gaps.
+
+7. Focus algorithm.  For a first pass, one might try to detect and
+ measure params for stars which pass thru the focus chips just like
+it was another astrometric chip.  The params would be stored in the
+astro gang file.  Suppose the focus chips, however, are slightly out of
+focus and centroid and fwhm routines may not work well. If this is
+the case then special treatment will be needed for the focus chips.
+This needs to be worked out. (At present the focus chips are orphans).
+
+==============================================================
+B. DA Archiver: (68040 CPUs 6 DLT tape drives)
+
+This part of the DA waits for 5 frames corresponding to a field
+to be read out.  They are sitting on the DA's disk.
+The archiver then gathers the 5 frames corresponding to a field
+and writes them as a group of 5 (FIELD) to a dual DLT tape drive.
+
+Some status pool flag is then set notifying that a field has
+been successfully archived.
+
+Old frames (ones that have already been written to tape)
+are then marked on the disk as 'expendable' and some
+kind of circular buffer can then overwrite them with new
+frames. Frame lifetime is about 20 minutes.
+
+=============================================================
+
+C. IOP: (Imaging Observer Program)  
+	Fritz Bartlett, with assistance from Kent, Yanny, and others.
+
+The IOP is a TCL program running on the sdsshost (SGI crimson 100MHZ)
+machine on the mountain.
+
+Its tasks are:
+
+1. poll the 10 DA CPUs every 10 seconds, if the FRAME number counter
+has been incremented, then a new gang file is ready for transfer.
+Transfer that gang file over to the sdsshost disk. At the
+end of the night all these gang files for a run(s) will be written 
+to "the 7th DLT tape".
+
+2. read the gang file header and append a line to a text log file
+giving FRAME#, RA, DEC, TAI, IPA, IPARATE, SPA, AZ, ALT, FOCUS.
+One log file per DA CPU per run.
+this log file is used by QA and also by the pipelines to see which
+frames occur in a given run, and where the telescope boresight
+was pointing for a given frame. written to 7th tape.
+
+3. read the gang files and plot fwhm, Ixx, Iyy , and sky brightness
+of selected bright stars. Trigger an alarm if stars become too 
+out of focus or too elongated or sky becomes too bright. This is a QA 
+feature.
+
+4. monitor TCC axes currents and weather,
+store to log file every two minutes. allow strip charts and alarms. This
+is achieved via a tcl-dp telnet connection to the TCC.
+
+5. monitor DA camera voltages and CCD temps every minute or so,
+log and alarm.  This info is in the DA status pool, and is available to IOP.
+
+6. QA: compare leading and trailing astrometric stars from the gang files
+for matches.  compare mags and positions to expected.
+
+7. monitor focus and feedback focus changes to the TCC.
+
+8. compare stars in the gang files to known GSC stars.
+
+9. Send secondary patch coordinates to the Monitor telescope program (mop)
+at the appropriate times.
+
+10.  Allow starting and stopping of a run (start and stop DA side).
+   start and stop TCC.
+
+11.  Allow infrequent bringing over of full frames from the ONLINE DA
+for QA purposes.  (one image every 2 minutes).
+
+12. Allow (within limits) (off mountain) monitoring of all 
+IOP variables and logs.
+
+=====================================================================
+
+D. Serial Stamp Collection (pipe)line:
+	(a new pipeline, run on production system at FNAL)
+	organizational responsibility: uncertain
+
+1. from tape 7, read the observing logs and gang files for one run
+	or set of runs from one night to disk.
+
+2. using the observing logs and bright star catalogs, 
+compute positions (frame numbers) of frames containing very bright (7th
+magnitude stars). No astrometry needed beyond crude RA, DEC vs. frame
+number in observing logs.
+
+3. load a raw frames tape (1-6). run 'nextFrameGet' which reads sets 
+of 5 frames (fields) and build the 200 pixel overlaps.  It holds the 
+field with overlap in memory.  
+
+4. cut photo CCD postage stamps from the field for stars corresponding
+to astrometric stars read from 5 astrometric gang files. Measure Kent
+and Monet (and Lupton?) params for these stars, store in a Field Gang file.
+Again no astrometry is needed at this point beyond fixed camera 
+CCD offsets between astro and photo CCDs.
+
+Note that in order for the astrom pipeline to match across ccd columns
+(i.e. to solve for the whole camera), all 6 tapes need to be read in 
+and processed.  This means either buying quite a bit more
+disk to store all the files from 6 CCD columns or alternatively
+(and this is the current plan) to read the tapes twice.
+
+4.1  Some of the ps pipeline may be inserted here at a later date
+to compute running PSFs based on 4. above.
+
+4.2 DA quartiles for the whole run be read in and interpolated over
+to generate a flat field. The raw, overlap built frames may then be
+flat fielded and written to disk, thus avoiding the need to store
+the raw frames on disk.  This step will not be done until a later date.
+For now, this SSC pipeline allows the existing PS and Frames pipeline
+to run on the data without extensive changes to either the PS or 
+Frames pipeline.  Enhancements such as 4.1 and 4.2 will be done 
+as time permits.  4.2 requires
+that the DA can measure good, not undersampled quartiles.  If the DA
+cannot, then good every-pixel-sampled quartiles are generated here in
+this SSC pipeline at this step.  These quartiles are then passed onto 
+the PS and frames pipelines for flatfielding.
+
+5. If the current frame contains a 7th mag star, save that frame in
+5 colors and give it a special name.
+
+6. Every half hour or so (every 30th frame?), detect a star about 15th 
+magnitude (gang file can be used to pinpoint the star) and cut 
+out a 200x200 pixel postage stamp in 5 colors. (in all columns?).  
+output of steps 5. and 6. are used by the PS and Frames pipelines 
+to model extended PSF wings of bright objects and ghosts.
+
+7.  Write the overlapped fields to disk to avoid re-reading the tapes
+a second time by the frames pipeline.  In principal a whole
+run's worth of fields need to be written to disk, thus an extra $50k = 100GB?
+of disk needs to be purchased to hold all this. Alternatively, one can 
+also skip the overlap building and writing to disk in this 
+pipeline and can read the tapes a second time in the frames pipeline.  
+Both options are feasible.
+
+=======================================================
+
+
+E. Astrom pipeline runs as before on the astro  gang files plus the newly
+generated cut photo gang files (step 4. in SSC line).
+
+E2: MT pipeline runs as before.
+
+F. PS pipeline then runs as before, alternatively many steps 
+from PS pipeline may be moved to SSC line as time permits.
+
+G. Frames pipeline then runs as before.
+
+=====================================================
+
+
+
+</pre>

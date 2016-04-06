@@ -1,0 +1,241 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.01, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: drawrel.scr -  Draws exisiting relationships b/w two classes
+'       Supports RUMBAUGH, BOOCH, FUSION, COAD_YOU, SHLAER_M, OOIE
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| SG  | 12/08/94 | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+
+'---------------------------------------------------------------------------
+'Assumption:
+'  This script assumes that the top window is an Object Diagram and that two
+'  classes are slected from it.
+'  Only Associations, Generalizations, Aggregations and their inverse
+'  relationships will be considered.
+'---------------------------------------------------------------------------
+
+Draw_Relationships:
+    SELECT ALL FROM Window WHERE Type = "Diagram"
+    SelectCount = 0
+    FOREACH Diagram
+        'Determine the characteristics of the two selected classes
+        FOREACH Diagram.Item
+            IF  (Item.Class = "Class") AND (Item.Selected = "T") THEN
+                SelectCount = SelectCount + 1
+                IF  (SelectCount = 1) THEN
+                    Class1$ = Item.Object
+                    X1      = VAL(Item.X) + 5
+                    Y1      = VAL(Item.Y) + 5
+                    Width1  = VAL(Item.Width)  - 10
+                    Height1 = VAL(Item.Height) - 10
+                ELSE
+                    Class2$ = Item.Object
+                    X2      = VAL(Item.X) + 5
+                    Y2      = VAL(Item.Y) + 5
+                    Width2  = VAL(Item.Width)  - 10
+                    Height2 = VAL(Item.Height) - 10
+                ENDIF
+            ENDIF
+        NEXT
+    NEXT
+
+    IF (SelectCount = 1) THEN
+	Class2$ = Class1$
+	X2 = X1
+	Y2 = Y1
+	Width2 = Width1
+	Height2 = Height1
+    ENDIF
+
+    IF  (SelectCount = 2 OR SelectCount = 1) THEN
+        GOSUB Initialization
+ 
+        'From Class1 draw the relationships to Class2
+        SELECT ALL FROM Class WHERE Name = Class1$
+note Class1$+" "+Class2$
+        FOREACH Class
+            RelCount = 0
+            GOSUB Get_RelCount
+            RelCount = RelCount + 1
+            X1 = X1 + (Width1  / RelCount)
+            Y1 = Y1 + (Height1 / RelCount)
+            X2 = X2 + (Width2  / RelCount)
+            Y2 = Y2 + (Height2 / RelCount)
+            GOSUB Plot_Arcs
+        NEXT
+    ENDIF
+
+END
+
+'------------------------------------------------------------------
+'  Determines the total number of relationships b/w the two classes
+
+Get_RelCount:
+
+    FOREACH ClassAssociation$
+        IF  (Name$ = Class2$) THEN
+            RelCount = RelCount + 1
+        ENDIF
+    NEXT
+    FOREACH ClassGeneralization$
+        IF  (Name$ = Class2$) THEN
+            RelCount = RelCount + 1
+        ENDIF
+    NEXT
+    FOREACH ClassSpecialization$
+        IF  (Name$ = Class2$) THEN
+            RelCount = RelCount + 1
+        ENDIF
+    NEXT
+    IF  (Paradigm$ <> "SHLAER_M") THEN
+        FOREACH ClassAggregation$
+            IF  (Name$ = Class2$) THEN
+                RelCount = RelCount + 1
+            ENDIF 
+        NEXT
+        FOREACH ClassParticipation$
+            IF  (Name$ = Class2$) THEN
+                RelCount = RelCount + 1
+            ENDIF
+        NEXT
+    ENDIF
+
+RETURN
+
+
+'--------------------------------------------------
+' Initializes paradigm specific variables
+
+Initialization:
+
+    ClassAssociation$        = "Class.Association"
+    ClassGeneralization$     = "Class.Generalization"
+    ClassSpecialization$     = "Class.Specialization"
+    ClassAggregation$        = "Class.Aggregation"
+    ClassParticipation$      = "Class.Participation"
+
+    IF  (Paradigm$ = "BOOCH") THEN
+	    ClassGeneralization$ = "Class.Inheritance"
+        ClassSpecialization$ = "Class.Ancestor"   
+    ELSEIF (Paradigm$ = "FUSION") THEN
+	    ClassAssociation$    = "Class.Relationship"
+    ELSEIF (Paradigm$ = "COAD_YOU") THEN
+	    ClassAssociation$    = "Class.Relationship"
+    ELSEIF (Paradigm$ = "SHLAER_M") THEN
+		ClassAssociation$    = "Class.Relationship"
+		ClassGeneralization$ = "Class.Superclass"
+		ClassSpecialization$ = "Class.SubClass"
+		ClassAggregation$    = ""
+		ClassParticipation$  = ""
+    ELSEIF (Paradigm$ = "OOIE") THEN
+	    ClassAggregation$    = "Class.Composition"
+    ENDIF
+
+RETURN
+
+'--------------------------------------------------------
+' Draws all existing relationships b/w the two classes
+
+Plot_Arcs:
+
+    FOREACH ClassAssociation$
+        IF  (Name$ = Class2$) THEN
+            IF  (Paradigm$ = "FUSION") OR (Paradigm$ = "COAD_YOU") OR (Pardigm$ = "SHLAER_M") THEN
+                RelType$   = "Relationship"
+                RelName$   = Relationship.Name
+                RelSource$ = Relationship.Source
+            ELSE
+                RelType$   = "Association"
+                RelName$   = Association.Name
+                RelSource$ = Association.Source
+            ENDIF
+            IF  (RelSource$ = Class1$) THEN
+                Diagram.DrawLink RelType$, 2, X1, Y1, X2, Y2, RelName$
+            ELSE
+                Diagram.DrawLink RelType$, 2, X2, Y2, X1, Y1, RelName$
+            ENDIF
+            GOSUB Increment_Coordinates
+        ENDIF
+    NEXT
+
+    FOREACH ClassGeneralization$
+        IF  (Name$ = Class2$) THEN
+            IF  (Paradigm$ = "BOOCH") THEN
+                RelType$ = "Inheritance"
+                RelName$ = Inheritance.Name
+            ELSEIF (Paradigm$ = "SHLAER_M") THEN
+                RelType$ = "SuperClass"
+                RelName$ = SuperClass.Name
+            ELSE
+                RelType$ = "Generalization"
+                RelName$ = Generalization.Name
+            ENDIF
+            Diagram.DrawLink RelType$, 2, X1, Y1, X2, Y2, RelName$
+            GOSUB Increment_Coordinates
+        ENDIF
+    NEXT
+
+    FOREACH ClassSpecialization$
+        IF  (Name$ = Class2$) THEN
+            IF  (Paradigm$ = "BOOCH") THEN
+                RelType$ = "Inheritance"
+                RelName$ = Inheritance.Name
+            ELSEIF (Paradigm$ = "SHLAER_M") THEN
+                RelType$ = "SuperClass"
+                RelName$ = SuperClass.Name
+            ELSE
+                RelType$ = "Generalization"
+                RelName$ = Generalization.Name
+            ENDIF
+            Diagram.DrawLink RelType$, 2, X2, Y2, X1, Y1, RelName$
+            GOSUB Increment_Coordinates
+        ENDIF
+    NEXT
+
+    IF  (Paradigm$ <> "SHLAER_M") THEN
+        FOREACH ClassAggregation$
+            IF  (Name$ = Class2$) THEN
+                IF  (Paradigm$ = "OOIE") THEN
+                    RelType$ = "Composition"
+                    RelName$ = Comoposition.Name
+                ELSE
+					RelType$ = "Aggregation"
+                    RelName$ = Aggregation.Name
+                ENDIF
+                Diagram.DrawLink RelType$, 2, X1, Y1, X2, Y2, RelName$
+                GOSUB Increment_Coordinates
+            ENDIF
+        NEXT
+
+        FOREACH ClassParticipation$
+            IF  (Name$ = Class2$) THEN
+                IF  (Paradigm$ = "OOIE") THEN
+					RelType$ = "Composition"
+                    RelName$ = Comoposition.Name
+                ELSE
+                    RelType$ = "Aggregation"
+                    RelName$ = Aggregation.Name
+                ENDIF
+				Diagram.DrawLink RelType$, 2, X2, Y2, X1, Y1, RelName$
+                GOSUB Increment_Coordinates
+            ENDIF
+        NEXT
+    ENDIF
+
+RETURN
+
+'--------------------------------------------------
+Increment_Coordinates:
+
+    X1 = X1 + (Width1  / RelCount)
+    Y1 = Y1 + (Height1 / RelCount)
+    X2 = X2 + (Width2  / RelCount)
+    Y2 = Y2 + (Height2 / RelCount)
+
+RETURN
+
+'--------------------------------------------------

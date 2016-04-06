@@ -1,0 +1,90 @@
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/sdssdas.css"/>
+  <title>An Experimental Alternative SDSS Footprint Page</title>
+</head>
+
+<body>
+
+<form method="post" ENCTYPE="multipart/form-data" 
+	action="http://cas.sdss.org/runs/en/tools/crossid/x_upload.asp">
+
+<!-- Set values needed by the web service, but not entered by the user -->
+<input type="hidden" name="search" value="n"> 
+<input type="hidden" name="radius" value="0.005"> 
+<input type="hidden" name="firstcol" value="1"> 
+<input type="hidden" name="format" value="html"> 
+<input type="hidden" name="uquery" value="SELECT f.run, f.rerun, f.camcol, f.field, 
+ CAST(fl.mjd_r AS DECIMAL(10,5)) AS 'MJD (r)',
+ CAST(((p.mu*f.e-f.b*p.nu-f.e*f.a+f.b*f.d)/(f.c*f.e-f.b*f.f)) AS DECIMAL(6,2)) AS col,
+ CAST(((p.mu*f.f-f.c*p.nu-f.a*f.f+f.c*f.d)/(f.b*f.f-f.c*f.e)) AS DECIMAL(6,2)) AS row,
+ f.strip, f.stripe,
+ '<a href=/www/cgi-bin/field?RUN='+CONVERT(varchar,f.run)+'&RERUN='+CONVERT(varchar,f.rerun)+'&CAMCOL='+CONVERT(varchar,f.camcol)+'&FIELD='+CONVERT(varchar,f.field)+'>DAS field page</a>' 
+ AS link 
+FROM #upload AS u
+CROSS APPLY dbo.fGetNearbyFrameEq(u.up_ra,u.up_dec,23.4,0) AS nf
+CROSS APPLY dbo.fCoordsFromEq(u.up_ra,u.up_dec) AS p
+LEFT OUTER JOIN #x AS x ON x.up_id = u.up_id
+JOIN frame AS f ON f.fieldID = nf.fieldID AND f.zoom = 0
+JOIN field AS fl ON fl.fieldID = f.fieldId
+WHERE 
+  ((p.mu*f.e-f.b*p.nu-f.e*f.a+f.b*f.d)/(f.c*f.e-f.b*f.f))  
+     BETWEEN 0 AND 2048
+ AND
+  ((p.mu*f.f-f.c*p.nu-f.a*f.f+f.c*f.d)/(f.b*f.f-f.c*f.e))
+     BETWEEN 0 AND 1489
+ORDER BY x.up_id">
+
+<!-- the viewable part of the page -->
+<h1>The Experimental Alternative SDSS Footprint Page</h1>
+
+<p class="left">This page is an alternative to the 
+<a href="/www/html/post_coords.html">SDSS DAS
+Coordinate List Submission Form</a>. Instead of using the very simple
+backend of the DAS, it uses the 
+<a href="http://www.sdss.org/DR7/glossary/index.html#runs_database">CAS
+"runs" database</a> as a back-end.
+</p>
+
+<p class="left" style="color: red"><em>
+This form is highly experimental! It may have bugs, and the URL is
+likely to change.
+</em></p>
+
+<p class="left"><em>The format of the uploaded list is slightly
+    different than that required by primary version. Unlike the
+    pure DAS version, the first line in this form must be the column
+    headings, and the "#" is not recognized as a comment
+    marker.</em></p>
+
+<p class="left">Provide your list of coordinates as tab or comma
+separated value (CSV) lists. The first line must contain column
+headings. Each remaining line must contain a name (which may not
+contain spaces or some other special characters), a right ascension
+in decimal degrees, and the declination, also in decimal degrees.
+</p>
+
+<div class="list-upload">
+<p class="list-upload">Either select file to upload
+<input type="file" name="upload"><input type="submit" name="Submit" value="Submit"></p>
+
+<p class="list-upload">or enter the CSV information below.</p>
+
+<p class="list-upload">
+<textarea cols="60" rows="6" name="paste">name, RA, Dec
+M53,198.230133,18.169120
+NGC4476,187.496172,12.348657
+NGC6962,311.82944,0.32080
+</textarea></p>
+
+<p class="list-upload">
+<input type="submit" name="Submit" value="Submit Request"> or, if you want
+to start again, 
+<input type="reset" value="Reset Form" name="Reset"></p>
+
+</div>
+
+</form>
+
+</body>
+</html>

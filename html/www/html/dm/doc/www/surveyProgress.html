@@ -1,0 +1,490 @@
+<html>
+<head>
+<title>Tracking the Progress of the Imaging Survey</title>
+</head>
+
+<body>
+<h1>Tracking the Progress of the Imaging Survey</h1>
+
+<STRONG>WARNING: This is a document in progress.  This has not all been
+thoroughly thought through yet.  This should be pretty close to the final
+system.</STRONG>
+<p>
+We require some mechanism for tracking the progress of the imaging survey
+across the sky; i.e., declaring that we have detected the astronomical objects
+in a chunk of sky, and declaring which objects in the database represent those
+astronomical objects.  This describes how we will do so, drawing largely on
+previous SDSS documents, as well as Steve Kent's initial implementation of
+the Target Selection Pipeline.
+
+<menu>
+  <li><a href="#concepts">Concepts</a>
+      <menu>
+	<li><a hred="#field">Field</a>
+	<li><a href="#scanline">Scanline</a>
+	<li><a href="#object">Object</a>
+	<li><a href="#object list">Object List</a>
+      </menu>
+  <li><a href="#operations">Operations</a>
+      <menu>
+	<li><a href="#postprocessor">Frames Pipeline Postprocessor</a>
+	<li><a href="#merge">Merge Objects</a>
+	<li><a href="#finalCal">Final Calibration</a>
+	<li><a href="#qa">Quality Analysis</a>
+	<li><a href="#select">Select Primaries</a>
+	<li><a href="#auto">Automatic Target Selection</a>
+	<li><a href="#manual">Manual Target Selection</a>
+      </menu>
+</menu>
+
+<h2><a name="concepts">Concepts</a></h2>
+
+<h3><a name="field">Field</a></h3>
+
+While imaging data for a given column of CCDs in the camera is acquired as a
+continous drift scan, it is process as individual fields.  The strip of data
+is divided into fields of 1361 rows by 2048 columns.  An additional 128 rows
+from the previous field is appended as overlap.
+
+
+<h3><a name="scanline">Scanline</a></h3>
+
+The survey observing strategy leads to a natural carving of the sky into
+scanlines.  A scanline is defined as that portion of the sky covered by a
+single column of the imaging camera while scanning along either the north or
+south strip of a single stripe.  Each scanline overlaps at least one other
+scanline on either side.  For example, scanline 6 in the north
+strip of stripe 3 overlaps scanline 6 in the south strip of stripe 3 and
+scanline 1 in the south strip of stripe 4.  Towards the poles of the survey
+area, three or more scanlines may overlap in a given area of sky.
+<p>
+Here we refine the definition of scanline to provide a one-to-one mapping from
+sky to scanline.  Stripes are predefined great circles laid out on the sky
+before any actual drift scan observations are performed.  One can similarly
+predefine the area of sky which maps onto a scanline.  This requires
+assumptions on the Image Camera geometry, as well as on the accuracy with which
+each drift scan tracks its strip, however a substantial error in these
+assumptions may be tolerated due to the overlap between scanlines.
+We now have predefined scanlines which overlap.
+In regions of overlap, we split the regions
+in the obvious way, assigning equal areas of the overlap regions to each
+scanline.  We are then
+left with non-overlapping scanlines which completely cover the survey area,
+yielding a one-to-one mapping from sky to scanline in the survey area.
+Throughout this document, the term <em>scanline</em> will refer to these
+predefined non-overlapping chunks of sky.
+
+<h3><a name="object">Object</a></h3>
+
+An <em>object</em> is a single detection, in all five filters, of an
+<em>astronomical object</em> (i.e., star, galaxy, asteroid; hereafter AO) in
+the Frames Pipeline.  A given AO may be detected numerous times over the
+course of the survey, thus giving rise to several <em>objects</em> for a given
+AO.  Causes for such multiple detections include:
+<ul>
+  <li>The Frames Pipeline is fed frames such that adjacent frames overlap
+      by 128 rows.  All AOs within those overlap rows should
+      be detected twice, thus yielding two separate objects each.  While
+      these objects should be exactly the same within the errors, comparing
+      these multiple detections provides useful quality analysis internal to
+      a Frames Pipeline Run.
+  <li>Fields within adjacent strips overlap by some variable amount, thus
+      leading to multiple detections of AOs, and thus multiple
+      objects.
+  <li>A given piece of a strip may be scanned multiple times for a variety of
+      reasons: quality tests, unacceptable data from the first scan, or for
+      scientific reasons as in the Southern Survey.
+  <li>A given Drift Scan may be processed multiple times by the Frames
+      Pipeline, leading to multiple objects for each AO (more specifically,
+      multiple objects for a single observation of an AO).  This will
+      happen certainly during the test year, and perhaps later as well if we
+      end up reprocessing all or some of the data one or more times.
+</ul>
+While a given AO may be detected and parameterized as an object
+numerous times in the course of the survey, we must choose one such object
+for each AO to serve as the <em>primary</em> object of that
+AO; i.e., the catalog entry for that AO will come from that
+object, target selection will use that object, all science requiring only a
+single detection for a given AO will use that object, etc.
+Each <em>object</em> is thus characterized by the following two attributes
+which specify its status in the survey:
+<dl>
+  <dt>Status
+  <dd>This specifies whether the object is considered a <em>primary</em>
+      object in the survey; i.e., the primary detection for a given
+      AO.  It may have one of the following values:<p>
+      <dl>
+	<dt>undetermined
+	<dd>Its status has not yet been determined.
+	<dt>DUPLICATE
+	<dd>This object matches another object detected in an adjacent field
+	    in the same Frames Pipeline Run.  It must therefore be located
+	    in the overlap region between the two fields.  In this case, one
+	    of the two objects is assigned this status.  Objects with
+	    this status are not used for any scientific purposes, but rather
+	    are only used for quality analysis internal to a given Frames
+	    Pipeline Run.
+	<dt>primary
+	<dd>This is the primary detection of the AO for the survey.
+	    All science which requires only a single detection of an
+	    AO will use this object.  Target selection will use this
+	    object.
+	<dt>secondary
+	<dd>This is a secondary detection of the AO.  This object is
+	    matched up to at least one other object which serves as the
+	    primary detection.  No science which requires only a single
+	    detection of a AO will use this object.  Target selection
+	    will not use this object, except for those aspects which examine
+	    variability (e.g., serendipity).  The object may be used for
+	    science which requires multiple detections of AOs
+	    (e.g., variability studies), as well as for quality analysis.
+      </dl>
+  <dt>Target
+  <dd>Is this object a spectroscopic target?  Only primary objects may be
+      spectroscopic targets.
+</dl>
+      
+Clearly we must be able to match up multiple detections/objects of the same
+AO before we can perform much quality analysis, select out primary
+objects, or perform target selection.  Such matches will not always be
+one-to-one between two given Frames Pipeline Runs; e.g., two or more objects
+may be differentiated in one Frames Pipeline Run but blended together as one
+object on another.  Various algortihms may be used for matching.  For example,
+two objects could be considered to match (i.e., are
+considered two detections of the same AO) if the measured center
+of one object falls within the effective area of the other (as determined by
+its atlas image).  This should be a rigorous, unambiguous, but CPU-intensive
+criterion.  A simpler criterion is that two objects match if their centers lie
+within 1 arcsec of each other.  The choice of a matching algorithm is a detail
+(albeit an important one) which does not affect the stucture for tracking
+survey progress and target slection presented here.
+<p>
+The assignment of primary/secondary status would be simplified if we could
+first uniquely assign an AO to a given scanline.  However, this is not
+possible.  In the case of AOs which are close to the border between two
+scanlines, different detections/objects for the same AO may fall in different
+scanlines due to random errors in the astrometric calibrations or measured
+instrumental positions, blending of objects in one Frames Pipeline Run but not
+the other, etc.  Even for a given object, a new astrometric calibration may
+move it from one scanline to another.
+
+<h3><a name="object list">Object List</a></h3>
+
+Objects are created by the Frames Pipeline.  
+Each <em>Frames Pipeline Run</em> (hereafter FPR) targets a contiguous set
+of fields in a single column of the Imaging Camera for a single Drift Scan,
+detecting and parameterizing all objects in each field.  The natural way
+to select primary objects would be to select all objects from a given
+Frames Pipeline Run, which fall within the scanline being tracked by that
+camera column for that run.  Since the data quality may vary over the course
+of a Drift Scan, this set of objects would be limited to one or more ranges of
+survey "longitude" in which the data is considered acceptable.  Here again, we
+encounter ambiguity in whether a given AO near the start or end of a
+range of survey "longitude" falls within that range or not.
+<p>
+The Frames Pipeline has been designed to work on a single field at a time.
+Astrometric and photometric calibrations are quantized in units of fields.
+Thus, it is natural to replace the idea of a range of survey "longitude" with
+a contiguous set of fields.
+This leads us to the concept of the <em>Object List</em> (hereafter OL).
+An OL is the list of objects detected in a single field in a single run of the
+Frames Pipeline.  Note that there is not a one-to-one mapping of OL to field;
+there may be multiple OLs for a given field, one for each time the Frames
+Pipeline ran on a given camera column for a given Drift Scan.
+<p>
+An OL serves as the fundamental quanta of data for tracking the progress of the
+imaging survey; i.e., for declaring which chunks of sky have been observed
+under acceptable conditions, and for which spectroscopic targets have been
+chosen.  Each OL can be thought of as mapping onto a contiguous piece of a
+scanline, being simply the the intersection of the field and the scanline
+which it tracks.  A given chunk of scanline may be mapped to multiple OLs for
+the following reasons:
+<ul>
+  <li>Fields within a given Drift Scan overlap, and thus so do their
+      associated OLs.
+  <li>A given field in a given Drift Scan may have been processed through the
+      Frames Pipeline more than once, leading to multiple OLs associated with
+      that field, and thus that piece of scanline.  Note that the different
+      OLs may not map onto exactly the same piece of scanline (though very
+      nearly the same), if they use different astrometric calibrations.
+X  <li>A given piece of scanline may have been scanned by more than one Drift
+      Scan.  In this case, OLs from different Drift Scans may overlap the
+      same piece of scanline.
+</ul>
+We thus need to be able to declare which OL represents that piece of scanline
+for the basic survey.  By <em>basic survey</em>, we mean the survey which
+requires exactly one detection/object for each AO.  An OL which is part of the
+basic survey we will call a <em>primary</em> OL.  An OL which it not part of
+the basic survey we will call a <em>secondary</em> OL.  We will also use OLs
+to quantize the quality of the data, as well as state of target selection.
+Thus, each OL is characterized by the following four attributes which fully
+specify its status in the survey:
+<dl>
+  <dt>Quality
+  <dd>The quality of the data, in terms of its acceptability to the survey.
+      This quality applies to all objects in the
+      list (although flags set for individual objects by the Frames Pipeline
+      may provide additional information; e.g., this object is contaminated
+      with a cosmic ray, overlaps a border of the field, etc).  A given
+      OL is assigned one of the following qualities:<p>
+      <dl>
+	<dt>undetermined
+	<dd>A quality has not yet been assigned.
+	<dt>useless
+	<dd>The data is of such poor quality as to be useless.  Don't bother
+	    with it.
+	<dt>unacceptable
+	<dd>The data is not acceptable as primary detections of the objects,
+	    but may still be useful.
+	<dt>acceptable
+	<dd>The data is acceptable as primary detections of the objects.
+      </dl>
+  <dt>Status
+  <dd>This attribute determines whether this object list is a part of the
+      basic survey.
+      Each OL is assigned one of the following status values:<p>
+      <dl>
+	<dt>undetermined
+	<dd>Its status has not yet been determined.
+	<dt>primary
+	<dd>This OL is part of the basic survey.
+	<dt>secondary
+	<dd>This OL is not part of the basic survey.
+      </dl>
+  <dt>Auto-Targeted
+  <dd>Has this OL been through the automatic portion of target selection yet
+      (e.g., bright galaxy, red galaxy, and QSO target selection)?
+      Only primary OL may be processed through the target selection.
+  <dt>Manually-Targeted
+  <dd>Has this OL been through the manual portion of target selection yet
+      (e.g., serendipity and stars target selection)?
+      Only OL which have been auto-targeted my be manually-targeted.
+</dl>
+Quality is actually divided into a number of quality attributes.  Two types of
+quality can be assigned: the quality of the data reductions (were the
+reductions performed correctly, regardless of the inherent quality of the
+data); and the inherent quality of the data (e.g., was the seeing good enough,
+does the sky background vary across the field, etc).  For example, one way to
+measure the quality is to examine the matchup of objects in overlap regions.
+Such matchups can be effected by, among many things, poor seeing or large
+centroiding errors due to weak detections (poor data quality), or due to poor
+initial astrometric calibrations caused by incorrect matchups with the primary
+astrometric standards (poor reduction quality).  Further, the quality of the
+data and reductions may be measured in different ways, and different stages in
+the processing.  The following three stages of quality analysis are identified.
+For each of these stages, a separate quality is assigned for bot the reduction
+quality and the data quality.
+<dl>
+  <dt>Check-in
+  <dd>An initial quality analysis will be performed when the output of the FPR
+      is read into the Operational Databases by the Frames Pipeline
+      Postprocessor.  This stage may use any data and diagnostic outputs of the
+      Frames Pipeline, including the corrected images, atlas images, and any
+      other output which is not stored directly in the Operational Databases,
+      but are easily accessed at this point as they are still located wherever
+      the Frames Pipeline left them.  Since merging of objects has not yet been
+      done, this stage of quality analysis is internal to a given FPR only,
+      with no use of comparisons with overlapping drift scans.
+      to any 
+  <dt>Merge and Final Calibrations
+  <dd>Additional QA will be done after merging the objects in a given FPR and
+      applying final calibrations to objects in a set of OLs.  This QA will
+       specifically take advantage of the objects which match objects in other
+       FPRs.  Note that there is no one particular time that a given OL can be
+       considered "merged", as additional observations in the same or
+       overlapping areas of the sky may introduce additional objects to be
+       matched up.  Thus, it is yet to be determined exactly when this form of
+       QA is considered done.  Perhaps the best time would be immediately
+       before a given area of sky is considered for target selection.
+  <dt> After target selection
+  <dd> A great deal of QA will be performed by scientists playing with the
+       data, particularly during target selection.
+</dl>
+<p>
+For a primary OL, most objects in the OL within the portion of sky covered by
+the associated scanline will then have their status set to primary, and most
+objects in the OL outside the scanline will have their status set to
+secondary.  We must also account for overlap between adjacent fields within a
+given Drift Scan.  We do this by dividing the overlap regions in two in the
+obvious way.  For a given OL, objects falling within the inner halves of the
+two overlap regions are assigned the same status as the OL, while those objects
+in the outer halves are assigned the status <em>secondary</em>.  These rules
+have exceptions.  Those objects whose status is
+already set to <em>DUPLICATE</em> will be left alone.  Some objects may have
+already had there status set to secondary because an overlapping OL was
+already set to be a primary OL.  This will mostly affect OLs from a
+different Drift Scan of the same scanline which overlaps at the ends with
+this one, and from border affects with adjacent scanlines.  These
+details will be described later under operations.  One rule to which there is
+no exception is that no objects belonging to a secondary OL may themselves be
+primary.
+
+<h2><a name="operations">Operations</a></h2>
+
+There are 7 basic operations which bring the objects from the Frames
+Pipeline through target selection, and which perform most of what is required
+to define the imaging survey.  Each step is outlined here.
+
+<h3><a name="postprocessor">Frames Pipeline Postprocessor</a></h3>
+
+The <em>Frames Pipeline Postprocessor</em> stuffs into the
+<em>Operational Database</em> the results of
+a single FPR, making the appropriate bookkeeping links, and assigns an initial
+data and reduction quality to each OL in the run.  Initial quality analysis
+must be done at this stage, as we have easy access to all outputs of the
+Frames Pipelines (including things like corrected frames which are not easily
+accessed from the Operational Databases).
+
+<h3><a name="merge">Merge Objects</a></h3>
+
+A single execution of the <em>Merge Objects</em> task operates on all OL in a
+single FPR.  Each object created by that FPR is merged with all other matching
+objects in the database.  The matching algorithm is left undefined here.
+An object may be matched only against other objects whose FPR has already
+been through the <em>Merge Objects</em> task.
+Note that two objects which match need not both match-up with the same set of
+objects.  The simplest instance of this is when two objects which are
+unblended in one FPR are blended as a single object in another FPR.
+<p>
+Each OL in the FPR is processed in order of increasing field number.  For
+each OL, the algorithm in brief is as follows (<strong>WARNING: this
+algortihm has not been thoroughly thought through, and most certainly is
+wrong --- this is all very complicated</strong>):
+<ol>
+<li>A portion of the sky is assigned
+to each OL, defined as the intersection of the field with the scanline which
+it tracks, excluding the "outer" halves of the overlap regions at either end of
+the field (these are assigned to the adjacent fields).  All objects whose
+centers fall within this region of sky are assigned the status
+<em>OK_FIELD</em>, while those objects falling outside this region of sky are
+assigned the status <em>OUT_OF_RANGE</em>.
+<li>The objects are then matched up with objects in the overlapping region of
+previous OL in the same FPR.  Note that a given object may match more than one
+object from the previous OL.  For each object with one or more matches, the
+following algorithm is applied:
+<ol>
+<li>If its status is <em>OK_FIELD</em>: set the status of each matching object
+to <em>DUPLICATE</em>.
+<li>If its status is <em>OUT_OF_RANGE</em>: if any of its matching objects is
+<em>OK_FIELD</em>, set this object's status to <em>DUPLICATE</em>; else set
+all matching object's status to <em>DUPLICATE</em>.
+</ol>
+<li>The objects are then matched up with objects overlapping OLs in other FPRs.
+For each object with one or more matches and whose status is not
+<em>DUPLICATE</em>, the following algorithm is applied:
+<ol>
+<li>If its status is <em>OK_FIELD</em>: set the status of each matching object
+to <em>DUPLICATE</em>.
+<li>If its status is <em>OUT_OF_RANGE</em>: if any of its matching objects is
+<em>OK_FIELD</em>, set this object's status to <em>DUPLICATE</em>; else set
+all matching object's status to <em>DUPLICATE</em>.
+</ol>
+<p>
+This task is an entirely automatic task, requiring no human decisions.
+<p>
+This task may be undone with no side-effects, so long as the task
+<em>Select Primaries</em> has not been run on the FPR.
+
+<h3><a name="finalCal">Final Calibration</a></h3>
+TBD
+
+<h3><a name="qa">Quality Analysis</a></h3>
+
+A quality must be assigned to every OL by a human.  This task
+operates on an arbitrary set of OLs.  All OLs must have been through the
+<em>Merge Objects</em> task for a final quality to be assigned.
+Not necessarily every OL in a given FPR
+need be assigned a quality at the same time (i.e., within a given run of this
+task).
+<p>
+If an OL is processed more than once through <em>Quality Analysis</em>,
+its old quality is written over, with no history kept of any previous QA.
+<p>
+This task may be undone, so long as the task <em>Select Primaries</em> has not
+yet been run on any of the OLs.  When undoing, the quality of all OLs touched
+by this invocation will be set to <em>undetermined</em>.
+
+<h3><a name="select">Select Primaries</a></h3>
+
+The <em>Select Primaries</em> task operates on an arbitrary set of OL (each of
+which must have a final quality assigned), assigning a survey status (primary
+or secondary) to each OL and the objects contained within those OLs.  This task
+proceeds in two stages.  First, a human must assign a status to each OL, within
+the restrictions of the following guidelines:
+<ul>
+  <li>Any OL assigned primary status <strong>must</strong> have its
+      quality set to <em>acceptable</em>.
+  <li>One thinks of the assignment of status in terms of unbroken lengths of
+      scanlines.  We are determining which objects will represent the AOs in
+      that portion of sky.  For any such piece of a scanline, primary status
+      should be assigned to a contiguous set of OL from the same FPR for the
+      earliest Drift Scan which produced acceptable data.
+  <li>There are few instances in which the previous guideline should be
+      ignored.  One case where it may be ignored is when an earlier short Drift
+      Scan is passed over in favor of a later but considerably longer Drift
+      Scan including the same region.
+  <li>No OL should be set as primary if one or more OL which were previously
+      set as primary completely cover the same piece of scanline.  Such a
+      case should be automatically detected.
+</ul>
+<p>
+The second stage assigns a survey status to each object in the OLs, and
+is performed automatically, with no human intervention.
+The OL are ordered on the basis of the time at which the observations
+were obtained, with the earliest obtained data first.  In other words,
+they are ordered first by run number, low run number first,
+with all OL for a given run ordered by field number, low field number first.
+Each OL is then taken in order, and the objects in each OL looped over.
+The algorithm varies depending on whether the OL is primary or secondary.
+<dl>
+  <dt>Primary OL
+  <dd>The following algorithm is used:
+      <ul>
+	<li>If an object already has its status set to <em>DUPLICATE</em>, then
+	    it is left as is.  If not, then continue to the next step.
+	<li>Check the status of all matching objects.  If any are primary
+	    objects, then set the status to <em>secondary</em>.  If none
+	    are primary but one or more are secondary and belong to an OL
+	    whose status is primary, then set the status to
+	    <em>primary</em> (this takes care of confusing border objects
+	    whose AO cannot be assigned to a unique scanline).  If neither,
+	    then continue to the next step.
+	<li>If the object lies within the associated scanline then set its
+	    status to <em>primary</em>.  If not, set its status to
+	    <em>secondary</em>.
+      </ul>
+  <dt>Secondary OL
+  <dd>If an object already has its status set to <em>DUPLICATE</em>, then it is
+      left as is.  If not, then set its status to <em>secondary</em>.
+</dl>
+<p>
+This task may be undone only if there are no overlapping OL not processed
+by this invocation which have been processed by a later invocation.
+
+<h3><a name="auto">Automatic Target Selection</a></h3>
+
+Automatic target selection operates on an arbitrary set of primary OL.  All
+primary objects contained within those OL are passed to the target selection
+pipeline.  Those objects selected as targets have their target attribute
+set to <em>true</em>.
+<p>
+This task is an entirely automatic task, requiring no human decisions.
+<p>
+This task may be undone only if all OL processed by this invocation have not
+yet been though manual target selection.
+
+<h3><a name="auto">Manual Target Selection</a></h3>
+
+Manual target selection operates on an arbitrary set of primary OL (all of
+which must have been processed through <em>Automatic Target Selection</em>).
+All primary objects contained within those OL are presented to the Survey
+collaborators via the Science Archive Database for manual target selection.
+Those objects selected as targets have their target attribute
+set to <em>true</em>.
+<p>
+This task is an entirely human task.
+<p>
+This task may be undone only if all OL processed by this invocation have not
+yet been though tiling.
+
+</body> </html>

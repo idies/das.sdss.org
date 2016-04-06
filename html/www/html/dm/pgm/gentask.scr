@@ -1,0 +1,245 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: gentask.scr - Provide a status report of pending tasks.
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| SG  | 12/16/93 | Initial implementation.
+'|-----|----------|---------------------------------------------------------
+'| ER  | 2/17/94  | Removed logic that prints headers, since the 2.0 report 
+'|     |          | editor now does it automatically.
+'|-----|----------|---------------------------------------------------------
+
+GenTask_Main:
+'-- Begining of main script  --
+
+    AllBugs= ASK("Do you want to list ALL tasks or just currently OPEN tasks?","All","Open")
+
+    SortFirst = ASK("Do you want to sort tasks according to TYPE first or USER first?","Type","User")
+    
+    ShowStoppersOnly = ASK("Do you want to print only HIGH priority (B1,B2) tasks?","Yes","No")
+
+'-- Initialize Arrays and Variables --
+    GOSUB Initialize
+
+'-- Sort information --
+    Start = 1
+    Stop  = Index
+    GOSUB Sort_Array
+
+'-- Print sorted array --
+    GOSUB Print_Headings
+
+    IF  (Index > 0) THEN
+        Trap_Type$ = LEFT$(Bugs_Gen$(1),1) + MID$(Bugs_Gen$(1),2,1)
+        Trap_User$ = LEFT$(Bugs_Gen$(1),2)
+    ENDIF
+    FOR I = 1 TO Index
+
+        IF  (SortFirst  = 0) THEN
+            Bugs_Type$        = LEFT$(Bugs_Gen$(I),1)
+            Bugs_Priority$    = MID$(Bugs_Gen$(I),2,1)
+            Bugs_User$        = MID$(Bugs_Gen$(I),3,2)
+            Bugs_Status$      = MID$(Bugs_Gen$(I),5,1)
+            Bugs_Platform$    = MID$(Bugs_Gen$(I),6,1)
+            Bugs_Id$          = MID$(Bugs_Gen$(I),7,6)
+            Temp_Type$        = Bugs_Type$ + Bugs_Priority$
+            IF  (Trap_Type$ <> Temp_Type$) THEN
+                PRINT
+                Trap_Type$ = Temp_Type$
+            ENDIF
+        ELSE
+            Bugs_User$        = LEFT$(Bugs_Gen$(I),2)
+            Bugs_Status$      = MID$(Bugs_Gen$(I),3,1)
+            Bugs_Type$        = MID$(Bugs_Gen$(I),4,1)
+            Bugs_Priority$    = MID$(Bugs_Gen$(I),5,1)
+            Bugs_Platform$    = MID$(Bugs_Gen$(I),6,1)
+            Bugs_Id$          = MID$(Bugs_Gen$(I),7,6)
+            IF  (Trap_User$ <> Bugs_User$) THEN
+                PRINT
+                Trap_User$ = Bugs_User$
+            ENDIF
+        ENDIF
+        IF  (AllBugs = 0) THEN
+            SELECT Description FROM Change_Request WHERE Name = Bugs_Id$
+            FOREACH Change_Request
+                Bugs_Description$ = Description$
+                NEXT '{Change_Request}
+        ELSE
+            Bugs_Description$ = MID$(Bugs_Gen$(I),13)
+        ENDIF
+        IF (ShowStoppersOnly=0 AND (Bugs_Type$="B") AND (Bugs_Priority$="1" OR Bugs_Priority$="2")) OR (ShowStoppersOnly=1) THEN 
+          PRINT Bugs_Id$:6, " ", Bugs_Status$:1, " ",
+          PRINT Bugs_Type$:1, Bugs_Priority$:1, " ",
+          PRINT Bugs_Platform$, " ",
+          PRINT Bugs_User$, " ", Bugs_Description$
+        ENDIF
+    NEXT I
+
+'-- Print Abbreviations --    
+    PRINT
+    PRINT "Status: O-Open                B-Bug            1,2,3-Priority       W-Windows"
+    PRINT "        C-Completed           E-Enhancement                         U-Unix"
+    PRINT "        I-In Work/Testing                                           A-All"
+END
+
+'---------------------------------------------------------------'
+'                P R I N T     H E A D I N G S                  '
+'---------------------------------------------------------------'
+Print_Headings:
+    Page_Count = Page_Count + 1
+    PRINT "Project: ", APP$, " as of ", TIME$
+    PRINT "______ _________ ___________________________________",
+    PRINT "____________________________________________"
+    PRINT "ID     Status    Description"
+    PRINT "¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯",
+    PRINT "¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯"
+    RETURN
+
+'---------------------------------------------------------------'
+'                      I N I T I A L I Z E                      '
+'---------------------------------------------------------------'
+Initialize:
+    Page_Count  = 0
+    Index       = COUNT(Change_Request)
+    IF  (AllBugs = 1) THEN 
+        SELECT Name FROM Change_Request WHERE Status = "OPEN"
+        Index = 0
+        FOREACH Change_Request
+            Index = Index + 1
+        NEXT '{Change_Request}
+    ENDIF  
+
+'-- Define arrays --
+    DIM Bugs_Gen$(Index)
+    IF  (AllBugs = 1) THEN 
+        SELECT ALL FROM Change_Request WHERE Status = "OPEN"
+    ENDIF
+    'If # of open bugs > 100 switch to Allbugs 0 mode (to avoid storing description)'
+    IF  (Index > 100) THEN AllBugs = 0
+
+'-- Assigning values to the arrays --
+    I = 0
+    FOREACH Change_Request
+        I = I + 1
+        Bugs_Id$          = LEFT$(Name$,6)
+        Bugs_Status$      = LEFT$(Status$,1)
+        Bugs_Type$        = LEFT$(Type$,1)
+        Bugs_Priority$    = LEFT$(Priority$,1)
+        Bugs_Platform$    = LEFT$(Platform$,1)
+        Bugs_Description$ = Description$
+        IF  (AllBugs=0) THEN Bugs_Description$ = ""
+        IF  (LEN(Bugs_Id$) < 6) THEN
+            FOR J = LEN(Bugs_Id$)+1 to 6
+                Bugs_Id$ = Bugs_Id$ + " "
+                NEXT J
+            ENDIF        
+
+        Bname$ = Name$
+
+        IF NOT EXIST (Task, Bname$) THEN New Task, BName$
+        SELECT Assigned_to FROM Task WHERE Name=BName$  
+        FOREACH Task
+            Bugs_User$    = Assigned_to$
+	    SELECT Initials FROM User WHERE Name = Bugs_User$
+	    Bugs_User$ = ""
+	    FOREACH User
+		Bugs_User$ = LEFT$(Initials$,2)
+	    NEXT '{User} 
+	    IF  (Bugs_User$ = "") THEN
+		Bugs_User$ = "  "
+	    ENDIF
+        NEXT '{Task}
+        IF  (SortFirst  = 0) THEN
+            Bugs_Gen$(I) = Bugs_Type$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Priority$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_User$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Status$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Platform$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Id$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Description$
+        ELSE
+            Bugs_Gen$(I) = Bugs_User$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Status$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Type$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Priority$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Platform$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Id$
+            Bugs_Gen$(I) = Bugs_Gen$(I) + Bugs_Description$
+        ENDIF
+        NEXT '{Change_Request}
+    RETURN
+
+'---------------------------------------------------------------'
+'                   S O R T      A R R A Y                      '
+'---------------------------------------------------------------'
+Sort_Array:
+    MaxStack = 20
+    DIM LowStack  (MaxStack)
+    DIM HighStack (MaxStack)
+    NStack = -5000
+    Low    = 1
+    High   = Index
+    WHILE (NStack <> 0)
+        IF  (NStack = -5000) THEN NStack = 0   '{Work around for repeat}
+        IF  (NStack > 0) THEN
+            Low    = LowStack  (NStack)
+            High   = HighStack (NStack)
+            NStack = NStack - 1
+        ENDIF
+        WHILE (Low < High) 
+            GOSUB Partition
+            IF  (PivotLocation - Low) < (High - PivotLocation) THEN
+                IF  (NStack >= MaxStack) THEN PRINT "Sort Overflow"
+                NStack = NStack + 1
+                LowStack  (NStack) = PivotLocation + 1
+                HighStack (NStack) = High
+                High = PivotLocation - 1
+            ELSE
+                IF (NStack >= MaxStack) THEN PRINT "Sort Overflow"
+                NStack = NStack + 1
+                LowStack  (NStack) = Low
+                HighStack (NStack) = PivotLocation -1
+                Low = PivotLocation + 1
+            ENDIF
+        WEND
+    WEND
+    RETURN                       
+
+'---------------------------------------------------------------'
+'                       P A R T I T I O N                       '
+'---------------------------------------------------------------'
+Partition:
+    X = Low
+    Y = (Low + High) / 2
+    GOSUB Swap
+    Pivot$    = Bugs_Gen$(Low)
+    LastSmall = Low
+    FOR I = (Low+1) TO High
+        IF  (Bugs_Gen$(I) < Pivot$) THEN
+            LastSmall = LastSmall + 1
+            X = LastSmall
+            Y = I
+            GOSUB Swap
+        ENDIF
+        NEXT I
+    X = Low
+    Y = LastSmall
+    GOSUB Swap
+    PivotLocation = LastSmall
+    RETURN
+
+'---------------------------------------------------------------'
+'                           S W A P                             '
+'---------------------------------------------------------------'
+Swap:
+    Temp_Gen$    = Bugs_Gen$(X)
+    Bugs_Gen$(X) = Bugs_Gen$(Y)
+    Bugs_Gen$(Y) = Temp_Gen$
+    RETURN
+
+'---------------------------------------------------------------'
+'                   E N D    O F    S C R I P T                 '
+'---------------------------------------------------------------'

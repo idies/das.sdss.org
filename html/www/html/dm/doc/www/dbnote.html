@@ -1,0 +1,52 @@
+<pre>
+Operational Databases in the SDSS survey
+
+The duties of the operational database system may be
+divided into three main subsystems:
+
+A. Guiding the mountain top operations, generating observing
+	plans for the upcoming lunation, and keeping track of which 
+	stripes of the survey have been observed successfully so far.
+	
+B. Staging raw data from the mountain top tapes to the processing 
+	pipelines back at Fermilab.  This involves generating 
+	processing plans for each pipeline,  Storing all parameters 
+	used to run each pipeline, and generating auxiliary files
+	to be used by the pipelines such as previously known 
+	object catalogs.
+
+C. Storing the outputs of the pipelines, applying calibrations,
+	generating final calibrated catalogs of objects to
+	export to the Science Archive Database,
+	and directing target selection for spectroscopic 
+	fiber targeting,
+
+
+These three systems are shown as heavily outlined boxes in Figure <a href="opdb.ps">XX</a>.
+The flow of information from the operational databases to and from
+the mountain and to and from the processing pipelines are indicated
+by arrows.  The products of each pipeline are indicated within
+each pipeline's box.
+
+The operational database system is based on the commercial 
+object-oriented data base system "Objectivity".
+The interface to the OPDB is supported by the 
+C and TCL-based "dervish" interactive 
+programming system developed at FNAL and Princeton.
+Currently the system will run on a 6-CPU Silicon Graphics
+Challenge machine with about 60-100GB of spinning disk and
+access to a hierarchical storage tape robot with 3-4TB of
+on-line secondary storage.  Tertiary storage of 12-24TB is in 
+the form of racks of "DLT" hi-density tapes.  Data is transferred
+from the mountain top to FNAL for processing on DLT tapes.
+
+Brian Yanny and Jeff Munn are currently based at FNAL and are
+responsible for delivering a completed operational database system
+within the next six months.  The designing data model
+is nearing completion, the interfaces to all the pipelines
+have been defined and implementation of code
+to stage the data into and out of
+the database in a systematic fashion is underway.
+
+
+</pre>

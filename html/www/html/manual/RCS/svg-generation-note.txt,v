@@ -1,0 +1,29 @@
+head	1.1;
+access;
+symbols;
+locks
+	neilsen:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	2008.10.24.14.46.48;	author neilsen;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@The SVG file produced by dia seems to get the font size wrong. To
+correct the appearance, you can just replace the font size attributes
+in the SVG file. For example:
+
+sed -i 's/font-size: 0.8/font-size: 0.6/g' dpActivityFlow.svg
+@

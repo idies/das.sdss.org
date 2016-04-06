@@ -1,0 +1,33 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: genstat.scr -  Statistics Report
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+
+gosub initialization
+print "Metaclass                         #"
+print "--------------------------------------"
+foreach metaclass
+  print name$:34, count(name$)
+next
+end
+'------------------------------------------------------
+' Initialization
+'------------------------------------------------------
+Initialization:
+   dashLine$ = "------------------------------------------------------------------------------------"
+   print 
+   print "Statistics Report"
+   print "_____________________________________________________"
+   print 
+   print "Generated on: ", Time$
+   print 
+   print "Paradigm: ", Paradigm$
+   print "Project:  ", App$
+   print
+return

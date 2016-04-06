@@ -1,0 +1,13 @@
+Imaging_root	/das/data/imaging
+Spectro_root	/das/data/spectro
+Scratch_root	/srv/das/webscratch
+Drdefs_root	/das/data/contents/tsv
+Astlimits_fname	/das/data/contents/fits/astlimits.fits
+Imaging_url	http://das.sdss.org/raw
+Spectro_url	http://das.sdss.org/raw/spectro
+Scratch_url	http://das.sdss.org/webscratch
+Cgi_url	http://das.sdss.org
+CAS_navi_url	http://cas.sdss.org/dr5/en/tools/chart/navi.asp
+CAS_obj_url	http://cas.sdss.org/dr8/en/tools/explore/obj.asp
+Rsync_host	rsync.sdss.org
+offer_drC	True

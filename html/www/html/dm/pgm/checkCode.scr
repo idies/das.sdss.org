@@ -1,0 +1,79 @@
+main:
+    'Variables specific to this kind of code generation
+    codeType$ = "            Objectivity C++ Code"
+    UseInclude = TRUE
+
+    '-------------------------
+    'Added for ICG by SG
+    '-------------------------
+    StartComment$ = "//"
+    EndComment$   = ""
+    StartBlock$   = "{"
+    EndBlock$     = "}"
+    BlockBody$    = ""  'Not required for C++
+    BlockName$    = ""  'Not required for C++
+    EndClass$     = ""  'Not required for C++
+    '-------------------------
+    ICGOption$ = "Diff"
+    CommentHeader$ ="// ========================================================================= "
+    gosub CommonCodeMain
+END
+
+main:
+    ICGOption$ = "Diff"
+    FALSE=0
+    TRUE =1
+    UseInclude = TRUE
+    Now$ = Time$
+    MapAtt = TRUE
+    MapQual = FALSE
+    MapOp = FALSE
+    '----------------------------------  TMZ 8-4-94
+    '{Mapping to different Paradigms}
+    Subsystem$               = "Subsystem"
+    SubsystemClass$          = "Subsystem.Contains.Class"
+    MClass$                  = "Class"
+    ClassAttrib$             = "Class.Attribute"
+    ClassOperat$             = "Class.Operation"
+    ClassGeneralization$     = "Class.Generalization"
+    ClassLink$               = "Class.Link_Association"
+    ClassAssociation$        = "Class.Association"
+    ClassAggregation$        = "Class.Aggregation"
+    ClassParticipation$      = "Class.Participation"
+
+    IF  (Paradigm$ = "BOOCH") THEN
+	ClassGeneralization$     = "Class.Inheritance"
+
+    ELSEIF (Paradigm$ = "FUSION") THEN
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+
+    ELSEIF (Paradigm$ = "COAD_YOU") THEN
+	Subsystem$           = "Subject"
+	SubsystemClass$      = "Subject.Contains.Class"
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+
+    ELSEIF (Paradigm$ = "SHLAER_M") THEN
+	SubsystemClass$      = "Subsystem.Link.Class"
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+	ClassGeneralization$ = "Class.Superclass"
+	ClassAggregation$    = ""
+	ClassParticipation$  = ""
+    ENDIF
+    '----------------------------------  
+    ClassCnt = 0
+
+    FOREACH Class
+        IF Document$ <> "" THEN
+	    ownerclass$=name$   'used in comparsion
+	    CurrentName$ = Class.Name
+	    ClassCnt = ClassCnt + 1
+	    GOSUB FlattenIt
+	ENDIF
+    NEXT
+END
+
+'$include "gendecl.scr"
+'$include "cpp.scr"

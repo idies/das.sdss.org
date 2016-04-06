@@ -1,0 +1,1019 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: CPP.SCR -  Common Code for C++ all code generation
+'       Supports RUMBAUGH, BOOCH, FUSION, COAD_YOU, SHLAER_M
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| DD  |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+'| HS  |          | Upgraded to support 2.0. 
+'|-----|----------|---------------------------------------------------------
+'| SG  | 07/94    | Added code to support Incremental Code Generation (ICG) 
+'|-----|----------|---------------------------------------------------------
+'| TZ  | 08/05/94 | Added code to support code generation by subsystem and
+'|     |          |  print comment blocks for functions, classes, and files.
+'|-----|----------|---------------------------------------------------------
+'| SU  | 08/06/94 | Added code to support code generation for Fusion notation
+'|     |          | 
+'---------------------------------------------------------------------------
+'                               main
+'---------------------------------------------------------------------------
+
+CommonCPPMain:
+  CommentHeader$ ="// ========================================================================= "
+  gosub CommonCodeMain
+RETURN
+
+'$include "gencode.scr"
+'$include "merge.scr"
+'$include "flatten.scr"
+'---------------------------------------------------------------------------
+'                         GenerateCode
+'---------------------------------------------------------------------------
+GenerateCode:
+    CurrentInstance$="a"+CurrentClass$
+    CurrentPersistence$ = Persistence$ 'added for code concilliation
+    CurrentDescription$ = Description$
+    CurrentType$ = class.type
+    CurrentVisibility$ = Visibility$
+    GOSUB GetFileNameInfo
+
+    '---------------------------------------------
+    'open header and body files and generate code
+    '---------------------------------------------
+    OPEN "PP_NEW1.$$$" FOR OUTPUT AS 1
+    IF CurrentVisibility$ <> "PRIVATE" THEN
+        OPEN "PP_NEW2.$$$" FOR OUTPUT AS 2
+        GOSUB GenerateImplementation
+    ENDIF
+    GOSUB GenerateDeclaration
+    CLOSE 1
+    IF CurrentVisibility$ <> "PRIVATE" THEN
+        CLOSE 2
+    ENDIF
+
+    ' Merge files
+    ICGOldFile$ = HFile$
+    ICGNewFile$ = "PP_NEW1.$$$"
+    GOSUB ICG_Merge_Files
+    IF ICGOption$ = "Diff" AND UseInclude = TRUE THEN
+        print "          File: ", ICGOldFile$
+        INCLUDE ICGDiffFile$
+        print "__________________________________________________________________"
+    ENDIF
+'    IF ICGOption$ = "New" THEN
+'	INCLUDE ICGOldFile$
+'    ENDIF
+    IF CurrentVisibility$ <> "PRIVATE" THEN
+        ICGOldFile$ = CPPFile$
+        ICGNewFile$ = "PP_NEW2.$$$"
+        GOSUB ICG_Merge_Files
+        IF ICGOption$ = "Diff" AND UseInclude = TRUE THEN
+            print "          File: ", ICGOldFile$
+            INCLUDE ICGDiffFile$
+            print "__________________________________________________________________"
+        ENDIF
+'        IF ICGOption$ = "New" THEN
+'	    INCLUDE ICGOldFile$
+'        ENDIF
+    ENDIF
+
+    ' Include in the report
+    IF UseInclude = TRUE THEN
+	IF ICGOption$ = "New" THEN
+	    GOSUB IncludeHeaderFile
+            IF CurrentVisibility$ <> "PRIVATE" THEN
+	        GOSUB IncludeBodyFile
+	    ENDIF
+	ENDIF
+    ENDIF
+RETURN
+
+'-------------------------
+' PrintText
+'
+' description: Prints a block of text to a file.  The block is broken up into
+'              lines, where lines are broken on spaces.  A leading piece of
+'              text is printed at the beginning of each line.
+'
+' input:       ptText$  = text to be printed
+'              ptLead$  = leading text for each line
+'              ptNum    = file number to print to
+'
+' output:      none
+'
+' scope:       none
+'--------------------------
+PrintText:
+   ptLineLen = 75   ' Maximum length of a line
+   ptLeadLen = len(ptLead$)
+   ptTmpText$ = ptText$
+   ptLen = LEN(ptTmpText$)
+   WHILE ptLen <> 0 
+      IF ptLen < ptLineLen - ptLeadLen then
+         PRINT #ptNum, ptLead$, ptTmpText$
+         ptLen = 0
+      ELSE
+         ptLine$ = LEFT$(ptTmpText$, ptLineLen - ptLeadLen)
+         WHILE RIGHT$(ptLine$, 1) <> " "
+            ptLine$ = LEFT$(ptLine$, LEN(ptLine$) - 1)
+         WEND 
+         IF LEN(ptLine$) = 0 then  'a very long word!!, very unlikely
+            ptLine$ = LEFT$(ptTmpText$, ptLineLen - ptLeadLen)
+	 END IF
+	 PRINT #ptNum, ptLead$, ptLine$
+         ptTmpText$ = RIGHT$(ptTmpText$, ptLen - LEN(ptLine$))
+         ptLen = LEN(ptTmpText$)
+      END IF      
+   WEND
+RETURN
+
+'----------------------
+'includeClasses
+'---------------------
+includeclasses:
+
+      gosub getRelStr   ' output rel$="class.association" or "class.relationship"  
+      gosub printIncludeClasses      'association class   
+      if paradigm$ <> "Shlaer_M" then
+          Rel$ ="class.aggregation"
+          gosub printIncludeClasses  'aggregation class 
+      end if
+      if paradigm$="Rumbaugh" or paradigm$="OMT94" then
+          gosub IncludeOtherclasses  
+      end if
+return
+
+'------------------
+'gethead
+'------------------
+gethead:
+
+     select all from class where name = n$
+     foreach class
+	head$ = class.class + ".h"
+     next
+     select all from class
+
+return
+
+'---------------------------------
+' printIncludeClasses : inside the scope of class
+'---------------------------------
+printIncludeClasses:
+   foreach Rel$ 
+      n$ = name$
+'------------------------------------------------------------------------------
+'	Suresh Gadagoju
+'---------------------------------------------------------------------------
+      IF (association.source$ = n$ AND container2$ <> "") OR (association.destination$ = n$ AND container1$ <> "" AND container1$ <> "KEY") THEN
+'          select all from class where name=n$
+'          foreach class
+'              if class.link = "TRUE" then
+'                  foreach Rel$
+'                      if name$ <> Ownerclass$ then
+'	                  n$ = name$
+'		      endif
+'		  next
+'              endif
+'      next
+  '----------------------------------------------------------------------
+      gosub GetClassName  
+'      head$ = left$(classname$, 8)+".h"
+      head$ = classname$+".h"
+
+      gosub gethead  
+      IF (Head$ <> HFile$) THEN print #1, "#include ", chr$(34), head$, chr$(34) 
+      ENDIF
+   next
+return
+
+'-------------------
+'IncludeOtherClasses : link association or qualifier association
+'   paradigm$ = "rumbaugh" only
+'------------------------------------
+IncludeOtherClasses:
+    'include link association classes 
+    foreach class.association
+        tptr=0  'target pointer
+        for j=1 to t
+            if as$(j) = association.name then tptr=j
+        next          
+        if tptr <> 0 then   
+            head$ =left$(cs$(tptr),8) +".h"
+            n$ = rcs$(tptr)
+            gosub gethead
+            
+            IF (Head$ <> HFile$) THEN print #1, "#include ",chr$(34), head$, chr$(34)
+        end if
+    next
+
+    'include qualifier association classes         
+'    foreach class.qualifier
+'        tptr=0
+'        for i = 1 to qt
+'            if qs$(i) = name$ then tptr=i
+'        next
+'        if tptr <> 0 then  
+'            head$ =left$(qcs$(tptr),8)+".h"
+'            n$ = qdests$(tptr)
+'            gosub gethead
+'            
+'            IF (Head$ <> HFile$) THEN print #1, "#include ", chr$(34), head$, chr$(34)
+'        end if
+'    next
+
+    'include qualifier aggregation classes         
+'    foreach class.qualifier
+'        tptr=0
+'        for i = 1 to gqt
+'           if gqs$(i) = name$ then tptr=i
+'        next
+'        if tptr <> 0 then                  
+'            head$ =left$(gqcs$(tptr),8)+".h"
+'            n$ = gqdests$(tptr)
+'            gosub gethead
+'         
+'            IF (Head$ <> HFile$) THEN print #1, "#include ", chr$(34), head$, chr$(34)
+'        end if
+'    next
+
+return
+
+'---------------------------------------------------------------------------
+'                              HandleInheritance
+'---------------------------------------------------------------------------
+HandleInheritance:
+   nAnc=0 'Number of Classes Inherited
+   hiPersistent = FALSE
+   hiBaseClasses$ = ""
+   Foreach ir$
+      '----------
+      n$=name$
+      IF Persistence$ = "PERSISTENT" THEN hiPersistent = TRUE
+      gosub GetClassName
+      irname$ = ClassName$
+      If nAnc>0 THEN hiBaseClasses$ = hiBaseClasses$ + ", "
+      hiBaseClasses$ = hiBaseClasses$ + "public " + irname$
+      nAnc=nAnc+1
+      head$ = Left$(irname$,8) + ".h"   
+      gosub gethead
+      '----------
+'     IF (Head$ <> HFile$) THEN print #1, "#include ",chr$(34),head$,chr$(34)
+   Next
+   RETURN
+
+'---------------------------------------------------------------------------
+'                              HandleMembers
+'---------------------------------------------------------------------------
+HandleMembers:
+    'Generates code for attributes, operations, and links to other classes
+    AttribCnt = 0
+    OpCnt = 0
+    FOREACH ClassAttrib$
+        IF Scope$ = curScope$ THEN
+            IF  AttribCnt = 0 THEN
+                PRINT #1, curScope$, ":"
+            ENDIF
+            AttribCnt = AtttibCnt + 1
+            GOSUB HandleAttribute
+        END IF
+    NEXT 'ClassAttrib$
+
+    IF curScope$ = "private" THEN
+        IF paradigm$ = "Rumbaugh"  or paradigm$ = "OMT94" THEN
+            GOSUB GenerateRelationAttributes
+        ELSEIF paradigm$="Shlaer_m" THEN
+            Rel$="class.relationship"
+            GOSUB GenReAttrs
+        ELSEIF paradigm$="Coad_you" OR paradigm$ ="fusion" THEN
+            Rel$="class.relationship"              
+            GOSUB GenReAttrs
+            Rel$ ="class.aggregation"
+            GOSUB GenReAttrs                  
+        ELSEIF paradigm$="booch" THEN
+            Rel$ = "class.association"              
+            GOSUB GenReAttrs         
+            Rel$ ="class.aggregation"               
+            GOSUB GenReAttrs                              
+        END IF
+    END IF 'curscope=private
+
+    fieldOffset$ = "  "
+
+    ' Add virtual pure destructor if an abstract class
+    'IF CurrentType$ = "ABSTRACT" AND curScope$ = "public" THEN
+    '    IF AttribCnt = 0 AND OpCnt = 0 AND Scope$ <> "IMPLEMENTATION" THEN 
+    '        PRINT #1, curScope$, ":"
+    '    ENDIF
+    '    OpCnt = OpCnt + 1
+    '	PRINT #1, fieldOffset$, "virtual ~", CurrentClass$, "() = 0;"
+    '	PRINT #1, fieldOffset$, "// Pure virtual destructor to make this an abstract class."
+    '	PRINT #1
+    'ENDIF
+
+for hmI = 1 TO 3
+    FOREACH Class.Operation   'ClassOperat$
+	IF Operation.Scope = "IMPLEMENTATION" THEN GOTO HmSkip ENDIF
+        IF hmI = 1 THEN
+	    IF Operation.Category <> "DESTRUCTOR" THEN GOTO HmSkip ENDIF
+        ELSEIF hmI = 2 THEN
+	    IF Operation.Category <> "CONSTRUCTOR" THEN GOTO HmSkip ENDIF
+	ELSE
+	    IF Operation.Category = "DESTRUCTOR" OR Operation.Category = "CONSTRUCTOR" THEN GOTO HmSkip ENDIF
+	ENDIF
+        IF Scope$ = curScope$ THEN
+             IF  AttribCnt = 0 AND OpCnt = 0 THEN
+                 PRINT #1, curScope$, ":"
+             ENDIF
+             OpCnt = OpCnt + 1
+
+             GOSUB HandleOperation
+	     IF goaNStrings > 1 OR LEN(OpStr$+goaArgs$(1)+OpStrEnd$)+LEN(fieldOffset$)+1 > 77 THEN
+	    	 PRINT #1, fieldOffset$, OpStr$,
+          	 offset = OpOffset + LEN(fieldOffset$)
+                 FOR hoI = 1 TO goaNStrings
+          	     delim1 = 1
+          	     delim2 = INSTR(delim1, goaArgs$(hoI), ",")
+          	     WHILE delim2 > 0
+          		 IF delim1 = 1 AND hoI = 1 THEN
+          	             PRINT #1, MID$(goaArgs$(hoI), delim1, delim2-delim1+1)
+          		 ELSE
+          		     PRINT #1, "":offset, MID$(goaArgs$(hoI), delim1, delim2-delim1+1)
+          		 ENDIF
+          		 delim1 = delim2 + 1
+          		 WHILE MID$(goaArgs$(hoI), delim1, 1) = " "
+          		     delim1 = delim1 + 1
+          		 WEND
+          	         delim2 = INSTR(delim1, goaArgs$(hoI), ",")
+          	     WEND
+		     IF delim1 <= LEN(goaArgs$(hoI)) THEN
+	                 IF delim1 = 1 AND hoI = 1 THEN
+	                     PRINT #1, goaArgs$(hoI),
+	                 ELSE
+		             PRINT #1, "":offset, MID$(goaArgs$(hoI), delim1),
+	                 ENDIF
+		         IF hoI < goaNStrings THEN PRINT #1
+		     ENDIF
+		 NEXT
+             ELSE
+                 PRINT #1, fieldOffset$, OpStr$, goaArgs$(1),
+             ENDIF
+	     PRINT #1, OpStrEnd$, ";"
+             ptLead$ = "  " + StartComment$ + " "
+             ptText$ = Operation.Description
+             ptNum = 1
+             GOSUB PrintText
+             PRINT #1
+         END IF 'Scope=curScope
+	 HmSkip:
+     NEXT 'ClassOperat
+NEXT
+RETURN
+
+'---------------------------------------------------------------------------
+'                              HandleAttribute
+'---------------------------------------------------------------------------
+HandleAttribute:
+    GOSUB GetAttributeName
+    GOSUB MapType
+
+    IF Attribute.Scope <> "IMPLEMENTATION" THEN
+        'GenerateAttributeString
+        haAttOut$ = "  "
+        IF Attribute.Static = "TRUE" THEN haAttOut$ = haAttOut$ +"static "
+        'IF Attribute.Constant = "TRUE" THEN haAttOut$ = haAttOut$ +"const "
+	IF Attribute.Domain <> "" THEN szNewType$ = "int16"
+        haAttOut$ = haAttOut$ + szNewType$ + " "
+	haIdx = INSTR(szNewName$, "[")
+	IF haIdx <> 0 THEN
+	    haAttOut$ = haAttOut$ + LEFT$(szNewName$, haIdx-1) + "_" + MID$(szNewName$, haIdx)
+	ELSE
+            haAttOut$ = haAttOut$ + szNewName$ + "_"
+	ENDIF
+        haAttOut$ = haAttOut$ + ";"
+        print #1, haAttOut$,
+        IF LEN(haAttOut$) >= 29 THEN
+	    pcStart = LEN(haAttOut$)+2
+        ELSE
+	    pcStart = 29 - LEN(haAttOut$)
+	    print #1, "":pcStart,
+	    pcStart = 30
+        ENDIF
+	IF LEN(Attribute.Description) > 1 THEN
+            pcText$ = Attribute.Description
+	    IF Attribute.Document <> "" THEN
+	        pcText$ = pcText$ + " (" + Attribute.Document
+	        IF Attribute.Domain <> "" THEN pcText$ = pcText$ + " X " + Attribute.Domain
+	        pcText$ = pcText$ + ")"
+            ELSEIF Attribute.Domain <> "" THEN
+	        pcText$ = pcText$ + " (X " + Attribute.Domain + ")"
+	    ENDIF
+            pcNum = 1
+	    pcLead$ = ""
+            GOSUB PrintComment
+	ELSE
+	    print #1, ""
+	ENDIF
+    ENDIF
+RETURN
+
+'---------------------------------------------------------------------------
+'                             ParseSzSize
+'---------------------------------------------------------------------------
+ParseSzSize:
+  szSizeLength = Len(szSize$)
+  TempSize$ = ""
+  TempChar$ = ""
+  For I = 1 to szSizeLength
+     TempChar$ = MID$(szSize$, I, 1)
+     IF TempChar$ = "," THEN TempChar$ = "]["
+     IF TempChar$ = " " THEN TempChar$ = ""
+     TempSize$ = TempSize$ + TempChar$
+  NEXT
+  szSize$ = TempSize$
+RETURN
+
+'---------------------------------------------------------------------------
+'                              HandleOperation
+'---------------------------------------------------------------------------
+HandleOperation:
+    GOSUB GetOperationName
+    OpType$ = Operation.Type
+    IF Operation.Category = "CONSTRUCTOR" THEN
+        szNewType$ = ""
+        OpName$ = CurrentClass$
+    ELSEIF Operation.Category = "DESTRUCTOR" THEN
+        szNewType$ = ""
+        OpName$ = "~"+CurrentClass$
+    ELSE
+        MapOp = TRUE
+        GOSUB MapType
+        MapOp = FALSE
+    END IF 'Operation.category
+
+    'NoIndependentOperation:
+    OpStr$ = ""
+    IF Operation.Friend = "TRUE" THEN OpStr$ = OpStr$ + "friend "
+    IF Operation.Static = "TRUE" THEN OpStr$ = OpStr$ + "static "
+    IF OpType$ = "VIRTUAL" or OpType$ = "ABSTRACT" THEN OpStr$ = Opstr$ + "virtual "
+    IF szNewType$ = "" THEN
+        OpStr$=OpStr$ + OpName$ + "("
+    ELSE
+	rgaInput$ = szNewType$
+	GOSUB ReplaceGenericArguments
+        OpStr$ = OpStr$ + rgaOutput$ + " " + OpName$ + "("
+    ENDIF
+
+    'IF OPeration.Operator = "TRUE" THEN OpStr$ = OpStr$ + "operator" + OpName$ + "("
+    'IF OPeration.Operator = "FALSE" THEN OpStr$ = OpStr$ + OpName$ + "("
+    OpOffset = LEN(OpStr$)
+
+    GOSUB GetOpArgs
+    OpStrEnd$ = ")"
+    IF Operation.Constant = "TRUE" THEN OpStrEnd$ = OpStrEnd$ + " const"
+    IF OpType$ = "ABSTRACT" THEN OpStrEnd$ = OpStrEnd$ + " = 0"
+    IF ErrorCode$ <> "" THEN print #1, ErrorCode$
+RETURN
+
+'---------------------------------------------------------------------------
+' GetOpArgs
+' Purpose: Get the argument string for an operation
+' inputs:
+' outputs: goaArgs$(5)     The argument string for that operation
+' scope:   Operation
+'---------------------------------------------------------------------------
+GetOpArgs:
+    DIM goaArgs$(15)
+
+    goaArg$ = ""
+    goaArgs$(1) = ""
+    goaArgs$(2) = ""
+    goaArgs$(3) = ""
+    goaArgs$(4) = ""
+    goaArgs$(5) = ""
+    goaArgs$(6) = ""
+    goaArgs$(7) = ""
+    goaArgs$(8) = ""
+    goaArgs$(9) = ""
+    goaArgs$(10) = ""
+    goaArgs$(11) = ""
+    goaArgs$(12) = ""
+    goaArgs$(13) = ""
+    goaArgs$(14) = ""
+    goaArgs$(15) = ""
+    goaNStrings = 0
+    IF Operation.Category = "CONSTRUCTOR" AND Operation.Formal_Parameters = "AUTO" THEN
+	flaFlatFile = FALSE
+	flaBoth = FALSE
+	flaClass$ = CurrentName$
+	GOSUB Flatten
+	FOR flaI = 1 TO flaCnt
+	    IF LEN(goaArg$) > 0 THEN goaArg$ = goaArg$ + " "
+	    IF flaType$(flaI) = "elem" OR flaType$(flaI) = "enum" THEN
+                IF flaSize$(flaI) <> "" THEN 
+                    goaArg$ = goaArg$ + "const " + flaDataType$(flaI) + "*"
+		ELSEIF RIGHT$(flaDataType$(flaI),1) = "]" THEN
+		    goaArg$ = goaArg$ + "const " + LEFT$(flaDataType$(flaI), INSTR(flaDataType$(flaI), "[")-1) + "*"
+                ELSEIF flaDataType$(flaI) = "ooVString" THEN
+                    goaArg$ = goaArg$ + "const char*"
+		ELSE
+                    goaArg$ = goaArg$ + flaDataType$(flaI)
+		ENDIF
+	        goaArg$ = goaArg$ + " " + flaName$(flaI)
+	        IF flaI < flaCnt THEN goaArg$ = goaArg$ + ","
+	        IF LEN(goaArg$) > 160 THEN
+		    goaNStrings = goaNStrings + 1
+		    goaArgs$(goaNStrings) = goaArg$
+		    goaArg$ = ""
+	        ENDIF
+	    ELSEIF flaType$(flaI) = "container" THEN
+		goaArg$ = goaArg$ + "const " + flaDataType$(flaI) + "& "
+	        goaArg$ = goaArg$ + flaName$(flaI)
+	        IF flaI < flaCnt THEN goaArg$ = goaArg$ + ","
+	        IF LEN(goaArg$) > 160 THEN
+		    goaNStrings = goaNStrings + 1
+		    goaArgs$(goaNStrings) = goaArg$
+		    goaArg$ = ""
+	        ENDIF
+	    ELSEIF LEFT$(flaDataType$(flaI), 2) = "ar" THEN
+		goaArg$ = goaArg$ + "const "
+		IF flaSize$(flaI) <> "" THEN
+		    goaArg$ = goaArg$ + "ooTVArray("
+		ENDIF
+		goaArg$ = goaArg$ + "ooHandle(" + flaDataType$(flaI) + ")"
+		IF flaSize$(flaI) <> "" THEN
+		    goaArg$ = goaArg$ + ")"
+		ENDIF
+		goaArg$ = goaArg$ + "&"
+	        goaArg$ = goaArg$ + " " + flaName$(flaI)
+	        IF flaI < flaCnt THEN goaArg$ = goaArg$ + ","
+	        IF LEN(goaArg$) > 160 THEN
+		    goaNStrings = goaNStrings + 1
+		    goaArgs$(goaNStrings) = goaArg$
+		    goaArg$ = ""
+	        ENDIF
+            ENDIF
+        NEXT
+    ELSE
+        IF Operation.Formal_Parameters <> "" THEN
+            rgaInput$ = Operation.Formal_Parameters
+            GOSUB ReplaceGenericArguments
+            goaArg$ = goaArg$ + rgaOutput$
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+        ENDIF
+        IF Operation.Category = "CONSTRUCTOR" AND Operation.Return_Type <> "" THEN
+            rgaInput$ = Operation.Return_Type
+            GOSUB ReplaceGenericArguments
+            goaArg$ = goaArg$ + rgaOutput$
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+        ENDIF
+        IF Operation.Source <> "" THEN
+            rgaInput$ = Operation.Source
+            GOSUB ReplaceGenericArguments
+            goaArg$ = goaArg$ + rgaOutput$
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+        ENDIF
+        IF Operation.Document <> "" THEN
+            rgaInput$ = Operation.Document
+            GOSUB ReplaceGenericArguments
+            goaArg$ = goaArg$ + rgaOutput$
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+        ENDIF
+        IF Operation.Category = "CONSTRUCTOR" THEN
+            IF Operation.Operation <> "" THEN
+        	rgaInput$ = Operation.Operation
+        	GOSUB ReplaceGenericArguments
+                goaArg$ = goaArg$ + rgaOutput$
+            ENDIF
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+            IF Operation.Reads <> "" THEN
+        	rgaInput$ = Operation.Reads
+        	GOSUB ReplaceGenericArguments
+        	goaArg$ = goaArg$ + rgaOutput$
+            ENDIF
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+            IF Operation.Changes <> "" THEN
+        	rgaInput$ = Operation.Changes
+        	GOSUB ReplaceGenericArguments
+        	goaArg$ = goaArg$ + rgaOutput$
+            ENDIF
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+            IF Operation.Sends <> "" THEN
+        	rgaInput$ = Operation.Sends
+        	GOSUB ReplaceGenericArguments
+        	goaArg$ = goaArg$ + rgaOutput$
+            ENDIF
+	    IF LEN(goaArg$) > 160 THEN
+		goaNStrings = goaNStrings + 1
+		goaArgs$(goaNStrings) = goaArg$
+		goaArg$ = ""
+	    ENDIF
+            IF Operation.Assumes <> "" THEN
+        	rgaInput$ = Operation.Assumes
+        	GOSUB ReplaceGenericArguments
+        	goaArg$ = goaArg$ + rgaOutput$
+            ENDIF
+        ENDIF
+    ENDIF
+    IF LEN(goaArg$) > 0 THEN
+        goaNStrings = goaNStrings + 1
+        goaArgs$(goaNStrings) = goaArg$
+    ENDIF
+    IF RIGHT$(goaArgs$(goaNStrings),1) = "," THEN
+	goaArgs$(goaNStrings) = LEFT$(goaArgs$(goaNStrings), LEN(goaArgs$(goaNStrings))-1)
+    ENDIF
+RETURN
+
+'---------------------------------
+' ReplaceGenericArguments
+'    Replaces generic arguments (like TIME, VARRAY, etc) in an argument list
+'    with their current real-world counterparts
+' input:  rgaInput$     input string to fix up
+' output: rgaOutput$    fixed up version of the input string
+'---------------------------------
+ReplaceGenericArguments:
+    rgaGenericType$ = "DATE,TIME,VALINK<,VARRAY<,LINK<,>,"
+    rgaMappedType$ = "arDate,arTime,ooTVArray(ooHandle(,ooVArray(,ooHandle(,),"
+    rgaMaxTypes = 6
+
+    rgaOutput$ = rgaInput$
+    FOR rgaI = 1 TO rgaMaxTypes
+	rgaDelim1 = INSTR(rgaGenericType$, ",")
+	rgaDelim2 = INSTR(rgaMappedType$, ",")
+	rgaInType$ = LEFT$(rgaGenericType$, rgaDelim1-1)
+	rgaOutType$ = LEFT$(rgaMappedType$, rgaDelim2-1)
+	rgaPos = INSTR(rgaOutput$, rgaInType$)
+	WHILE rgaPos > 0
+	    ' INSTR is case-insensitive.  Fix that.
+	    rgaSame = 1
+	    FOR rgaJ = 1 TO LEN(rgaInType$)
+		IF ASC(MID$(rgaInType$, rgaJ, 1)) <> ASC(MID$(rgaOutput$, rgaPos+rgaJ-1)) THEN
+		    rgaSame = 0
+		    
+		ENDIF
+	    NEXT
+	    IF rgaSame = 1 THEN
+		IF rgaOutType$ = ")" THEN
+		    rgaTest = rgaPos-1
+		    rgaNumParens = 0
+		    WHILE rgaTest > 1 AND MID$(rgaOutput$, rgaTest, 1) <> ")"
+			IF MID$(rgaOutput$, rgaTest, 1) = "(" THEN
+			    rgaNumParens = rgaNumParens + 1
+			ENDIF
+			rgaTest = rgaTest - 1
+		    WEND
+		    rgaOutType$ = ""
+		    FOR rgaTest = 1 TO rgaNumParens
+			rgaOutType$ = rgaOutType$ + ")"
+		    NEXT
+		ENDIF
+	        rgaOutput$ = LEFT$(rgaOutput$, rgaPos-1) + rgaOutType$ + MID$(rgaOutput$, rgaPos + LEN(rgaInType$))
+	        rgaPos = INSTR(rgaPos + LEN(rgaOutType$), rgaOutput$, rgaInType$)
+	    ELSE
+	        rgaPos = INSTR(rgaPos + LEN(rgaInType$), rgaOutput$, rgaInType$)
+	    ENDIF
+	WEND	    
+	rgaGenericType$ = MID$(rgaGenericType$, rgaDelim1+1)
+	rgaMappedType$ = MID$(rgaMappedType$, rgaDelim2 +1)
+    NEXT
+RETURN
+
+'----------------------------------------------------------------------------
+'                          GenerateGetFunctions: set fuction added 
+'----------------------------------------------------------------------------
+GenerateGetFunctions:
+    offset$ = "  "
+    GetCnt = 0
+    Foreach ClassAttrib$
+      IF Attribute.Scope <> "IMPLEMENTATION" THEN
+        r$=attribute.readable
+        w$ =attribute.writeable
+
+        IF r$ <> "FALSE"  or w$ <> "false" THEN
+            GOSUB GetAttributeName
+            IF GetCnt = 0 THEN
+                print #1, offset$, StartComment$,"------------------ inline 'get' and 'set' functions -----------------", EndComment$ 'TMZ
+            ENDIF
+            GOSUB MapType
+            GetCnt = GetCnt + 1
+        ENDIF
+        IF r$ <> "false" THEN
+	    GetStr$ = offset$
+            IF szSize$ <> "" THEN
+	        GetStr$ = GetStr$ + "const " + szNewType$ + "*"
+            ELSE
+	        IF szType$ = "STRING" THEN
+		    GetStr$ = GetStr$ + "const char*"
+                ELSEIF (RIGHT$(szNewType$,1) = "*") OR (Right$(szNewType$,1)="&") THEN
+		    GetStr$ = GetStr$ + "const " + szNewType$
+	        ELSEIF szElemType = FALSE AND Attribute.Bound = "FALSE" THEN
+		    GetStr$ = GetStr$ + "const " + szNewType$ + "&"
+	        ELSE
+		    GetStr$ = GetStr$ + szNewType$
+	        ENDIF
+            ENDIF
+            GetStr$ = GetStr$ + " " + AttribName$ + "() const"
+            PRINT #1
+            PRINT #1, GetStr$,
+	    IF INSTR(szType$, "ooHandle(") = 1 THEN
+		PRINT #1, ""
+	        PRINT #1, offset$,"  {",szType$," objH; ",
+	        PRINT #1, "return ", AttribName$, "_(objH);}"
+	    ELSE
+                PRINT #1, " {return ", AttribName$, "_",
+		IF attribute.domain <> "" THEN
+		    PRINT #1, " / ", attribute.domain,
+		    IF INSTR(attribute.domain, ".") = 0 THEN
+		        PRINT #1, ".",
+		    ENDIF
+		ENDIF
+                PRINT #1, ";}"
+	    ENDIF
+	    ptLead$ = offset$ + StartComment$ + " "
+	    IF LEN(attribute.description) <> 0 THEN
+	        ptText$ = "Get " + LOCASE$(LEFT$(attribute.description, 1))
+	        ptText$ = ptText$ + MID$(attribute.description, 2)
+		IF Attribute.Document <> "" THEN
+		    ptText$ = ptText$ + " (" + Attribute.Document + ")"
+		ENDIF
+	    ELSE
+	        ptText$ = ""
+	    ENDIF
+	    ptNum = 1
+	    GOSUB PrintText
+        END IF
+        IF w$ <> "false" THEN
+            Setstr$ = offset$ + "void set"+UPCASE$(LEFT$(AttribName$,1)) + MID$(AttribName$,2) + "("
+            IF szsize$ <>"" THEN 
+                setStr$ = setstr$ + "const " + szNewType$ + "*"
+            ELSE
+	        IF szType$ = "STRING" THEN
+		    setStr$ = setStr$ + "const char*"
+                ELSEIF (Right$(szNewType$,1) = "*") OR (Right$(szNewType$,1) = "&") THEN
+                    setStr$ = setstr$ + "const " + szNewType$
+	        ELSEIF szElemType = FALSE AND Attribute.Bound = "FALSE" THEN
+		    setStr$ = setStr$ + "const " + szNewType$ + "&"
+                ELSE
+                    setStr$ = setstr$ + szNewType$
+                ENDIF
+            END IF 
+            setstr$ = setstr$ + " " + AttribName$ + ") {"
+	    IF CurrentPersistence$ = "PERSISTENT" THEN
+		setstr$ = setstr$ + "ooUpdate(); "
+	    ENDIF
+            setstr$ = setstr$ + AttribName$ + "_ = " + AttribName$
+	    IF attribute.domain <> "" THEN
+		setstr$ = setstr$ + " * " + attribute.domain
+	    ENDIF
+	    setstr$ = setstr$ + ";}"
+            PRINT #1
+            PRINT #1, setstr$
+	    ptLead$ = offset$ + StartComment$ + " "
+	    IF LEN(attribute.description) <> 0 THEN
+	        ptText$ = "Set " + LOCASE$(LEFT$(attribute.description, 1))
+	        ptText$ = ptText$ + MID$(attribute.description, 2)
+		IF Attribute.Document <> "" THEN
+		    ptText$ = ptText$ + " (" + Attribute.Document + ")"
+		ENDIF
+	    ELSE
+	        ptText$ = offset$ + StartComment$
+	    ENDIF
+	    ptNum = 1
+	    GOSUB PrintText
+        END IF
+      ENDIF
+    NEXT 'ClassAttrib
+
+    FOREACH ClassAssociation$
+	IF Class.Class <> "" AND (ownerclass$ = association.source OR (INSTR(container1$, "UNI") = 0 AND mandatory$ = "TRUE")) THEN
+	   targetClass$ = Class.Class
+	   targetName$ = Class.Name
+
+	   if ownerclass$ = association.source then
+		   con$ = container1$
+		   rawmul$ = multiplicity2$
+		   gosub getMul
+		   mul2=mul
+		   rawmul$ = multiplicity1$
+		   gosub getMul
+		   mul1=mul  
+		   rol2$ = role2$
+		   rol1$ = role1$
+	   else
+		   con$ = container2$
+		   rawmul$ = multiplicity1$
+		   gosub getMul
+		   mul2 = mul
+		   rawmul$ = multiplicity2$
+		   gosub getMul
+		   mul1=mul
+		   rol2$ = role1$
+		   rol1$ = role2$
+	   end if
+
+	   aName$ = association.name
+	   IF friend$ = "TRUE" THEN
+       		IF GetCnt = 0 THEN print #1, offset$, StartComment$,"------------------ inline 'get' and 'set' functions -----------------", EndComment$ 'TMZ
+	        GOSUB PrintRelAttrGet
+		GetCnt = GetCnt + 1
+	   ENDIF
+
+	   IF virtual$ = "TRUE" THEN
+                IF GetCnt = 0 THEN print #1, offset$, StartComment$,"------------------ inline 'get' and 'set' functions -----------------", EndComment$ 'TMZ
+	        GOSUB PrintRelAttrSet
+		GetCnt = GetCnt + 1
+	   ENDIF
+	ENDIF
+   next 'ClassAssociation$
+
+    FOREACH ClassAggregation$
+	scContainer$ = container1$
+        GOSUB StripContainer
+        IF Class.Class <> "" OR scContainer$ <> "" THEN
+	   targetClass$ = Class.Class
+	   targetName$ = Class.Name
+	   con$ = container1$
+	   rawmul$ = multiplicity2$
+	   gosub getMul
+	   mul2=mul
+	   rawmul$ = multiplicity1$
+	   gosub getMul
+	   mul1=mul  
+	   rol2$ = role2$
+	   rol1$ = role1$
+
+	   aName$ = aggregation.name
+	   IF friend$ = "TRUE" THEN
+       		IF GetCnt = 0 THEN print #1, offset$, StartComment$,"------------------ inline 'get' and 'set' functions -----------------", EndComment$ 'TMZ
+	        GOSUB PrintRelAttrGet
+		GetCnt = GetCnt + 1
+	   ENDIF
+	   IF virtual$ = "TRUE" THEN
+                IF GetCnt = 0 THEN print #1, offset$, StartComment$,"------------------ inline 'get' and 'set' functions -----------------", EndComment$ 'TMZ
+	        GOSUB PrintRelAttrSet
+		GetCnt = GetCnt + 1
+	   ENDIF
+	ENDIF
+   next 'ClassAggregation$
+
+    FOREACH ClassParticipation$
+	IF Class.Class <> "" AND INSTR(container1$, "UNI") = 0 AND mandatory$ = "TRUE" THEN
+	   targetClass$ = Class.Class
+	   targetName$ = Class.Name
+	   con$ = container2$
+	   rawmul$ = multiplicity1$
+	   gosub getMul
+	   mul2=mul
+	   rawmul$ = multiplicity2$
+	   gosub getMul
+	   mul1=mul  
+	   rol2$ = role1$
+	   rol1$ = role2$
+
+	   aName$ = aggregation.name
+	   IF friend$ = "TRUE" THEN
+       		IF GetCnt = 0 THEN print #1, offset$, StartComment$,"------------------ inline 'get' and 'set' functions -----------------", EndComment$ 'TMZ
+	        GOSUB PrintRelAttrGet
+		GetCnt = GetCnt + 1
+	   ENDIF
+	   IF virtual$ = "TRUE" THEN
+                IF GetCnt = 0 THEN print #1, offset$, StartComment$,"------------------ inline 'get' and 'set' functions -----------------", EndComment$ 'TMZ
+	        GOSUB PrintRelAttrSet
+		GetCnt = GetCnt + 1
+	   ENDIF
+	ENDIF
+   next 'ClassParticipation$
+
+   'IF GetCnt<> 0 THEN print #1, "     //-----------------------------------------------------------" TMZ
+RETURN
+
+'---------------------------------------------------------------------------
+'                         GetFileNameInfo
+'---------------------------------------------------------------------------
+GetFileNameInfo:
+	gfniFi$ = Class.Source
+	IF CurrentPersistence$ = "PERSISTENT" THEN
+	    HFile$   = "../../" + gfniFi$ + "/include/" + Class.Class + ".ddl"
+	ELSE
+	    HFile$   = "../../" + gfniFi$ + "/include/" + Class.Class + ".h"
+	ENDIF
+	CPPFile$ = "../../" + gfniFi$ + "/src/" + Class.Class + ".cc"
+RETURN
+
+
+'---------------------------------------------------------------------------
+'                              PrintScriptInfo
+'---------------------------------------------------------------------------
+PrintScriptInfo:
+   print
+   print codeType$ 'Variable set in calling script           
+   print "________________________________________"
+   print
+   print "      Paradigm: ", Paradigm$
+   print "       Project: ", App$
+   print "          Date: ", Now$
+   print
+
+RETURN
+
+'---------------------------------------------------------------------------
+'                              PrintClassInfo
+'---------------------------------------------------------------------------
+PrintClassInfo:
+   'GOSUB GetFileNameInfo
+   IF OwnerClass$ = "*" AND UseInclude = TRUE THEN GOSUB ClassHeader
+   print ""
+   IF paradigm$ = "SASD" THEN 
+    PRINT "        Entity: ",
+   'ELSEIF paradigm$ = "COAD_YOU" THEN
+   '  PRINT "  Class_Object: ",
+   ELSE
+     PRINT "         Class: ",
+   END IF 'paradigm=sasd
+   PRINT CurrentClass$
+   PRINT "          Spec: ",HFile$
+   PRINT "          Body: ",CPPFile$
+   PRINT
+RETURN
+
+
+'---------------------------------------------------------------------------
+'                              IncludeHeaderFile
+'---------------------------------------------------------------------------
+IncludeHeaderFile:
+   PRINT ""
+   PRINT "----------------------------------------------------------------------------"
+   IF paradigm$ = "SASD" THEN
+      PRINT "Header file for entity ",
+   ELSE
+      PRINT "Header file for class ",
+   END IF 'paradigm=sasd
+   PRINT CurrentClass$
+   INCLUDE HFile$
+RETURN
+
+'---------------------------------------------------------------------------
+'                              IncludeBodyFile
+'---------------------------------------------------------------------------
+IncludeBodyFile:
+   PRINT ""
+   PRINT ""
+   PRINT "----------------------------------------------------------------------------"
+   IF paradigm$ = "SASD" THEN
+      PRINT "Source code file for entity ",
+   ELSE
+      PRINT "Source code file for class ",
+   END IF 'paradigm=sasd
+   PRINT CurrentClass$
+   INCLUDE CPPFile$
+RETURN
+
+'---------------------------------------------------------------------------
+'                              IncludeDiffFile
+'
+' input: cppDiffFile$ -- name of file differenced
+'---------------------------------------------------------------------------
+IncludeDiffFile:
+    PRINT ""
+    PRINT ""
+    PRINT "----------------------------------------------------------------------------"
+    cppI = INSTR(cppDiffFile$, "/")
+    WHILE (cppI <> 0)
+        cppDiffFile$ = MID$(cppDiffFile$, cppI+1)
+        cppI = INSTR(cppDiffFile$, "/")
+    WEND
+    PRINT "Diff for file ", cppDiffFile$
+    INCLUDE "/tmp/PP"+cppDiffFile$
+RETURN

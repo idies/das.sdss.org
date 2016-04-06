@@ -1,0 +1,657 @@
+<pre>
+SDSS Spectroscopic Operations Plan v1.3
+
+Preface to V1.3
+
+	Corrections and modifications in the CNC DRILLING FILE section were 
+sugested by Walt Siegmund. Comments about handling dead fibers are 
+included in the mapper section. File formats haven't been fixed (things
+like uppercase keywords and non-dervish-par structure that might be changed)
+but we'll update this document when the real files expose themselves.
+
+Alan Uomoto
+
+plan06.doc
+1995/09/01
+
+Preface to V1.2
+
+	This will be the last posting of this file for awhile. It is time to 
+check the concept in the real world. Thanks to all who sent their 
+comments. I continue to solicit advice.
+	The question of duplicate-keyword parameter files is left hanging but 
+if you know that YOU will have to read one of these files, please let me 
+know (all data in the parameter files will find its way into the FITS 
+headers, so it might not be important to read the text files).
+	All changes are minor, although the role of the PLUGPLATE TARGET FILE 
+was clarified in my mind. It no longer contains exposure information 
+because its role is science, not implementation.
+
+Alan Uomoto
+plan05.doc
+1995/05/22
+
+Preface to V1.1
+
+	I've added some clarification text and started to move to Brian 
+Yanny's ASCII parameter file format. Filenames seem to be undecided so I 
+haven't changed my suggestions. Eileen Berman will have a file checksum 
+routine added to Dervish (there are at least two unix sum commands; while 
+one can do both methods, it's a simple thing to add to Dervish and might 
+prevent confusion later).
+	Most other changes are minor (for example, NAXIS=2 instead of 3 for 
+the output files). Keep those suggestions coming.
+
+Alan Uomoto
+May 8, 1995
+
+Preface to V1.0
+
+	The spectroscopic operations plan is simple, but because many people 
+are involved in the final product, it's a good idea to agree on details 
+and responsibilities. I would appreciate a critical reading of this, 
+with comments to au@jhu.edu.
+	There are many gaps that need to be filled, and if you can 
+contribute, please send me what you can. Even if you don't know the 
+details, I can find out and insert it.
+
+Alan Uomoto
+May 1, 1995
+
+Preface to v0.1
+
+	Future editions of this will be posted only to sdss-strategy. If you 
+are not on this mailing list, send email to
+			sdss-request@astro.princeton.edu
+and ask to be put on the sdss-strategy mailing list.
+	Please examine this carefully and send changes to au@jhu.edu. The 
+intent is to account for all major operations activities needed to run 
+the spectroscopic portion of the SDSS. Implementation details are not 
+important at this stage, but please note things that interfere or 
+preclude alternatives.
+	In many cases I make specific recommendations (for example, I say 
+"use FTP" in a few places). These are usually flexible choices and most 
+have not been considered in detail. Please send updates.
+	I also mention who is responsible for what, but these also are 
+guesses. A good reason to read this is to make sure you're not 
+responsible for more that you think you are(!). People named might want 
+to reassign tasks to others (please inform them!). The goal of version 
+1.0 (hopefully the next) is to have all assignments clarified.
+
+Alan Uomoto
+March 28, 1995
+
+Contents
+
+I.	Introduction
+II.	Target Selection
+III.	Plugging and unplugging
+IV.	Observing
+V.	Special sequences
+VI.	Write tape
+VII.	Instrument log
+VIII.	File formats
+
+
+I. Introduction
+
+	The practical aspects of gathering SDSS spectroscopic data, from 
+target selection to data delivery, are explained here. This document is 
+intended both as a reference for system developers and an introduction 
+for implementers.
+	Most activities produce a computer file so these are examined 
+closely. The format and contents of these files are documented here. 
+Also listed are the people responsible for definition and delivery of 
+these files.
+
+II. Target Selection
+
+A. Plugplate Target File (Rich Kron)
+
+	Spectroscopic targets are selected on criteria set by the science 
+working groups. After target selection, plugplate center coordinates are 
+chosen by an optimizing procedure called the tiling run to maximize the 
+number of objects observed.
+	The plugplates are then populated with targets. This occurs after 
+tiling because tiling is based on galaxy and quasar locations and should 
+be immune to locations of guide stars, sky holes, etc. The list of 
+objects on a particular plugplate is the PLUGPLATE TARGET FILE.
+	This file is called out and saved because it is the last point where 
+targets can be selected, deleted, or modified before drilling. The 
+PLUGPLATE TARGET FILE might look like this:
+
+# PLUGPLATE TARGET FILE
+DATE 1998/10/23
+FIELDC 12:43:33.24 +23:44:22.5 J2000.0
+COORSOL FK5-2053
+TILERUN 24352
+KEY OBJECT NAME RA DEC RAPM DECPM EPOCHPM TYPE g g-r FLAGS
+KEY SKY RA DEC
+OBJECT target1-a 182.444556 23.444456 10 2 1967 STAR 16.5 1.03 DUPLICATE
+...
+OBJECT target1-b 182.434566 23.444456 0 0 1967 GALAXY 16.9 1.20 AGN
+SKY 182.413443 23.452310
+
+This file lists the objects associated with a particular pointing. No 
+exposure information is included (exposure time, hour angles, etc.) 
+because this file might be created long before the observation. The 
+details should be determined as late as possible so the most accurate 
+observing date and instrument information can be used.
+	The FIELDC is the plugplate field center. The COORSOL is the 
+coordinate solution referred to by RA and DEC. (This might be useful if 
+a coordinate recalibration alters target names, for example.) The 
+TILERUN is the unique job number that produced the tiling solution for 
+this plate and its siblings. For object records, NAME might be a common 
+catalog name or a coordinate name (suggestions?), RA and DEC are what 
+you think they are (use field center's equinox date), RAPM, DECPM, are 
+proper motions (mas/yr, useful for guide stars with known proper motions 
+and high proper motion targets), EPOCHPM is the date at which the RA and 
+DEC are correct (format example 1998.2). TYPE is one of (GALAXY, QUASAR, 
+STAR, STANDARD, SKY, GUIDESTAR, or LIGHTTRAP, explained later). The 
+intent of TYPE is to help the observer identify spectra on the screen 
+("my star is three down from the bright quasar at location 242"). PHOTOM 
+is g' and g'-r', and FLAGS is one or more of (DUPLICATE, AGN, COLOR, 
+PROPERMOTION, and other things).
+	A LIGHTTRAP is an undersized plugplate hole at a bright star. This 
+hole will not receive a fiber but will allow light to pass through the 
+plugplate instead of being reflected and possibly contaminating faint 
+object observations. No special device will be inserted into these 
+holes.
+	The DUPLICATE flag is set when an object appears on more than one 
+plugplate. This can be useful for quality analysis (find all the objects 
+observed more than once so we can compare them). AGN and COLOR flags 
+might be set if the object was selected because of its AGN properties 
+(such as a stellar nucleus as opposed to a usual color-selected quasar), 
+or if a star was selected because of its unusual color or proper motion. 
+We can evaluate selection criteria by looking at the flags.
+
+B. Plugplate Drilling File (Rich Kron)
+
+	The PLUGPLATE TARGET FILE is the input to drilling routines that 
+create the PLUGPLATE DRILLING FILE. These routines map RA and DEC to 
+(x,y) positions on the plugplate using information about the telescope 
+optics (for geometric distortions), anticipated temperature at the 
+observatory (to guess plate scale), and declination and anticipated hour 
+angle (to correct for atmospheric refraction).
+	The PLUGPLATE DRILLING FILE contains all the information of the 
+PLUGPLATE TARGET FILE plus additional information for drilling:
+
+# PLUGPLATE DRILLING FILE
+DATE 1998/10/23
+FIELDC 12:43:33.24 +23:44:22.5 J2000.0
+COORSOL FK5-2053
+TILERUN 24352
+EXPTIME 2700
+PLATEID 2433
+ROTATOR 23.45
+# Anticipated observing temperature
+USETEMP 12.3
+# Range of valid hour angles
+HARANGE -0.54 1.23
+# Range of valid dates
+DATERNGE 950501 9510701
+# Drilling algorithm (plate coef?)
+DRILALG 960322.5 2.342E-5 1.593E-7 -2.452E-7 5.423E-9 -8.023E-9
+# Anticipated drilling temperature at machine shop
+DRILTEMP 21.5
+KEY OBJECT X Y NAME RA DEC RAPM DECPM EPOCHPM TYPE g g-r FLAGS
+OBJECT 234.03 51.33 target1-a 182.444556 23.444456 10 2 1967 STAR 16.5 
+1.03 DUPLICATE
+...
+OBJECT 144.33 98.52 target1-b 182.434566 23.444456 0 0 1967 GALAXY 16.9 
+1.20 AGN
+SKY 182.413443 23.452310
+KEY QUALITY X Y
+QUALITY 89.50 23.10
+...
+QUALITY 799.14 315.89
+
+We carry accumulated information even if it is not immediately useful. 
+For example, the astronomical coordinates are not important at this 
+stage. The intent is to simplify the development and maintenance of 
+programs using the data. Using one input stream to create one output 
+stream is usually best. The penalty is file size, but this cannot be a 
+problem.
+	The DRILTEMP is the temperature used by the drilling algorithm as a 
+prediction for the temperature at which the plate will be drilled. The 
+difference between this and the telescope temperature should be good 
+enough to anticipate the correct scaling for the telescope.
+	A new keyword, QUALITY, is added to note the locations of quality 
+control reference holes. These are necessarily the same size as object 
+and sky holes but must not be plugged with fibers. Their appearance here 
+allows them to be tagged for "not plugging" during the viewgraph manual 
+marking operation.
+	This file and its checksum is transmitted from Fermilab via FTP to 
+the observer's workstation (SGI) at Apache Point. The observer's 
+workstation automatically verifies correct receipt or sends a checksum 
+error message back to Fermilab. The name of the file is of the form 
+001234.drl where the 001234 is the plugplate identifier noted in the 
+header. This makes it easy to find the file for a particular plugplate.
+	The checksum information guarantees that the files have not been 
+modified after receipt at Apache Point. Most data transfer protocols 
+(FTP, Kermit, Xmodem, nfs, etc.) use error checking so we are not 
+worried about transmission errors. Inadvertent changes by humans, 
+however, are easily caught with a checksum. We should also make sure 
+that the receiving routines write the files as read-only.
+
+C. CNC DRILLING FILE (Walt Siegmund)
+
+	The PLUGPLATE DRILLING FILE is the source for the machinist's 
+drilling program, the CNC DRILLING FILE. This file is generated directly 
+from the PLUGPLATE DRILLING FILE residing on the observer's workstation 
+at Apache Point. The plugplate (x,y) coordinates are reordered to 
+improve drilling efficiency and transformed to the bent-plate projection 
+(the plugplates are bent over a mandrel during drilling so the fibers 
+will point in the correct direction when installed on the telescope). 
+This file is a dead-end branch and no further information will be 
+derived from the CNC DRILLING FILE. Walt Siegmund supplied this example:
+
+%
+O2005     (HOLES IN PLUG-PLATE)
+G20
+G00 G28 G91 Z0.0 M09
+G28 X0.0 Y0.0
+M0
+N01 G00 G28 G91 Z0.0 T01 M06 (0.0867" DRILL)
+M03 S3500
+G00 G90 G40 G17
+G54 G60 X-7.4834 Y6.8789
+G43 H01 Z0.1
+M08
+G83 G98 Z-0.3904 R-0.205 L0 Q0.1 F5.0
+G60 X-7.4834 Y6.8789
+G83 G98 Z-0.3835 R-0.198 L0 Q0.1 F5.0
+G60 X-6.9300 Y7.1002
+...
+G83 G98 Z-0.4091 R-0.224 L0 Q0.1 F5.0
+G60 X-8.0027 Y7.3046
+G83 G98 Z-0.1555 R0.029 L0 Q0.1 F5.0
+G60 X-0.3235 Y-0.1916
+M09
+G00 G80 G28 G91 Z0.0
+M01
+N02 G00 G28 G91 Z0.0 T02 M06 (7/32" end mill)
+M03 S1500
+G00 G90
+G60 G54 X-0.3235 Y-0.1916
+G43 H02 Z1.0
+M08
+G83 G98 Z-0.1555 R0.029 L0 Q0.1 F5.0
+G60 X-0.3235 Y-0.1916
+M09
+G00 G80 G28 G91 Z0.0
+M01
+N03 G00 G28 G91 Z0.0 T03 M06 (1/4" end mill)
+M03 S1500
+G00 G90
+G60 G54 X-0.3235 Y-0.1916
+G43 H03 Z1.0
+M08
+G83 G98 Z-0.1555 R0.029 L0 Q0.1 F5.0
+G60 X-0.3235 Y-0.1916
+M09
+G00 G80 G28 G91 Z0.0
+G91 G28 X0.0 Y0.0
+M30
+%
+
+	The expected delivery date of the CNC DRILLING FILE is sent to Survey 
+Strategy where tracking and followup occur.
+	Someone asked why the CNC DRILLING FILE is not generated at Fermilab. 
+The reason is that the PLUGPLATE DRILLING FILE from which the CNC FILE 
+is generated does not officially exist until it arrives at Apache Point. 
+There is, of course, no technical reason why the CNC file cannot be made 
+at Fermilab, but its pedigree is untracable unless we create another 
+file that is pretty much the same as the PLUGPLATE FILE at Apache Point. 
+If we do that, there is the possibility of modifications before shipping 
+the file to Apache Point but after the CNC file is created. Because the 
+PLUGPLATE DRILLING FILE cannot be modified once it arrives at Apache 
+Point, this is the correct place to generate the CNC file. For these 
+operations I am willing to give up considerable convenience for clarity 
+and simplicity.
+
+D. Drilling
+
+	The plugplates are drilled and the plugplate identification number is 
+manually stamped on the edge. The plugplates are painted black on the 
+sky side and have a pushing post in the middle that occupies 3.2 mm 
+radius, preventing fiber placement in that region.
+
+E. Plugplate receipt (Bruce Gillespie)
+
+	Daytime staff at Apache Point receive the plugplates and inspect them 
+for damage. Receipt and condition information is transmitted to Survey 
+Strategy, which takes any necessary action (replaces bad plugplates, for 
+example).
+	I recently watched observers at Las Campanas when they discovered 
+that half the holes in their plugplate were too big and the fibers fell 
+out. I'm sure we'll develop a list of appropriate quality checks for our 
+plugplates.
+
+III. Plugging and unplugging
+
+A. Marking plugplates (Walt Siegmund)
+
+	Holes on the plugplate are used for many purposes; not all get 
+spectroscopic fibers. Some are for guide stars while other smaller holes 
+trap light from bright stars. A large (0.25-inch) hole holds a coherent 
+sky bundle and perhaps 10 more holes are for drilling quality control. 
+The quality control holes might be a fixed pattern on every plate that 
+the machinist measures to make sure things did not slip during drilling, 
+for example. These must be marked before plugging.
+	A viewgraph transparency generated from the PLUGPLATE DRILLING FILE 
+is projected onto the plugplates so the guide star, light trap, and 
+quality control holes can be manually marked. The software for printing 
+the transparency is on the fiber mapper at Apache Point because this is 
+the system used by the daytime plugging staff. The PLUGPLATE DRILLING 
+FILE is accessed from the observer's workstation via NFS.
+
+B. Plugplate Selection (Rich Kron)
+
+	Survey Strategy sends to Apache Point the list of plugplates that 
+should be ready for the next spectroscopic night.
+
+C. Plugging (Bruce Gillespie)
+
+	Daytime staff at Apache Point plug the plates.
+
+D. Mapping (Paul Mantsch)
+
+	After plugging, the fiber cartridge is presented to the fiber mapper, 
+which matches the object name to the spectrum location on the CCD. The 
+input is the PLUGPLATE DRILLING FILE and the output is the MAPPING FILE.
+	The operator installs the fiber cartridge in the fiber mapper and 
+types the plugplate identification number. The mapper goes to the 
+observer's workstation and opens the corresponding PLUGPLATE DRILLING 
+FILE (through NFS; the filename is just the plugplate ID: 002433.drl). 
+It performs (or instigates on the SGI) the checksum verification to make 
+sure the file hasn't been damaged or modified since it left Fermilab.
+	The mapper then scans the fiber cartridge to determine which spectrum 
+on the CCD corresponds to which object in the PLUGPLATE DRILLING FILE. 
+It writes the MAPPING FILE to the SGI, which for the most part looks 
+like the PLUGPLATE DRILLING FILE. Appended to each non-light trap object 
+record are two numbers: the slithead identification and the spectrum 
+number.
+	Each slithead is coded with a 7-bit identification (we use a large 
+number so we can track slithead modifications, dead fiber status, and 
+repairs; each time we modify the slithead, we change the number). On 
+each cartridge, one slithead has an even identification, the other odd. 
+This identification number is appended to the object records.
+	A 4-digit fiber cartridge identifier is made by combining the two 
+slithead identification numbers in hex. Concatenating the two 2-digit 
+hex numbers, even number last (so the LSB is always 0) makes the 4-digit 
+fiber cartridge identifier. Thus, a fiber cartridge that holds slitheads 
+number 5 and 10 would be called 050a.
+	The mapper will also flag fibers broken during plugging. Broken or 
+low throughput fibers will be immediately tied off and the object or sky 
+record in the MAPPING FILE will have the DEAD flag added. This is the 
+best place to deal with dead fibers because their possible locations can 
+be shown on the video display and the mapper can be instructed to 
+illuminate the suspects for confirmation.
+	Alternatives to this procedure include a routine (monthly?) mapping 
+run for dead fibers or flagging dead fibers from flat field 
+observations. The dead fiber mapping run is not be sufficiently 
+different from the observing mapping run to make it worthwhile. Using 
+the flat field information is less reliable (what if a bug is sitting on 
+a good fiber?) and requires immediate action AFTER the observation 
+because the only way to find a particular fiber is by its location in a 
+plugplate (even if every fiber were numbered, you wouldn't find it 
+easily in a jungle of 640). Unplug the plate and you've lost the dead 
+fiber information.
+	Another procedure might be to accumulate statistical data with the 
+mapper: "N fibers dead on this date" and wait until the N becomes large 
+enough to make a difference. You'd still have to do a mapping run on a 
+plugplate, but you'd concentrate the effort in one job, making the usual 
+mapping run completely automatic.
+	The MAPPING FILE, whose name would be 050a.map in this example, is 
+written to the observer's workstation (SGI), which immediately generates 
+and stores a checksum. No example is presented here, but this file looks 
+just like the PLUGPLATE DRILLING FILE except that the object records 
+have two additional values: the slithead ID and the spectrum number.
+	When the MAPPING FILE is safely stored on the observer's workstation, 
+a message is sent to Survey Strategy alerting them that the fiber 
+cartridge is available for nighttime use.
+
+E. Unplugging (Bruce Gillespie)
+
+	When the spectroscopic observation has been obtained or the plugplate 
+expires, the daytime staff removes the plugplate from the fiber 
+cartridge. Notification is sent to Survey Strategy.
+	
+IV. Observing
+
+A. Nightly lineup (Rich Kron)
+
+	Before the beginning of every night, the spectroscopic lineup is 
+written by the Apache Point observer. At the least, it shows the civil 
+time range during which each cartridge can be used. At this time, 
+existence of the related .map files should be confirmed.
+
+B. Decide: Imaging or Spectroscopy (Rich Kron)
+
+	The Apache Point observer decides at sunset whether the night starts 
+with imaging or spectroscopy.
+
+C. Load a cartridge (Bruce Gillespie)
+
+	The nighttime staff selects a cartridge and latches it to the 
+telescope. The latch system for the fiber cartridges is completely 
+independent of the spectroscopic control system, preventing the observer 
+in the control room from dropping the fiber cartridge by accident.
+	If this is the first spectroscopic observation after an imaging run, 
+the spectroscopic corrector must be installed. The corrector is carried 
+above the plugplate on any of the ten fiber cartridges and is latched 
+onto the telescope at the beginning of a spectroscopic run. It is 
+removed when the imaging camera is installed.
+
+D. Setup for calibrations and exposure (Alan Uomoto, Russell Owen)
+
+	The observer's program (SGI) reads the fiber cartridge identification 
+number from the spectrographs and opens the associated MAPPING FILE. The 
+MAPPING FILE contains the plate coordinates, valid hour angles, guide 
+star locations, intended temperature, etc. It passes the intended 
+temperature information to the telescope and instructs it to point, 
+scale, and focus for the estimated mid hour angle of the exposure.
+	Simultaneously, the observer's program adjusts the spectrograph focus 
+and alignment accounting for the temperature and slithead personality. 
+When the telescope is ready, the flat field screen is extended and a 
+short calibration lamp exposure checks the image position and focus. The 
+observer examines the placement of one or two sets of emission lines on 
+each CCD to make sure the spectra are properly positioned. Adjustments 
+are made if necessary by moving the spectrograph collimator mirror. If 
+the observer feels the need, a Hartmann exposure is made to check the 
+focus and the focus is adjusted. When all is properly set up, a 
+wavelength and flat field exposure set is taken and recorded at this 
+telescope position.
+	The observer's program then tells the telescope to retract the 
+calibration screen and point to the field center. It also transmits the 
+guide star coordinates to the telescope. The guider picks up the guide 
+stars and the telescope is instructed to center up and start guiding.
+	Strictly speaking, the telescope does not need the guide star 
+coordinates. In principle, it can locate the radial position of each 
+fiber on the plugplate and determine the rotation of the fiber in its 
+hole through exploratory telescope motions. In practice, the image 
+quality in the guide fibers will be poor and the telescope can use all 
+the help it can get. By fixing the fiber plugplate coordinates, a better 
+solution should be possible.
+	If telescope pointing turns out not to be accurate enough to find the 
+guide stars in the guide fibers, an offset from a star in the large 
+coherent bundle can be done prior to setup.
+
+E. Spectrophotometry sequence (Alan Uomoto)
+
+	When the observer's program finds that the telescope is set up on the 
+field and guiding, it begins a spectrophotometric exposure sequence. The 
+observer's program moves the telescope in a 2x2 raster stopping at each 
+location for a short exposure. These exposures are heavily binned and 
+need not take long. These data may be used to check the photometric zero 
+points against the predicted count rate (are we even close to being 
+centered up?) and act as a sanity check on the centering and drilling 
+algorithms.
+	They will also be used to provide spectrophotometric calibrations. 
+The sum of the four exposures is probably a pretty good 
+spectrophotometric observation so normalizing the redshift exposures to 
+this level is a first-order correction for slit losses.
+
+F. Redshift exposure (Alan Uomoto, Russell Owen)
+
+	The observer's program then begins the first of three spectroscopic 
+exposures. While exposing, the observer's program occasionally queries 
+the telescope for the following guide star information: count rate for 
+each guide star, FWHM (or other seeing indicator) for each guide star, 
+sky brightness from the large coherent bundle, and telescope pointing 
+error. The query rate will be something like every 10-30 seconds. At the 
+least, this information is reported to the observer; at best, it will be 
+used to adjust automatically the exposure time.
+
+G. Decide again
+
+	At the end of each spectroscopic exposure a decision to stay with 
+spectroscopy or change to imaging mode is made by the Apache Point 
+observer. Sky condition information comes from visual inspections and 
+the IR camera, which can see clouds on moonless nights, and the monitor 
+telescope, which presents the transparency, extinction, and stability of 
+the sky. The guide cameras on the spectrographs are useful for adjusting 
+spectroscopic exposure times but are not sufficiently accurate to help 
+in the imaging vs spectroscopy question.
+
+V. Special sequences
+
+A. Spectrograph focus
+
+	The spectrograph is focused by comparing two discharge lamp exposures 
+taken with left and right Hartmann masks in place. We expect that an 
+automatic sequence will be written to determine and set the best focus.
+	The spectrographs have three focus adjustments. The most important is 
+the collimator to slithead distance, controlled by three motors (we can 
+also aim the collimator). Each of the two spectrograph cameras also has 
+a manual focus adjustment that moves the CCD with respect to the big 
+lenses of the camera. During normal operations, only the collimator 
+mirror adjustment is needed.
+
+B. Dispersion curves
+
+	The low order coefficients of the dispersion curves will be measured 
+directly from the discharge lamp calibration exposures. The higher order 
+coefficients are computed from high signal to noise exposures obtained 
+less frequently. A set of long exposures will be obtained maybe once per 
+night. These will be delivered to the spectroscopic data reduction 
+system for analysis.
+
+C. Bias exposures
+
+	A set of bias exposures, medianed in groups of three to eliminate 
+radiation hits and averaged to increase signal-to-noise, is taken at 
+regular intervals. These may or may not be used in data reduction.
+
+D. Dark exposures
+
+	Dark exposures of 15-60 minute duration will be obtained at 
+occasional intervals. These will probably not be used in data reduction.
+
+E. Sky
+
+	These are obtained during periods not good enough for spectroscopy 
+(too much moon, poor seeing, etc.) and are compared with flat field 
+exposures to check our calibration system for throughput variations, 
+baffling problems, etc.
+
+F. Scattered light
+
+	A single bright star is sent through the spectrograph to map the 
+scattered light background. This should be done every month or so to 
+check for dust on the spectrograph optics, lens hazing, and changes in 
+internal baffling (none of these should be a problem, but it doesn't 
+take much to check).
+
+G. Blocking
+
+	A small bright planetary nebula (NGC 7027 comes to mind) should 
+occasionally be put on the spectrograph to check the second order 
+blocking. [O II] 3727 should show up in second order. If we pick a known 
+spot on the nebula, we can estimate the blocking efficiency (we can't 
+observe 3727 directly).
+
+VI. Write tape (Alan Uomoto)
+
+	At the end of the night, two DLT tapes are installed in the 
+observer's workstation and a write tape routine puts FITS files on them. 
+One tape is stored at Apache Point and the other is shipped to Fermilab 
+the following Monday or Thursday, whichever is sooner (every day? UPS 
+2nd day? FedEx next day? Priority mail? FTP?).
+
+VII. Instrument log
+
+	The current plan is to provide a paper notebook that resides at the 
+observatory for use by the spectrograph scientist and resident 
+instrument specialist. This is the most convenient record keeping system 
+for those working on the instrument. There might be a need for some of 
+this information to be transmitted to others, however. For example, 
+broken fibers must be accounted for in the object count.
+	Do we need (or want) an on-line instrument log? I can imagine a 
+simple TCL window with check marks for general subject and a place to 
+insert text. After working on the spectrograph, the instrument 
+specialist might copy the important information from the notebook to the 
+on-line log. The TCL program the writes a database entry or maybe a FITS 
+file that will be recorded the next time data from the spectrograph are 
+put on tape.
+
+VIII. File formats
+
+	Except for the spectroscopic data files, all of the above files are 
+plain text. This makes it easy for the fiber mapper to read the 
+PLUGPLATE DRILLING FILE and write the MAPPING FILE. The files are small 
+so storage space is not a sufficient argument to use a binary format. 
+The checksum will catch errors.
+	Each spectroscopic exposure generates one output file per 
+spectrograph in true FITS format. Each file contains data from one CCD. 
+The files are written to tape using dd and a blocking factor of 10 
+(28800 bytes/physical record). The FITS header:
+
+SIMPLE  =           T
+BITPIX  =          16
+NAXIS   =           2
+NAXIS1  =        2100
+NAXIS2  =        2048
+SOP     = '1.0     '  / SPECTROSCOPIC OBSERVER'S PROGRAM VERSION
+DATE    = 'DD/MM/YY'  / DATE THIS FILE WAS WRITTEN (UT)
+DATE-OBS= 'DD/MM/YY'  / OBSERVATION DATE (UT)
+ORIGIN  = 'SDSS    '
+TELESCOP= '2.5 M   '  / JUST IN CASE YOU DON'T KNOW
+INSTRUME= '640Z-1  '
+SLITHEAD=          45 / WHICH SLITHEAD IS IN THE SPECTROGRAPH?
+OBSERVER= 'J. MUNN '  / WHO'S IN CHARGE?
+OBJECT  = 'SURVEY  '  / (OR ARGON OR NEON OR XENON OR FLAT OR ?)
+RA      =    13.18043 / DEGREES
+DEC     =    28.75234 / DEGREES
+EQUINOX =      2000.0
+UT-START= '20:10:00'  / UT START TIME
+UT-END  = '20:25:00'  / UT ENDING TIME
+HA-START= '-00:35:02' / START HA
+HA-END  = '-00:20:02' / ENDING HA
+EXPTIME =         900 / SHUTTER OPEN TIME
+CCD     = '1589CR24'  / CCD SERIAL NUMBER
+COLL-A  =      243.02 / COLLIMATOR MOTOR A POSITION
+COLL-B  =      324.52
+COLL-C  =      224.55
+RH      =          83 / RELATIVE HUMIDITY AT START (%)
+T0      =        12.8 / ELECTRONICS TEMPERATURE (C)
+T1      =        12.4 / FOCUS TOP TEMPERATURE (C)
+T2      =        12.2 / FOCUS BOTTOM
+T3      =        12.3 / BLUE CAMERA
+T4      =        12.0 / BLUE SIDE
+T5      =        12.3 / RED CAMERA
+T6      =        12.3 / RED SIDE
+FIB001  = '3C273   '  / A REGULAR NAMING SCHEME?
+FIB002  = 'MKN463  '
+FIB003  = 'NGC6946 '
+FIB004  = 'TON490  '
+FIB005  = 'SKY234  '
+FIB006  = 'DARK    '
+...
+FIB320  = 'MOON    '
+COMMENT = 'PEOPLE WRITE COMMENTS, MACHINES WRITE HISTORY'
+END
+
+
+</pre>

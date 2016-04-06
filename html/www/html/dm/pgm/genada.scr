@@ -1,0 +1,6 @@
+main:
+	ICGOption$ = "New"
+	GOSUB GenFlat
+END
+
+'$include "genflat.scr"

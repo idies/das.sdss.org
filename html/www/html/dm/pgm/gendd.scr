@@ -1,0 +1,135 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: gendd.scr -  Data Dictionary Report
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+'| SG  | 08/26/94 | Adde code to print local attributes and operations 
+'|-----|----------|---------------------------------------------------------
+
+'---------------------------------------------------------------------------
+'                              Create_Report
+'---------------------------------------------------------------------------
+Create_Report:
+       gosub initialization
+       print "Class":25,  "Description"
+       print dashline$
+    
+       foreach class
+          print name$:24, " ",
+
+          gosub GetGenstr   ' output ir$ 
+          printed = 0 
+          foreach ir$     'class.generalization
+             if printed = 0 then 
+                print "Subclass of ",
+                printed =1
+             end if                 
+             print name$,"  ",
+          next
+
+          if printed = 1 then 
+             print
+          end if 
+   
+          gosub Getigenstr   ' output ir$
+          printed2 = 0 
+          foreach ir$    'class.specialization
+             if printed2= 0 then 
+                if printed = 1 then print " ":25, 
+                print "Superclass of ",
+                printed2 =1
+             end if                 
+             print name$,"  ",
+          next     
+          
+          if printed2=1 or printed = 0 then print                   
+       next
+
+       print 
+       print "Attribute":40, "Type":15, "Description"
+       print dashline$
+       '------------------------
+       ' Added by SG on 08/26/94
+       '------------------------
+       SELECT ALL FROM Class
+       FOREACH Class
+           CName$ = Name$
+           FOREACH Class.Attribute 
+               AName$ = CName$ + "." + Name$
+               PRINT AName$:39," ",Type$:14, " ", Description$:70 
+           NEXT
+       NEXT
+       '------------------------
+       foreach attribute
+         print name$:39," ",type$:14, " ", description$:70 
+       next
+             
+       print 
+       print "Operation":40, "Return Type":15, "Description"
+       print dashline$ 
+       '------------------------
+       ' Added by SG on 08/26/94
+       '------------------------
+       SELECT ALL FROM Class
+       FOREACH Class
+           CName$ = Name$
+           FOREACH Class.Operation 
+               OName$ = CName$ + "." + Name$
+               PRINT OName$:39," ",Return_Type$:14, " ", Description$:70
+           NEXT
+       NEXT
+       '------------------------
+       foreach operation
+         print name$:39," ",Return_type$:14, " ", description$:70
+       next
+
+end               
+                
+
+'------------------------------------------------------
+' Initialization
+'------------------------------------------------------
+Initialization:
+   dashLine$ = "------------------------------------------------------------------------------------"
+   print 
+   print "Data Dictionary Report"
+   print "_____________________________________________________"
+   print 
+   print "Generated on: ", Time$
+   print 
+   print "Paradigm: ", Paradigm$
+   print "Project:  ", App$
+   print
+return
+
+'-------------------------------------
+'GetGenStr -- output: ir$
+'-------------------------------------
+GetGenStr:
+         if paradigm$= "booch" then
+            ir$ = "Class.Inheritance"
+         elseif paradigm$="Shlaer_m" then
+            ir$="class.superclass" 
+         else 
+	    ir$ = "Class.Generalization"
+         end if
+return
+'---------------------------------
+'GetIGenStr
+'----------------------------------
+GetIgenStr:
+
+         if paradigm$= "booch" then
+            ir$ = "Class.ancestor"
+         elseif paradigm$="Shlaer_m" then
+            ir$="class.subclass" 
+         else 
+	    ir$ = "Class.specialization"
+         end if
+
+return

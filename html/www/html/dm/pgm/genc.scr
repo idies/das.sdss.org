@@ -1,0 +1,42 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: gencppv.scr - Script that generates Objectivity/C++ Code
+'       Supports RUMBAUGH, BOOCH, FUSION, COAD_YOU, SHLAER_M
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| DD  |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+'| HS  |          | Upgraded to support 2.0. 
+'|-----|----------|---------------------------------------------------------
+'| SG  | 08/01/94 | Added code to support Incremental Code Generation (ICG) 
+'|-----|----------|---------------------------------------------------------
+'| TZ  | 08-05-94 | Added code to implement subsystem code gen. and comments 
+'|-----|----------|---------------------------------------------------------
+'---------------------------------------------------------------------------
+'                               main
+'---------------------------------------------------------------------------
+main:
+    'Variables specific to this kind of code generation
+    codeType$ = "            Objectivity C++ Code"
+    UseInclude = TRUE
+
+    '-------------------------
+    'Added for ICG by SG
+    '-------------------------
+    StartComment$ = "//"
+    EndComment$   = ""
+    StartBlock$   = "{"
+    EndBlock$     = "}"
+    BlockBody$    = ""  'Not required for C++
+    BlockName$    = ""  'Not required for C++
+    EndClass$     = ""  'Not required for C++
+    '-------------------------
+    ICGOption$ = "Diff"
+    GOSUB CommonCPPMain
+END
+
+'$include "gendecl.scr"
+'$include "cpp.scr"

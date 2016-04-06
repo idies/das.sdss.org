@@ -1,0 +1,190 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: checkout.scr - Script invoked by the File/Revert to Baseline command
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| ER  | 2/15/94  | Initial implementation (compressed tar and PKZIP).
+'|-----|----------|---------------------------------------------------------
+'| ER  | 4/1/94   | Added support for PVCS, RCS, SCCS, and Softbench.
+'|-----|----------|---------------------------------------------------------
+'| ER  | 5/15/94  | Added limited error checking on input strings.
+'|-----|----------|---------------------------------------------------------
+
+'---------------------------------------------------------------------------
+' PROCEDURE: ProjectCheckout
+'
+' Check project repository and diagram files out of the chosen "CM" system.
+'
+' NOTE: To add support for a CM system other than those currently supported,
+' use one of the existing "Revert" procedures as a template and change the
+' RUN statement to invoke the CM system's appropriate "check out" command.
+'---------------------------------------------------------------------------
+ProjectCheckout:
+  PRINT
+  PRINT "Revert to Baseline Script"
+  PRINT "_____________________________________________________"
+  PRINT
+  PRINT "Current date and time is: ", Time$
+  PRINT
+  PRINT "Paradigm: ", Paradigm$
+  PRINT "Project:  ", App$
+  PRINT
+  '
+  ' Ask the user for a version number (revision) to revert to.
+  ' Currently, it MUST be entered in the form:
+  '
+  ' [major release digit].[minor release digit]
+  '
+  ' NOTE: Improved validation needs to be performed on the input string.
+  '
+  szVersion$ = ""
+  WHILE szVersion$=""
+    INPUT "Revert to baseline version (eg. 2.0):",szVersion$
+    IF szVersion$="" THEN NOTE "Enter a numeric version in the form: [major version].[minor version]"
+  WEND
+  '
+  ' The project must be closed in order to avoid file sharing violations
+  ' and/or possible data loss. More accurately, ALL users with the current
+  ' project open should close it before performing the revert to baseline
+  ' command.
+  '
+  Project.Close
+  '
+  ' Finally, invoke the appropriate "revert" procedure and then re-open
+  ' the project. The user might have to wait for a few minutes while the
+  ' project is being reverted to.
+  '
+  ' NOTE: To customize Paradigm Plus to invoke your particular CM system,
+  ' uncomment out the appropriate procedure call and comment out the rest.
+  '
+  PRINT "The following command(s) were invoked to revert to baseline:"
+' GOSUB PKZIPRevert
+  GOSUB TarZRevert
+' GOSUB PVCSRevert
+' GOSUB RCSRevert
+' GOSUB SCCSRevert
+' GOSUB SoftbenchRevert
+  Project.Open App$
+  END
+
+'---------------------------------------------------------------------------
+' PROCEDURE: PKZIPRevert
+'
+' Revert to baseline using the DOS shareware PKUNZIP utility. The compressed
+' file is named in the form: [project].[version]
+'
+' Because of DOS limitations, dot characters in the version string are
+' replaced with underscores.
+'
+' It is assumed that the PKUNZIP.EXE executable is in your path.
+'---------------------------------------------------------------------------
+PKZIPRevert:
+  nIndex = INSTR(szVersion$,".")
+  IF nIndex<>0 THEN
+    szVersion$ = LEFT$(szVersion$,1)+"_"+RIGHT$(szVersion$,1)
+  END IF
+  PRINT "pkunzip -d -o "+App$+"."+szVersion$
+  RUN "pkunzip -d -o "+App$+"."+szVersion$
+  RETURN
+
+'---------------------------------------------------------------------------
+' PROCEDURE: TarZRevert
+'
+' Revert to baseline using Unix zcat and tar commands. The compressed
+' file is named in the form: [project].[version].Z
+'---------------------------------------------------------------------------
+TarZRevert:
+  PRINT "zcat "+App$+"."+szVersion$+".Z | tar xvf -"
+  RUN "zcat "+App$+"."+szVersion$+".Z | tar xvf -"
+  RETURN
+
+'---------------------------------------------------------------------------
+' PROCEDURE: PVCSRevert
+'
+' Revert to baseline using the PVCS Version Manager GET command.
+'
+' It is assumed that PVCS is installed and that the GET.EXE executable
+' is in your path.
+'---------------------------------------------------------------------------
+PVCSRevert:
+  OPEN App$+".rsp" FOR OUTPUT AS #1
+  FOR i = 1 to nProjectFiles
+    PRINT #1, aszProjectFiles$(i)
+  NEXT
+  CLOSE #1
+  PRINT "get -y -l -M"+CHR$(34)+szDescription$+CHR$(34)+" -r"+szVersion$+" @"+App$+".rsp"
+  RUN "get -y -l -M"+CHR$(34)+szDescription$+CHR$(34)+" -r"+szVersion$+" @"+App$+".rsp"
+  RETURN
+
+'---------------------------------------------------------------------------
+' PROCEDURE: RCSBaseline
+'
+' Baseline the project using the RCS check-in command (ci).
+'
+' Paradigm Plus project repositories consist of multiple BINARY files,
+' and RCS handles only TEXT files, so first the binary files are converted
+' to ASCII text files by using the Unix uuencode command.
+'
+' It is assumed that RCS is installed and that the ci command is in
+' your path.
+'---------------------------------------------------------------------------
+RCSBaseline:
+  INPUT "RCS baseline description:",szDescription$
+  FOR i = 1 to nProjectFiles
+    PRINT "rm "+aszProjectFiles$(i)+".txt"
+    PRINT "uuencode "+aszProjectFiles$(i)+" "+aszProjectFiles$(i)+" > "+aszProjectFiles$(i)+".txt"
+    PRINT "co -f -m"+CHR$(34)+szDescription$+CHR$(34)+" -l"+szVersion$+" "+aszProjectFiles$(i)+".txt"
+    RUN "rm "+aszProjectFiles$(i)+".txt"
+    RUN "uuencode "+aszProjectFiles$(i)+" "+aszProjectFiles$(i)+" > "+aszProjectFiles$(i)+".txt"
+    RUN "co -f -m"+CHR$(34)+szDescription$+CHR$(34)+" -l"+szVersion$+" "+aszProjectFiles$(i)+".txt"
+  NEXT
+  RETURN
+
+'---------------------------------------------------------------------------
+' PROCEDURE: SCCSBaseline
+'
+' Baseline the project using the SCCS check-in command.
+'
+' Paradigm Plus project repositories consist of multiple BINARY files,
+' and SCCS handles only TEXT files, so first the binary files are converted
+' to ASCII text files by using the Unix uuencode command.
+'
+' It is assumed that SCCS is installed and that the sccs command is in
+' your path.
+'---------------------------------------------------------------------------
+SCCSBaseline:
+  INPUT "SCCS baseline description:",szDescription$
+  FOR i = 1 to nProjectFiles
+    PRINT "rm "+aszProjectFiles$(i)+".txt"
+    PRINT "uuencode "+aszProjectFiles$(i)+" "+aszProjectFiles$(i)+" > "+aszProjectFiles$(i)+".txt"
+    PRINT "sccs get -m"+CHR$(34)+szDescription$+CHR$(34)+" -r"+szVersion$+" "+aszProjectFiles$(i)+".txt"
+    RUN "rm "+aszProjectFiles$(i)+".txt"
+    RUN "uuencode "+aszProjectFiles$(i)+" "+aszProjectFiles$(i)+" > "+aszProjectFiles$(i)+".txt"
+    RUN "sccs get -m"+CHR$(34)+szDescription$+CHR$(34)+" -r"+szVersion$+" "+aszProjectFiles$(i)+".txt"
+  NEXT
+  RETURN
+
+'---------------------------------------------------------------------------
+' PROCEDURE: SoftbenchBaseline
+'
+' Baseline the project using the currently configured Softbench CM system
+' and the Softbench-specific REQUEST script language command.
+'
+' It is assumed that Softbench is installed and configured appropriately.
+'---------------------------------------------------------------------------
+SoftbenchBaseline:
+  INPUT "Softbench CM baseline description:",szDescription$
+  FOR i = 1 to nProjectFiles
+    ' Comment the following two lines out if your CM system supports binary
+    ' files. Also, remove the +".txt" from the end of the REQUEST command.
+    PRINT "rm "+aszProjectFiles$(i)+".txt"
+    PRINT "uuencode "+aszProjectFiles$(i)+" "+aszProjectFiles$(i)+" > "+aszProjectFiles$(i)+".txt"
+    PRINT "REQUEST CM, CHECK-OUT -m"+CHR$(34)+szDescription$+CHR$(34)+" -r"+szVersion$+" "+aszProjectFiles$(i)+".txt"
+    RUN "rm "+aszProjectFiles$(i)+".txt"
+    RUN "uuencode "+aszProjectFiles$(i)+" "+aszProjectFiles$(i)+" > "+aszProjectFiles$(i)+".txt"
+    RUN "REQUEST CM, CHECK-OUT -m"+CHR$(34)+szDescription$+CHR$(34)+" -r"+szVersion$+" "+aszProjectFiles$(i)+".txt"
+  NEXT
+  RETURN

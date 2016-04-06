@@ -1,0 +1,47 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: gencr.scr -  Change Request Report
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+
+print
+print "Change Request Report"
+print "====================="
+print
+print "Paradigm: ", PARADIGM$
+print "Project : ", APP$
+print "Time    : ", time$  
+print
+
+print "Change Request":20,  "Type ", "Status ", "Description"
+print "------------------------------------------------------------------------------------------"
+foreach change_Request
+   print name$:19, " ",
+   if type$ = "Bug" then
+      print "B":5,
+   else
+      print "E":5,
+   end if
+
+   if status$="open" then
+      print "O":7,
+   elseif  status$= "Closed" then
+      print "C":7,
+   else
+      print "I":7,
+   end if
+        
+  print description$  
+next
+print
+print
+print "Notation:"
+print "  B: Bug     E: Enhancement    "
+print "  O: Open    C: Closed         I: Investigating"
+end
+

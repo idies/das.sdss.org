@@ -1,0 +1,17 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: at.scr -  User Login Report
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+
+REM User Login Report -- Used by all paradigms
+OPEN "userlog.txt"
+PRINT "Audit Trail / User Login Report"
+userlog$ = syspath$+"user.log"
+IF EXIST(FILE,userlog$) THEN INCLUDE userlog$
+END

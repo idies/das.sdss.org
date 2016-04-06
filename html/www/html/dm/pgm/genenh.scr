@@ -1,0 +1,33 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: genenh.scr -  Enhancement List Report
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+
+question$ = "Do you want to list ALL enhancements or just currently OPEN enhancements?"
+answer = ask(question$,"All","Open")
+print
+print "Enhancement List Report"
+print "======================="
+print
+print "Paradigm: ", PARADIGM$
+print "Project: ", APP$
+print
+print "ID     Status Description"
+print "------ ------ ---------------------------------------------------------------"
+if answer=1 then select all from change_request where status <> "closed"
+foreach change_request
+  if id$="" then gosub update_id
+  if type$="ENHANCEMENT" then print change_request.id:6," ",status$:6," ",description$
+next
+end
+
+update_id:
+change_request.id = change_request.name
+update change_request,change_request.name
+return

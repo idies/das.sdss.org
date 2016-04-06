@@ -1,0 +1,49 @@
+<html>
+<head>
+<title> Release Notes for dm </title>
+</head>
+
+<body>
+<h1> Release Notes for dm </h1>
+
+<h2>devel</h2>
+Here's a list of changes made which need to be incorporated for version 1.1,
+which needs to be cut before the integration.
+<ul>
+<li>psPlan: removed mtPatchesDir and modified mtPatches to accomodate multiple
+    directories for multiple kali runs as input.
+<li>exPhotom: added HDU matching observed stars in primary catalog stars.
+<li>fpObjc: renamed profSig to profErr.  Changed some capitalization.
+<li>idReport: added fields mu0 and nu0.
+<li>psPlan: added keyword psOid.
+<li>exPhotom: changed in comments for aa, bb, cc, and kk: primed ->unprimed.
+<li>idReport: added keyword "ccdCamera".
+<li>idReport: removed field "mjd" from the table.  Fixed up the example table
+    entries.
+<li>fpPlan: added keywords "ccdrow_[riuzgolts]".
+<li>scParam: added keywords.
+<li>exPlan: renamed keyword "version" to "setVersion", since "version"
+    conflicts with the generic plan keyword of the same name.
+<li>asPlan: added keyword ccdConfig, needed only for ncols and nrows.
+<li>asParam: changed keyword 'thetaNcoeff' to 'thetacNcoeff'
+<li>koCat: added color field
+</ul>
+
+<h2>Version 1.0 --- 1 July 1996</h2>
+This is the first official cut version of the Data Model.  It is the first
+attempt to use the Data Model as the central tool for integration.
+Its main features are:
+<ul>
+<li>Official cut versions of all flatfiles for the MT and main imaging
+pipelines.
+<li>Object diagrams are now available from the web.
+<li>Documentation has been made a little more useful.
+</ul>
+
+<h2> Version 0.0 --- Transformation of dm into a product </h2>
+
+11-June-96:  Chris Stoughton added Makefiles in all directories and
+a ups directory.
+
+</body>
+</html>

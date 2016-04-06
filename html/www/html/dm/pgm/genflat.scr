@@ -1,0 +1,818 @@
+GenFlat:
+    FALSE=0
+    TRUE =1
+    UseInclude = TRUE
+    Now$ = Time$
+    MapAtt = TRUE
+    MapQual = FALSE
+    MapOp = FALSE
+    '----------------------------------  TMZ 8-4-94
+    '{Mapping to different Paradigms}
+    Subsystem$               = "Subsystem"
+    SubsystemClass$          = "Subsystem.Contains.Class"
+    MClass$                  = "Class"
+    ClassAttrib$             = "Class.Attribute"
+    ClassOperat$             = "Class.Operation"
+    ClassGeneralization$     = "Class.Generalization"
+    ClassLink$               = "Class.Link_Association"
+    ClassAssociation$        = "Class.Association"
+    ClassAggregation$        = "Class.Aggregation"
+    ClassParticipation$      = "Class.Participation"
+
+    IF  (Paradigm$ = "BOOCH") THEN
+	ClassGeneralization$     = "Class.Inheritance"
+
+    ELSEIF (Paradigm$ = "FUSION") THEN
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+
+    ELSEIF (Paradigm$ = "COAD_YOU") THEN
+	Subsystem$           = "Subject"
+	SubsystemClass$      = "Subject.Contains.Class"
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+
+    ELSEIF (Paradigm$ = "SHLAER_M") THEN
+	SubsystemClass$      = "Subsystem.Link.Class"
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+	ClassGeneralization$ = "Class.Superclass"
+	ClassAggregation$    = ""
+	ClassParticipation$  = ""
+    ENDIF
+    '----------------------------------  
+    ClassCnt = 0
+
+    FOREACH Window
+	IF Window.Type = "DIAGRAM" THEN
+	    tmp$ = Window.Name
+	    WHILE INSTR(tmp$, "- ") <> 0
+		tmp$ = MID$(tmp$, INSTR(tmp$, "- ")+2)
+	    WEND
+	    SELECT All FROM Diagram WHERE Name = tmp$
+	    FOREACH Diagram
+		FOREACH Diagram.Item
+		    IF Item.Selected="T" THEN
+		        SELECT All FROM MClass$ WHERE Name=Item.Object
+	   	        '------------------------------------------------
+	   	        ' main loop
+	   	        '------------------------------------------------
+	   	        foreach MClass$
+			    IF Document$ <> "" THEN
+	      		        ownerclass$=name$   'used in comparsion
+	    		        CurrentName$ = Class.Name
+	      		        ClassCnt = ClassCnt + 1
+			        GOSUB FlattenIt
+			    ENDIF
+			NEXT
+		    ENDIF
+		NEXT
+	    NEXT
+	ENDIF
+    NEXT
+END
+
+'$include "flatten.scr"
+'$include "gencode.scr"
+'$include "merge.scr"
+
+FlattenIt:
+    ' Set up the MERGE facility
+    StartComment$ = "<!--"
+    EndComment$   = "-->"
+    StartBlock$   = ""
+    EndBlock$     = ""
+    BlockBody$    = ""
+    BlockName$    = ""
+    EndClass$     = ""
+    ParseName$ = Class.Name
+    gosub ParseName
+    CurrentClass$ = ParseName$
+    CurrentDesign$ = Design$
+    ICGOldFile$ = "../flatFiles/" + Document$
+    ICGNewFile$ = "PP_NEW.$$$"
+
+    ' Generate the file
+    flaFlatFile = TRUE
+    IF Cardinality$ = "0" THEN
+        flaTableHierarchy = 0
+    ELSEIF Cardinality$ = "1" THEN
+        flaTableHierarchy = -1
+    ELSE
+        flaTableHierarchy = -2
+    ENDIF
+    PPCommentPrinted = 0
+    PPComment$ = StartComment$ + " P+      Project: " + App$ + "   Date: " + Now$ + EndComment$
+    OPEN ICGNewFile$ FOR OUTPUT AS 1
+    IF Division$ = "PASSIVE" THEN
+        GOSUB GenerateBinaryFITS
+    ELSEIF Division$ = "ACTIVE" THEN
+	GOSUB GenerateFITSHeader
+    ELSEIF Division$ = "SUBSYSTEM" THEN
+	GOSUB GenerateFTCLParamTable
+    ELSEIF Division$ = "TERMINATOR" THEN
+	GOSUB GenerateFTCLParamFile
+    ENDIF
+    CLOSE 1
+
+    ' Merge in the new changes with the old file
+    GOSUB ICG_Merge_Files
+
+    ' Include the file in the report
+'    print "__________________________________________________________________"
+'    print "      Paradigm: ", Paradigm$
+'    print "       Project: ", App$
+'    print "          Date: ", Now$
+    print "          File: ", ICGOldFile$
+'    print "__________________________________________________________________"
+    IF ICGOption$ = "New" THEN
+        INCLUDE ICGOldFile$
+    ELSE
+        INCLUDE ICGDiffFile$
+    ENDIF
+    print "__________________________________________________________________"
+RETURN
+
+GenerateFITSHeader:
+    DIM gfhAggr$(200)
+
+    ' Flatten it
+    IF Metaclass$ = "TRUE" THEN
+	flaIsKey = FALSE
+    ELSE
+        flaIsKey = TRUE
+    ENDIF
+    IF Link$ = "TRUE" THEN
+	flaFollow = FALSE
+    ELSE
+	flaFollow = TRUE
+    ENDIF
+    flaBoth = TRUE
+    flaClass$ = CurrentName$
+    GOSUB Flatten
+
+    ' Test whether this class contains any aggregations.  If it does, then
+    ' we assume that we're making a FITS header with binary table extensions.
+    ' If not, then we assume that we're making an image.
+    gfhImage = TRUE
+    FOR flaI = 1 TO flaCnt
+	IF flaType$(flaI) = "aggregation" AND flaSize$(flaI) <> "" THEN gfhImage = FALSE
+    NEXT
+
+    ' Print the Primary HDU
+  IF CurrentDesign$ = "FALSE" THEN
+    PPBeginFlag$ = StartComment$ + "##begin FITS " + CurrentClass$ + "." + "PDU" + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end FITS "   + CurrentClass$ + "." + "PDU" + " " + EndComment$
+    PRINT #1, "SIMPLE  =                    T"
+    IF gfhImage = FALSE THEN
+        PRINT #1, "BITPIX  =                    8"
+        PRINT #1, "NAXIS   =                    0"
+        PRINT #1, "EXTEND  =                    T"
+    ELSE
+        PRINT #1, "BITPIX  =                   16"
+        PRINT #1, "NAXIS   =                    2"
+        PRINT #1, "NAXIS1  =                  XXX"
+        PRINT #1, "NAXIS2  =                  XXX"
+        PRINT #1, "BSCALE  =                XXX.X"
+        PRINT #1, "BZERO   =                XXX.X"
+    ENDIF
+    PRINT #1, PPBeginFlag$
+    PRINT #1, PPComment$
+    PPCommentPrinted = 1
+    pfMin = -1000
+    pfMax = 0
+    GOSUB PrintFlattenedAsFITSHeader
+    PRINT #1, PPEndFlag$
+    PRINT #1, "END"
+  ENDIF
+
+    ' Print out aggregations as binary FITS table extensions
+    gfhI = 0
+    FOR flaI = 1 TO flaCnt
+	IF flaType$(flaI) = "aggregation" AND flaSize$(flaI) <> "" THEN
+	    gfhI = gfhI + 1
+	    gfhAggr$(gfhI) = flaDataType$(flaI)
+	ENDIF
+    NEXT
+    FOR flaI = 1 TO gfhI
+	    SELECT All FROM Class WHERE Class = gfhAggr$(flaI)
+	    FOREACH Class
+	        ParseName$ = Class.Name
+	        GOSUB ParseName
+		gfhAggregationName$ = ParseName$
+
+		' Flatten it
+	        flaBoth = FALSE
+	        flaClass$ = Class.Name
+		GOSUB Flatten
+
+	        ' Print the table header
+		binaryFitsCode$ = gfhAggregationName$
+	        GOSUB PrintFlattenedAsBinaryFits
+	    NEXT
+    NEXT
+RETURN
+
+GenerateFTCLParamTable:
+    ' Flatten it
+    IF Metaclass$ = "TRUE" THEN
+	flaIsKey = FALSE
+    ELSE
+        flaIsKey = TRUE
+    ENDIF
+    IF Link$ = "TRUE" THEN
+	flaFollow = FALSE
+    ELSE
+	flaFollow = TRUE
+    ENDIF
+    flaBoth = TRUE
+    flaClass$ = CurrentName$
+    GOSUB Flatten
+
+  IF CurrentDesign$ = "FALSE" THEN
+    ' Print the header parameters
+    PPBeginFlag$ = StartComment$ + "##begin PARAM " + CurrentClass$ + "." + "header" + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end PARAM "   + CurrentClass$ + "." + "header" + " " + EndComment$
+    PRINT #1, PPBeginFlag$
+    PRINT #1, PPComment$
+    pfMin = -1000
+    pfMax = -1 + flaTableHierarchy
+    GOSUB PrintFlattenedAsFTCLParam
+    PRINT #1, PPEndFlag$
+  ENDIF
+
+    ' Print the table
+    PPBeginFlag$ = StartComment$ + "##begin PARAM " + CurrentClass$ + "." + "table" + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end PARAM "   + CurrentClass$ + "." + "table" + " " + EndComment$
+    PRINT #1, PPBeginFlag$
+    GOSUB PrintFlattenedAsFTCLTable
+    PRINT #1, PPEndFlag$
+    PRINT #1, "} ", UPCASE$(CurrentClass$), ";"
+RETURN
+
+GenerateFTCLParamFile:
+    ' Flatten it
+    IF Metaclass$ = "TRUE" THEN
+	flaIsKey = FALSE
+    ELSE
+        flaIsKey = TRUE
+    ENDIF
+    IF Link$ = "TRUE" THEN
+	flaFollow = FALSE
+    ELSE
+	flaFollow = TRUE
+    ENDIF
+    flaBoth = TRUE
+    flaClass$ = CurrentName$
+    GOSUB Flatten
+
+    ' Print the header parameters
+    PPBeginFlag$ = StartComment$ + "##begin PARAM " + CurrentClass$ + "." + "header" + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end PARAM "   + CurrentClass$ + "." + "header" + " " + EndComment$
+    PRINT #1, PPBeginFlag$
+    PRINT #1, PPComment$
+    pfMin = -1000
+    pfMax = 0
+    GOSUB PrintFlattenedAsFTCLParam
+    PRINT #1, PPEndFlag$
+RETURN
+
+GenerateBinaryFITS:
+    ' Flatten it
+    IF Metaclass$ = "TRUE" THEN
+	flaIsKey = FALSE
+    ELSE
+        flaIsKey = TRUE
+    ENDIF
+    IF Link$ = "TRUE" THEN
+	flaFollow = FALSE
+    ELSE
+	flaFollow = TRUE
+    ENDIF
+    flaBoth = TRUE
+    flaClass$ = CurrentName$
+    GOSUB Flatten
+
+    ' Print the Primary HDU
+  IF CurrentDesign$ = "FALSE" THEN
+    PPBeginFlag$ = StartComment$ + "##begin FITSbinary " + CurrentClass$ + "." + "PDU" + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end FITSbinary "   + CurrentClass$ + "." + "PDU" + " " + EndComment$
+    PRINT #1, PPBeginFlag$
+    PRINT #1, PPComment$
+    PPCommentPrinted = 1
+    PRINT #1, "SIMPLE  =                    T"
+    PRINT #1, "BITPIX  =                    8"
+    PRINT #1, "NAXIS   =                    0"
+    PRINT #1, "EXTEND  =                    T"
+    pfMin = -1000
+    pfMax = -2 + flaTableHierarchy
+    GOSUB PrintFlattenedAsFITSHeader
+    PRINT #1, PPEndFlag$
+    PRINT #1, "END"
+    PRINT #1, ""
+  ENDIF
+
+    ' Print the table header
+    binaryFitsCode$ = CurrentClass$
+    GOSUB PrintFlattenedAsBinaryFits
+RETURN
+
+PrintFlattenedAsFITSHeader:
+    FOR flaI = 1 TO flaCnt
+        'note flaType$(flaI)+":"+flaDataType$(flaI)+":"+flaName$(flaI)+":"+STR$(pfMin)+":"+STR$(flaLevel(flaI))+":"+STR$(pfMax)
+	IF flaLevel(flaI) <= pfMax AND flaLevel(flaI) >= pfMin AND flaType$(flaI) <> "aggregation" THEN
+	    IF flaDataType$(flaI) = "int16" THEN
+		pfafhFITSType$ = "int"
+	    ELSEIF flaDataType$(flaI) = "int32" THEN
+		pfafhFITSType$ = "int"
+	    ELSEIF flaDataType$(flaI) = "char" THEN
+		pfafhFITSType$ = "char"
+	    ELSEIF flaDataType$(flaI) = "float32" THEN
+		pfafhFITSType$ = "float"
+	    ELSEIF flaDataType$(flaI) = "float64" THEN
+		pfafhFITSType$ = "float"
+	    ELSEIF flaDataType$(flaI) = "uint8" THEN
+		pfafhFITSType$ = "int"
+	    ELSEIF flaDataType$(flaI) = "uint16" THEN
+		pfafhFITSType$ = "int"
+	    ELSEIF flaDataType$(flaI) = "uint32" THEN
+		pfafhFITSType$ = "int"
+	    ELSEIF flaDataType$(flaI) = "ooVString" THEN
+		pfafhFITSType$ = "char"
+	    ELSEIF flaType$(flaI) = "enum" THEN
+		pfafhFITSType$ = "char"
+	    ELSE
+	        ERROR "illegal type "+flaDataType$(flaI)+" "+flaName$(flaI)
+	    ENDIF
+
+	    fitsField$ = UPCASE$(LEFT$(flaName$(flaI), 8))
+	    fitsComment$ = flaDescription$(flaI)
+	    IF flaUnits$(flaI) <> "" AND flaType$(flaI) <> "enum" THEN
+		fitsComment$ = fitsComment$+" ("+flaUnits$(flaI)+")"
+	    ENDIF
+	    IF flaSize$(flaI) <> "" THEN
+	        pluName$ = fitsField$
+	        GOSUB Pluralize
+	        fitsField$ = UPCASE$(pluName$)
+	    ENDIF
+	    IF pfafhFITSType$ = "int" THEN
+		IF flaInitValue$(flaI) <> "" THEN
+		    fitsVal$ = flaInitValue$(flaI)
+		ELSE
+	            fitsVal$ = "XXX"
+		ENDIF
+		IF flaSize$(flaI) <> "" THEN
+		    fitsVal$ = fitsVal$+" "+fitsVal$+" ..."
+		    GOSUB FITSStrPrint
+		ELSE
+		    GOSUB FITSNumPrint
+		ENDIF
+	    ELSEIF pfafhFITSType$ = "float" THEN
+		IF flaInitValue$(flaI) <> "" THEN
+		    fitsVal$ = flaInitValue$(flaI)
+		ELSE
+	            fitsVal$ = "XXX.X"
+		ENDIF
+		IF flaSize$(flaI) <> "" THEN
+		    fitsVal$ = fitsVal$+" "+fitsVal$+" ..."
+		    GOSUB FITSStrPrint
+		ELSE
+		    GOSUB FITSNumPrint
+		ENDIF
+	    ELSEIF pfafhFITSType$ = "char" THEN
+		IF flaInitValue$(flaI) <> "" THEN
+		    fitsVal$ = flaInitValue$(flaI)
+		ELSE
+	            fitsVal$ = "XXX"
+		ENDIF
+		IF flaSize$(flaI) <> "" THEN
+		    fitsVal$ = fitsVal$+" "+fitsVal$+" ..."
+		ENDIF
+		GOSUB FITSStrPrint
+	    ENDIF
+	    'IF pfOpt = FALSE AND flaOpt(flaI) = TRUE THEN PRINT #1, "-->"
+	ENDIF
+    NEXT
+RETURN
+
+PrintFlattenedAsBinaryFits:
+    DIM tform$(200)
+    DIM ttype$(200)
+    DIM tzero$(200)
+    DIM tunit$(200)
+    DIM ttype$(200)
+    DIM tdesc$(200)
+    DIM topt(200)
+    DIM tdim$(200)
+
+    ' Translate to FITS binary field type and count bytes in a row
+    pfbNFields = 0
+    pfbCnt = 0
+    pfbVCnt = 0
+    pfbHeap = FALSE
+    FOR flaI = 1 TO flaCnt
+        'note flaType$(flaI)+":"+flaDataType$(flaI)+":"+flaName$(flaI)+":"+flaSize$(flaI)+":"+STR$(pfMin)+":"+STR$(flaLevel(flaI))+":"+STR$(pfMax)
+      IF flaLevel(flaI) >= flaTableHierarchy AND flaType$(flaI) <> "aggregation" THEN
+	pfbNFields = pfbNFields + 1
+	nelems$ = flaSize$(flaI)
+	IF nelems$ = "" THEN
+	    nelems$ = "1"
+	    tdim$(pfbNFields) = ""
+	ELSEIF INSTR(nelems$, ",") <> 0 THEN
+	    pfbPos = INSTR(nelems$, ",")
+	    tdim$(pfbNFields) = "("+nelems$+")"
+	    nelems$ = STR$(VAL(LEFT$(nelems$,pfbPos-1))*VAL(MID$(nelems$,pfbPos+1)))
+	ELSE
+	    tdim$(pfbNFields) = ""
+	ENDIF
+	ttype$(pfbNFields) = flaName$(flaI)
+	tdesc$(pfbNFields) = flaDescription$(flaI)
+	tunit$(pfbNFields) = flaUnits$(flaI)
+	IF flaType$(flaI) = "enum" THEN
+'	    IF INSTR(nelems$, "V") THEN
+'	        ERROR "we don't allow variable-length arrays of enums in FITS binary tables"
+'	    ENDIF
+'	    IF nelems$ = "1" THEN
+'		nelems$ = "V"
+'	    ELSE
+'		nelems$ = nelems$+"V"
+'	    ENDIF
+'	    pfbElemSize = 1
+'	    pfbElemType$ = "A"
+	    pfbElemSize = 4
+	    pfbElemType$ = "J"
+	    tzero$(pfbNFields) = "0"
+'	    tunit$(pfbNFields) = ""
+	ELSEIF flaDataType$(flaI) = "int16" THEN
+	    pfbElemSize = 2
+	    pfbElemType$ = "I"
+	    tzero$(pfbNFields) = "0"
+	ELSEIF flaDataType$(flaI) = "int32" THEN
+	    pfbElemSize = 4
+	    pfbElemType$ = "J"
+	    tzero$(pfbNFields) = "0"
+	ELSEIF flaDataType$(flaI) = "char" THEN
+	    pfbElemSize = 1
+	    pfbElemType$ = "A"
+	    tzero$(pfbNFields) = "0"
+	ELSEIF flaDataType$(flaI) = "float32" THEN
+	    pfbElemSize = 4
+	    pfbElemType$ = "E"
+	    tzero$(pfbNFields) = "0"
+	ELSEIF flaDataType$(flaI) = "float64" THEN
+	    pfbElemSize = 8
+	    pfbElemType$ = "D"
+	    tzero$(pfbNFields) = "0"
+	ELSEIF flaDataType$(flaI) = "uint8" THEN
+	    pfbElemSize = 1
+	    pfbElemType$ = "B"
+	    tzero$(pfbNFields) = "0"
+	ELSEIF flaDataType$(flaI) = "uint16" THEN
+	    pfbElemSize = 2
+	    pfbElemType$ = "I"
+	    tzero$(pfbNFields) = "0"
+	    ' tzero$(pfbNFields) = "32768"
+	ELSEIF flaDataType$(flaI) = "uint32" THEN
+	    pfbElemSize = 4
+	    pfbElemType$ = "J"
+	    tzero$(pfbNFields) = "0"
+	    ' tzero$(pfbNFields) = "21474883648"
+	ELSEIF flaDataType$(flaI) = "ooVString" THEN
+	    pfbElemSize = 1
+	    pfbElemType$ = "A"
+	    tzero$(pfbNFields) = "0"
+	    IF flaSize$(pfbNFields) = "" THEN nelems$ = "20"
+	ELSE
+	    ERROR "illegal type "+flaDataType$(flaI)+" "+flaName$(flaI)
+	ENDIF
+	IF nelems$ = "V" THEN
+	    pfbHeap = TRUE
+	    pfbCnt = pfbCnt + 8
+	    tform$(pfbNFields) = "1P"+pfbElemType$+"(XXX)"
+	ELSEIF nelems$ = "#V" THEN
+	    pfbHeap = TRUE
+	    pfbVCnt = pfbVCnt + 8
+	    tform$(pfbNFields) = "#P"+pfbElemType$+"(XXX)"
+	ELSEIF RIGHT$(nelems$,1) = "V" THEN
+	    pfbHeap = TRUE
+	    nelems$ = LEFT$(nelems$, LEN(nelems$)-1)
+	    pfbCnt = pfbCnt + VAL(nelems$) * 8
+	    tform$(pfbNFields) = nelems$+"P"+pfbElemType$+"(XXX)"
+	ELSEIF nelems$ = "#" THEN
+	    pfbVCnt = pfbVCnt + pfbElemSize
+	    tform$(pfbNFields) = nelems$+pfbElemType$
+	ELSE
+	    pfbCnt = pfbCnt + VAL(nelems$) * pfbElemSize
+	    tform$(pfbNFields) = nelems$+pfbElemType$
+	ENDIF
+      ENDIF
+    NEXT
+	
+    ' Print the binary table HDU
+    PPBeginFlag$ = StartComment$ + "##begin FITSbinary " + binaryFitsCode$ + "." + "header" + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end FITSbinary "   + binaryFitsCode$ + "." + "header" + " " + EndComment$
+    PRINT #1, PPBeginFlag$
+    IF PPCommentPrinted = 0 THEN
+        PRINT #1, PPComment$
+        PPCommentPrinted = 1
+    ENDIF
+    PRINT #1, "XTENSION= 'BINTABLE'          "
+    PRINT #1, "BITPIX  =                    8"
+    PRINT #1, "NAXIS   =                    2"
+    fitsField$ = "NAXIS1"
+    fitsVal$ = STR$(pfbCnt)
+    IF pfbVCnt > 0 THEN
+	fitsVal$ = fitsVal$ + "+" + STR$(pfbVCnt) + "#"
+    ENDIF
+    fitsComment$ = ""
+    GOSUB FITSNumPrint
+    PRINT #1, "NAXIS2  =                  XXX"
+    IF pfbHeap = FALSE THEN
+        PRINT #1, "PCOUNT  =                    0"
+    ELSE
+        PRINT #1, "PCOUNT  =                  XXX"
+    ENDIF
+    PRINT #1, "GCOUNT  =                    1"
+    fitsField$ = "TFIELDS"
+    fitsVal$ = STR$(pfbNFields)
+    fitsComment$ = ""
+    GOSUB FITSNumPrint
+    pfMin = -1 + flaTableHierarchy
+    pfMax = -1 + flaTableHierarchy
+    GOSUB PrintFlattenedAsFITSHeader
+    PRINT #1, PPEndFlag$
+    PPBeginFlag$ = StartComment$ + "##begin FITSbinary " + binaryFitsCode$ + "." + "table" + " " + EndComment$
+    PPEndFlag$   = StartComment$ + "##end FITSbinary "   + binaryFitsCode$ + "." + "table" + " " + EndComment$
+    PRINT #1, PPBeginFlag$
+    IF PPCommentPrinted = 0 THEN
+        PRINT #1, PPComment$
+        PPCommentPrinted = 1
+    ENDIF
+    FOR flaI = 1 TO pfbNFields
+	fitsField$ = "TFORM"+STR$(flaI)
+	fitsVal$ = tform$(flaI)
+	fitsComment$ = ""
+	GOSUB FITSStrPrint
+	fitsField$ = "TTYPE"+STR$(flaI)
+	fitsVal$ = ttype$(flaI)
+	fitsComment$ = tdesc$(flaI)
+	GOSUB FITSStrPrint
+	IF tdim$(flaI) <> "" THEN
+	    fitsField$ = "TDIM"+STR$(flaI)
+	    fitsVal$ = tdim$(flaI)
+	    fitsComment$ = ""
+	    GOSUB FITSStrPrint
+	ENDIF
+	IF tunit$(flaI) <> "" THEN
+	    fitsField$ = "TUNIT"+STR$(flaI)
+	    fitsVal$ = tunit$(flaI)
+	    fitsComment$ = ""
+	    GOSUB FITSStrPrint
+	ENDIF
+	IF tzero$(flaI) <> "0" THEN
+	    fitsField$ = "TZERO"+STR$(flaI)
+	    fitsVal$ = tzero$(flaI)
+	    fitsComment$ = ""
+	    GOSUB FITSNumPrint
+	ENDIF
+    NEXT
+    PRINT #1, PPEndFlag$
+    PRINT #1, "END"
+RETURN
+
+FITSNumPrint:
+    fitsLen = 20 - LEN(fitsVal$)
+    fitsCommentLen = 47
+    PRINT #1, fitsField$:8, "= ", " ":fitsLen, fitsVal$,
+    IF LEN(fitsComment$) > 0 THEN
+	IF LEN(fitsComment$) > fitsCommentLen THEN
+	    fpFirstPeriod = INSTR(fitsComment$, ".")
+	    IF fpFirstPeriod > 0 THEN
+	        PRINT #1, " / ", LEFT$(LEFT$(fitsComment$, fpFirstPeriod), fitsCommentLen),
+	    ELSE
+	        PRINT #1, " / ", LEFT$(fitsComment$, fitsCommentLen),
+	    ENDIF
+	ELSE
+	    PRINT #1, " / ", fitsComment$,
+	ENDIF
+    ENDIF
+    PRINT #1
+RETURN
+
+FITSStrPrint:
+    IF LEN(fitsVal$) < 9 THEN
+        PRINT #1, fitsField$:8, "= '", fitsVal$:8, "'":11,
+	fitsCommentLen = 47
+    ELSEIF LEN(fitsVal$) < 18 THEN
+	PRINT #1, fitsField$:8, "= ", "'"+fitsVal$+"'":20,
+	fitsCommentLen = 47
+    ELSE
+	PRINT #1, fitsField$:8, "= ", "'"+fitsVal$+"'",
+        fitsCommentLen = 67-LEN(fitsVal$)
+    ENDIF
+    IF LEN(fitsComment$) > 0 THEN
+	IF LEN(fitsComment$) > fitsCommentLen THEN
+	    fpFirstPeriod = INSTR(fitsComment$, ".")
+	    IF fpFirstPeriod > 0 THEN
+		IF RIGHT$(fitsComment$, 8) = " (error)" THEN
+	            PRINT #1, " / ", LEFT$(LEFT$(fitsComment$, fpFirstPeriod)+" (error)", fitsCommentLen),
+		ELSE
+	            PRINT #1, " / ", LEFT$(LEFT$(fitsComment$, fpFirstPeriod), fitsCommentLen),
+		ENDIF
+	    ELSE
+	        PRINT #1, " / ", LEFT$(fitsComment$, fitsCommentLen),
+	    ENDIF
+	ELSE
+	    PRINT #1, " / ", fitsComment$,
+	ENDIF
+    ENDIF
+    PRINT #1
+RETURN
+
+PrintFlattenedAsFTCLParam:
+    fpValStart = 21
+    fpDescrStart = 41
+    fpLead$ = ""
+
+    StartCommentSave$ = StartComment$
+    EndCommentSave$ = EndComment$
+    StartComment$ = "#"
+    EndComment$ = ""
+
+    FOR flaI = 1 TO flaCnt
+	IF flaSize$(flaI) <> "" THEN
+	    pluName$ = flaName$(flaI)
+	    GOSUB Pluralize
+	    fpName$ = pluName$
+	ELSE
+	    fpName$ = flaName$(flaI)
+	ENDIF
+	IF flaLevel(flaI) <= pfMax AND flaLevel(flaI) >= pfMin AND flaType$(flaI) <> "aggregation" THEN
+	    IF flaInitValue$(flaI) <> "" THEN
+	        fpVal$ = flaInitValue$(flaI)
+	    ELSE
+	        IF flaDataType$(flaI) = "int16" THEN
+		    fpVal$ = "XXX"
+	        ELSEIF flaDataType$(flaI) = "int32" THEN
+		    fpVal$ = "XXX"
+	        ELSEIF flaDataType$(flaI) = "char" THEN
+		    fpVal$ = "'XXX'"
+	        ELSEIF flaDataType$(flaI) = "float32" THEN
+		    fpVal$ = "XXX.X"
+	        ELSEIF flaDataType$(flaI) = "float64" THEN
+		    fpVal$ = "XXX.X"
+	        ELSEIF flaDataType$(flaI) = "uint8" THEN
+		    fpVal$ = "XXX"
+	        ELSEIF flaDataType$(flaI) = "uint16" THEN
+		    fpVal$ = "XXX"
+	        ELSEIF flaDataType$(flaI) = "uint32" THEN
+		    fpVal$ = "XXX"
+	        ELSEIF flaDataType$(flaI) = "ooVString" THEN
+		    fpVal$ = "'XXX'"
+	        ELSEIF flaType$(flaI) = "enum" THEN
+		    fpVal$ = "'XXX'"
+	        ELSE
+	            ERROR "illegal type "+flaDataType$(flaI)+" "+flaName$(flaI)
+	        ENDIF
+	    ENDIF
+	    IF flaSize$(flaI) <> "" THEN
+		fpVal$ = fpVal$ + " " + fpVal$ + " ..."
+	    ENDIF
+	    fpDescr$ = flaDescription$(flaI)
+	    IF flaUnits$(flaI) <> "" AND flaType$(flaI) <> "enum" THEN
+		fpDescr$ = fpDescr$+" ("+flaUnits$(flaI)+")"
+	    ENDIF
+	    GOSUB FTCLParamPrint
+	ENDIF
+    NEXT
+
+    StartComment$ = StartCommentSave$
+    EndComment$ = EndCommentSave$
+RETURN
+
+PrintFlattenedAsFTCLTable:
+    fpValStart = 15
+    fpDescrStart = 31
+    fpLead$ = ""
+
+    StartCommentSave$ = StartComment$
+    EndCommentSave$ = EndComment$
+    StartComment$ = "#"
+    EndComment$ = ""
+
+    PRINT #1, "typedef struct {"
+    FOR flaI = 1 TO flaCnt
+	' skip this one if size <> 1
+        IF flaLevel(flaI) >= flaTableHierarchy AND flaSize$(flaI) <> "V" AND flaSize$(flaI) <> "#" AND flaType$(flaI) <> "aggregation" THEN
+	    IF flaDataType$(flaI) = "int16" THEN
+	        fpName$ = "int"
+	    ELSEIF flaDataType$(flaI) = "int32" THEN
+		fpName$ = "int"
+	    ELSEIF flaDataType$(flaI) = "char" THEN
+		fpName$ = "char"
+	    ELSEIF flaDataType$(flaI) = "float32" THEN
+		fpName$ = "float"
+	    ELSEIF flaDataType$(flaI) = "float64" THEN
+		fpName$ = "double"
+	    ELSEIF flaDataType$(flaI) = "uint8" THEN
+		fpName$ = "int"
+	    ELSEIF flaDataType$(flaI) = "uint16" THEN
+		fpName$ = "int"
+	    ELSEIF flaDataType$(flaI) = "uint32" THEN
+		fpName$ = "int"
+	    ELSEIF flaDataType$(flaI) = "ooVString" THEN
+		fpName$ = "char"
+	    ELSEIF flaType$(flaI) = "enum" THEN
+		fpName$ = "char"
+	    ELSE
+	        ERROR "illegal type "+flaDataType$(flaI)+" "+flaName$(flaI)
+	    ENDIF
+	    fpName$ = "    " + fpName$
+	    fpVal$ = flaName$(flaI)
+	    IF flaDataType$(flaI) = "ooVString" OR flaType$(flaI) = "enum" THEN
+		fpVal$ = fpVal$ + "[20]"
+	    ELSEIF flaSize$(flaI) <> "" THEN
+		fpVal$ = fpVal$ + "[" + flaSize$(flaI) + "]"
+	    ENDIF
+	    fpVal$ = fpVal$ + ";"
+	    fpDescr$ = flaDescription$(flaI)
+	    IF flaUnits$(flaI) <> "" THEN
+		IF fpDescr$ = "" THEN
+		    fpDescr$ = "("+flaUnits$(flaI)+")"
+		ELSE
+		    fpDescr$ = fpDescr$+" ("+flaUnits$(flaI)+")"
+		ENDIF
+	    ENDIF
+	    GOSUB FTCLParamPrint
+	ENDIF
+    NEXT
+
+    StartComment$ = StartCommentSave$
+    EndComment$ = EndCommentSave$
+RETURN
+
+'--------------------------
+' FTCLParamPrint
+'
+' description: Print a FTCL param to file # 1
+'
+' input:       fpName$       = parameter name
+'              fpVal$        = parameter value
+'              fpDescr$       = parameter description
+'              fpValStart    = column to start value in
+'              fpDescrStart  = column to start description in
+'	       fpLead$       = lead "blank" at start of each comment
+'--------------------------
+FTCLParamPrint:
+    fpNameWidth = fpValStart - 1
+    fpValWidth = fpDescrStart - fpValStart
+    IF LEN(fpName$) > fpNameWidth - 1 THEN
+	fpValWidth = fpValWidth - (LEN(fpName$) + 1 - fpNameWidth)
+	fpNameWidth = LEN(fpName$) + 1
+    ENDIF
+    IF LEN(fpVal$) > fpValWidth - 1 THEN
+	PRINT #1, fpName$:fpNameWidth, fpVal$
+	fpTmp = fpDescrStart - 1
+	PRINT #1, fpLead$:fpTmp,
+    ELSE
+	PRINT #1, fpName$:fpNameWidth, fpVal$:fpValWidth,
+    ENDIF
+    IF LEN(fpDescr$) > 0 THEN
+        pcText$ = fpDescr$
+        pcStart = fpDescrStart
+        pcNum = 1
+        pcLead$ = fpLead$
+        IF fpLead$ = "#" THEN
+	    saveStartComment$ = StartComment$
+	    saveEndComment$ = EndComment$
+	    StartComment$ = ""
+	    EndComment$ = ""
+            GOSUB PrintComment
+	    StartComment$ = saveStartComment$
+	    EndComment$ = saveEndComment$
+        ELSE
+            GOSUB PrintComment
+        ENDIF
+    ELSE
+	PRINT #1, ""
+    ENDIF
+RETURN
+
+'--------------------------
+' Pluralize
+'
+' description: Pluralize a name
+'
+' input/output: pluName$      = singular name on input, plural on output
+'--------------------------
+Pluralize:
+    IF RIGHT$(pluName$, 1) = "y" THEN
+	pluName$ = LEFT$(pluName$, LEN(pluName$)-1)+"ies"
+    ELSEIF RIGHT$(pluName$, 2) = "ch" THEN
+	pluName$ = pluName$+"es"
+    ELSEIF RIGHT$(pluName$, 1) = "s" THEN
+	pluName$ = pluName$+"es"
+    ELSE
+	pluName$ = pluName$+"s"
+    ENDIF
+RETURN

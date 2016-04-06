@@ -1,0 +1,366 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: MERGE.SCR -  Used for incremental code generation (ICG).
+'       Supports RUMBAUGH, BOOCH, FUSION, COAD_YOU, SHLAER_M
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| SG  | 07/18/94 | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+'
+' ICG_Merge_Files subroutine can be called by another script after code
+' has been generated and written in 'ICGNewFile$'. The old code will be
+' in the 'ICGOldFile$'. This script will merge the two files and put it in 
+' the 'ICGOldFile$'.  The script assumes that Classes and the implementation
+' of the methods will be in two seperate files. For example, in C++
+' Class definitions will be in *.H files and implementation of methods
+' will be in *.CPP files.  Also the script assumes a maximum of 100 
+' (defined by MaxEntries) class definitions or methods (implementation)
+' to be contained within the 'ICGNewFile$' at any given time.  If the number
+' is greater than 100 then the value for MaxEntries must be increased.
+' This can be done by the user.
+' Max number of formal paremeters for a method is assumed to be 25. This
+' number can be increased by the user.
+' Code generation scripts must define the following variables/files.
+' ICGOption$    : Create a "New" copy, or "Diff" the new with the old
+' ICGNewFile$   : Newly generated code (PP_NEW.$$$)
+' ICGOldFIle$   : Old code (example for C++ : ATM.H)
+' StartComment$ : Language specific start comment character/s (for C++ : "//")
+' EndComment$   : Language specific end comment character/s (for C++ : "")
+' StartBlock$   : Language specific block starting character (for C++ : "{")
+' EndBlock$     : Language specific block ending character (for C++ : "{")
+' BlockBody$    : Language specific block body (for Ada : "  null;")
+' BlockName$    : Language specific end block name for a method (for Ada : "end <method_name>")
+' EndClass$     : Language specific end block name for a class (for Ada: "End <Class_name>;")
+'---------------------------------------------------
+
+
+ICG_Merge_Files:
+
+    MaxEntries = 100 'Max # of Classes or methods allowed in the NewFile
+    MaxFormalParams = 25 'Max # of lines a method can have.
+                         '(each formal param can be in a seperate line) 
+    CheckBeginFlag$ = "##begin"
+    CheckEndFlag$   = "##end"
+
+    IF  EXIST(File, ICGOldFile$) THEN
+        GOSUB Generate_NewFile_Entries
+        ICGMergeFile$ = "PP_Merge.$$$"
+        OPEN ICGOldFile$   FOR INPUT  AS #2
+        OPEN ICGMergeFile$ FOR OUTPUT AS #3
+        WHILE  (EOF(2) = 0)
+            GOSUB Scan_OldFile
+        WEND
+
+        GOSUB Check_For_New_Entries
+        CLOSE #2
+        CLOSE #3
+    ELSE
+        'Generated code for the first time
+        ICGMergeFile$ = ICGNewFile$
+    ENDIF
+    IF ICGOption$ = "New" THEN
+        COPY ICGMergeFile$, ICGOldFile$ 
+    ELSE
+        COPY ICGOldFile$, "/tmp/PPold"
+        COPY ICGMergeFile$, "/tmp/PPnew"
+	RUN "diff -I\<\!--.*P+.*Date:.*--\> /tmp/PPnew /tmp/PPold > /tmp/PPdiff; echo > /dev/null"
+	ICGDiffFile$ = "/tmp/PPdiff"
+    ENDIF
+RETURN
+
+'---------------------------------------------------
+Generate_NewFile_Entries:
+
+    'Scan the NewFile for 'CheckBeginFlag's and store them in an
+    'array (ICGEntryName). The offset(line number) is also stored.
+    'A flag (ICGEntryDOne) is set to 0 indicating that the
+    'class/method given in ICGEntryName is still not processed.
+
+    DIM ICGEntryName$  (MaxEntries)
+    DIM ICGEntryDone   (MaxEntries)
+    DIM ICGEntryOffset (MaxEntries)
+
+    ICGEntryCount  = 0
+    ICGOffsetCount = 0
+    OPEN ICGNewFile$ FOR INPUT  AS #1
+    WHILE (EOF(1)=0)
+        ICGOffsetCount = ICGOffsetCount + 1
+        LINE INPUT #1, InputLine$
+        IF  (INSTR(InputLine$, StartComment$ + CheckBeginFlag$) = 1) THEN
+            ICGEntryCount = ICGEntryCount + 1
+            ICGEntryName$  (ICGEntryCount) = InputLine$
+            ICGEntryDone   (ICGEntryCount) = 0
+            ICGEntryOffset (ICGEntryCount) = ICGOffsetCount
+        ENDIF
+    WEND
+    CLOSE #1
+
+RETURN
+
+'---------------------------------------------------
+Determine_Begin_End_Flags:
+
+    'This subroutine scans the InputLine (which is the begin flag line)
+    'and determines the FlagType (eg. Class or method) and if the type 
+    'is method the MethodName$ is determined. From This information
+    'PPEndFlag$ is also calculated/determined.
+
+    PPBeginFlag$ = InputLine$
+    TempPos      = INSTR(InputLine$, CheckBeginFlag$)
+    PPEndFlag$   = MID$(InputLine$, 1, TempPos-1) + CheckEndFlag$
+    PPEndFlag$   = PPEndFlag$ + MID$(InputLine$, TempPos+LEN(CheckBeginFlag$))
+    'Temp1$       = MID$(InputLine$, INSTR(InputLine$, " ") + 1)
+    Temp1$       = MID$(InputLine$, INSTR(InputLine$, CheckBeingFlag$) + LEN(CHeckBeginFlag$) + 1)
+    FlagType$    = MID$(Temp1$, 1, INSTR(Temp1$, " ") - 1)
+    IF  (FlagType$ = "method") THEN
+        Temp1$ = MID$(Temp1$, INSTR(Temp1$, " ") + 1)
+        MethodName$ = MID$(Temp1$,INSTR(Temp1$,".")+1, INSTR(Temp1$," ") -INSTR(Temp1$,".") - 1)
+    ELSE
+        MethodName$ = ""
+    ENDIF
+
+RETURN
+
+'---------------------------------------------------
+Scan_OldFile:
+
+    'Read OldFile line by line and print it to MergeFile until
+    'a PPBeginFlag is encountered. (or until end fo OldFile)
+    InputLine$ = ""
+    WHILE (INSTR(InputLine$, StartComment$ + CheckBeginFlag$) <> 1) AND (EOF(2)=0)
+        LINE INPUT #2, InputLine$
+        IF  (EndClass$ = "") OR (InputLine$ <> EndClass$) THEN
+            PRINT #3, InputLine$
+        ELSE
+            'If end of Old file is encountered check for unprocessed
+            'entries in the ICGEntryName array. Note that these entries
+            'will be new entries which are in the NewFile but not
+            'in the OldFile
+            GOSUB Check_For_New_Entries
+           PRINT #3, EndClass$
+        ENDIF
+    WEND
+
+    'PPBeginFlag is encountered (If not end of OldFile)
+    IF  (EOF(2) = 0) THEN  'Not end of file
+        GOSUB Determine_Begin_End_Flags
+        GOSUB Find_ICGEntry
+        IF  (EntryFound = 1) THEN
+            IF  (FlagType$ = "class") THEN
+                GOSUB Merge_Class
+                GOSUB Skip_To_EndOfBlock_OldFile
+            ELSEIF (FlagType$ = "method") THEN
+                GOSUB Merge_Method
+            ELSE
+                'Not class or method. Therefore copy stuff from newFile
+                'upto the endflag into MergeFile and skip until endflag
+                'of OldFile
+                GOSUB Copy_Upto_EndofBlock_NewFile
+                GOSUB Skip_To_EndOfBlock_OldFile
+            ENDIF
+        ENDIF
+    ENDIF
+
+RETURN
+
+'---------------------------------------------------
+Copy_Upto_EndofBlock_NewFile:
+
+    OPEN ICGNewFile$ FOR INPUT AS #1
+    FOR Index = 1 TO ICGEntryOffset(EntryNo)
+        LINE INPUT #1, InputLine$
+    NEXT Index
+    InputLine$ = ""
+    WHILE (InputLine$ <> PPEndFlag$) AND (EOF(1) = 0)
+        LINE INPUT #1, InputLine$
+        PRINT #3, InputLine$
+    WEND
+
+    ICGEntryDone(EntryNo) = 1
+    CLOSE #1
+
+RETURN
+
+'---------------------------------------------------
+Find_ICGEntry:
+    
+    'Check if the detected entry is in the ICGEntryName
+    'array thereby dermining if it exist in the NewFile
+    EntryFound = 0
+    Index      = 0
+    WHILE (EntryFound = 0) AND (Index < ICGEntryCount)
+        Index = Index + 1
+        IF  (ICGEntryName$(Index) = PPBeginFlag$ AND ICGENTRYDONE(INDEX) = 0) THEN
+           EntryNo = Index
+            EntryFound = 1
+        ENDIF
+    WEND
+
+RETURN
+'---------------------------------------------------
+Merge_Class:
+
+    'Copy all lines (NewFile) upto the endflag to
+    'the MergeFile.
+
+    OPEN ICGNewFile$ FOR INPUT AS #1
+    InputLine$ = ""
+    FOR Index = 1 TO ICGEntryOffset(EntryNo)
+        LINE INPUT #1, InputLine$
+    NEXT Index
+    WHILE (InputLine$ <> PPEndFlag$) AND (EOF(1) = 0)
+        LINE INPUT #1, InputLine$
+        PRINT #3, InputLine$
+    WEND
+    'Mark the entry as processed
+    ICGEntryDone(EntryNo) = 1
+    CLOSE #1
+
+RETURN
+
+'---------------------------------------------------
+Merge_Method:
+
+    DIM MethodArray$(MaxFormalParams)
+    MethodIndex = 0
+
+    'Skip upto the required entryline (NewFile)
+    OPEN ICGNewFile$ FOR INPUT AS #1
+    InputLine$ = ""
+    FOR Index = 1 TO ICGEntryOffset(EntryNo)
+        LINE INPUT #1, InputLine$
+    NEXT Index
+
+    'Identify and store the method protocol of the old file
+    InputLine2$ = StartComment$
+    MM_MethodName$ = ""
+    WHILE (INSTR(InputLine2$, StartComment$ + CheckEndFlag$) <> 1) AND (EOF(2)=0)
+        IF  (MM_MethodName$ <> "") THEN
+            'If protocol is defined in more than one line
+            MethodIndex = MethodIndex + 1
+            MethodArray$(MethodIndex) = InputLine2$
+            WHILE (INSTR(InputLine2$, " ") = 1)
+                InputLine2$ = MID$(InputLine2$, 2)
+            WEND
+            MM_MethodName$ = MM_MethodName$ + InputLine2$
+        ELSEIF (INSTR(InputLine2$, StartComment$) = 0) AND (INSTR(InputLine2$, MethodName$) <> 0) THEN
+            'This would be the first line
+            MM_MethodName$ = InputLine2$
+            MethodIndex = MethodIndex + 1
+            MethodArray$(MethodIndex) = InputLine2$
+        ENDIF
+	LINE INPUT #2, InputLine2$  'Read the method from OldFile
+    WEND
+    InputLine2$ = MM_MethodName$
+
+    'Identify and store the method protocol of the new file
+    InputLine$ = ""
+    InputLine1$ = ""
+    WHILE (INSTR(InputLine$, StartComment$ + CheckEndFlag$) <> 1) AND (EOF(1)=0)
+        MM_MethodName$ = InputLine$
+        WHILE (INSTR(InputLine$, " ") = 1)
+            InputLine$ = MID$(InputLine$, 2)
+        WEND
+	InputLine1$ = InputLine1$ + InputLine$
+        IF  (INSTR(InputLine1$, StartComment$ + CheckEndFlag$) <> 1) THEN
+            IF (MM_MethodName$ <> "") THEN PRINT #3, MM_MethodName$
+	ENDIF
+	LINE INPUT #1, InputLine$  'Read the method from NewFile
+    WEND
+    'InputLine$ = InputLine1$
+    'InputLine1$ = MM_MethodName$
+
+    'Strip InputLine1$ and InputLine2$ of spaces
+    WHILE (INSTR(InputLine1$, " ") <> 0)
+        SPos = INSTR(InputLine1$, " ")
+        InputLine1$ = LEFT$(InputLine1$, Spos-1) + MID$(InputLine1$, SPos+1)
+    WEND
+    WHILE (INSTR(InputLine2$, " ") <> 0)
+        SPos = INSTR(InputLine2$, " ")
+        InputLine2$ = LEFT$(InputLine2$, Spos-1) + MID$(InputLine2$, SPos+1)
+    WEND
+
+    'If method prtotcol from NewFile is different to that of OldFile
+    IF  (InputLine1$ <> InputLine2$) THEN
+        'If the protocol has changed
+        FOR MMIndex = 1 TO MethodIndex
+            PRINT #3, StartComment$, MethodArray$(MMindex), EndComment$
+        NEXT MMIndex
+    ENDIF
+    PRINT #3, InputLine$ 'Print the end flag
+
+    'Mark the entry as processed
+    ICGEntryDone(EntryNo) = 1
+    CLOSE #1
+
+RETURN
+
+'---------------------------------------------------
+Add_New_Method:
+
+    'Skip upto the required entryline (NewFile)
+    OPEN ICGNewFile$ FOR INPUT AS #1
+    InputLine$ = ""
+    FOR ANMIndex = 1 TO ICGEntryOffset(EntryNo)
+        LINE INPUT #1, InputLine$
+    NEXT ANMIndex
+
+    'Print the new method protocol to MergeFile
+    WHILE (InputLine$ <> PPEndFlag$) AND (EOF(1) = 0)
+        LINE INPUT #1, InputLine$
+        PRINT #3, InputLine$
+    WEND
+
+    PRINT #3, StartBlock$
+    IF (BlockBody$ <> "") THEN PRINT #3, BlockBody$
+    PRINT #3, EndBlock$,  'Next line will be printed on the same line
+    IF  (BlockName$ = "") THEN  'For Ada it will be ";"
+        PRINT #3
+    ELSE
+        PRINT #3, " ", MethodName$, BlockName$
+    ENDIF
+    PRINT #3
+    'Mark the entry as processed
+    ICGEntryDone(EntryNo) = 1
+    CLOSE #1
+
+RETURN
+
+'---------------------------------------------------
+Skip_To_EndOfBlock_OldFile:
+
+    'Skip to end of block (OldFile)
+    InputLine$ = ""
+    WHILE (InputLine$ <> PPEndFlag$) AND (EOF(2) = 0)
+        LINE INPUT #2, InputLine$
+    WEND
+
+RETURN
+
+'---------------------------------------------------
+Check_For_New_Entries:
+
+    'After end of OldFile is reached check the ICGEntryName$
+    'array for any unprocessed entries and process accordingly.
+    FOR CFNEIndex = 1 TO ICGEntryCount
+        IF  (ICGEntryDone(CFNEIndex) = 0) THEN
+            EntryNo = CFNEIndex
+            EntryFound = 1
+            PRINT #3
+            PRINT #3, ICGEntryName$(CFNEIndex)
+            InputLine$ = ICGEntryName$(CFNEIndex)
+            GOSUB Determine_Begin_End_Flags
+            IF  (FlagType$ = "class") THEN
+                GOSUB Merge_Class
+            ELSEIF (FlagType$ = "method") THEN
+                GOSUB Add_New_Method
+            ELSE
+                GOSUB Copy_Upto_EndofBlock_NewFile
+            ENDIF
+        ENDIF
+    NEXT Index
+
+RETURN

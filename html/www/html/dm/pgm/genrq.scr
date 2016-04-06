@@ -1,0 +1,28 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: genrq.scr -  Requirements Report
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+
+print
+print "Requirements Report"
+print "==================="
+print
+print "Paradigm: ", PARADIGM$
+print "Project : ", APP$
+print "Time    : ", time$
+print
+
+print "Requirement":20, "Type":20, "Description"
+print "------------------------------------------------------------------------------------------"
+
+foreach requirement
+  print name$:19, " ", type$:19, " ", description$
+next
+end
+

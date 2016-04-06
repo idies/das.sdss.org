@@ -1,0 +1,722 @@
+'---------------------------------------------------------------------------
+'                              MapType
+' ouput: szType$
+'        szNewType$
+'        szNewName$
+'        szElemType
+'        szSize$
+'---------------------------------------------------------------------------
+MapType:
+	genericType$ = "DATE,TIME"
+	mappedType$ = "arDate,arTime"
+	maxTypes = 2
+	ErrorCode$=""
+
+	szNewType$=""
+	szSize$ = ""
+
+	IF MapOp = TRUE THEN
+		szType$ = Operation.Return_Type
+		if szType$ = "" then szType$ = "int"
+	ELSEIF MapQual = TRUE THEN
+		szNewName$=QualName$
+		szType$ = Qualifier.Type
+		szSize$ = Qualifier.Size
+	ELSE
+		szNewName$=AttribName$
+		szType$ = Attribute.Type
+		szSize$ = Attribute.Size
+	ENDIF
+
+	if INSTR(szSize$, ",") <> 0 THEN GOSUB ParseSzSize
+
+	FOR i = 1 TO maxTypes
+		Delim1 = INSTR(genericType$, ",")
+		Delim2 = INSTR(mappedType$, ",")
+		IF LEFT$(genericType$,Delim1-1) = szType$ THEN
+			 szNewType$ = LEFT$(mappedType$,Delim2-1)
+		ENDIF
+		genericType$ = MID$(genericType$, Delim1+1)
+		mappedType$ = MID$(mappedType$, Delim2 +1)
+	NEXT
+
+	IF szType$ = "STRING" THEN
+		IF szSize$ <> "" THEN
+			ErrorCode$=" // ERROR -- can't specify size of STRING "
+		ENDIF
+		IF MapOp = TRUE THEN
+		    szNewType$ ="char*"
+		ELSE
+		    szNewType$ = "ooVString"
+		ENDIF
+	ELSEIF szType$ <> "" THEN
+		IF szNewType$ = "" THEN szNewType$ = szType$
+		array = INSTR(szNewType$, "[")
+		IF array <> 0 AND szSize$ = "" THEN
+			ErrorCode$=" // WARNING -- Default array size of 32 "
+			szSize$ = "32"
+		ENDIF
+	ELSE
+		szNewType$="__default"
+		ErrorCode$=" // ERROR -- Undefined Type! "
+	ENDIF
+        IF szNewType$ = "uint8" OR szNewType$ = "uint16" OR szNewType$ = "uint32" OR szNewType$ = "int16" OR szNewType$ = "int32" OR szNewType$ = "float32" OR szNewType$ = "float64" OR szNewType$ = "char" THEN
+            szElemType = TRUE
+	ELSE
+            szElemType = FALSE
+	ENDIF
+
+	if szSize$ <> "" then szNewName$ = szNewName$ + "["+szSize$+"]"
+
+	' Swap "type *" or "type &" to be "type*" or "type&"
+	IF RIGHT$(szNewType$,2) = " *" THEN
+		szNewType$ = LEFT$(szNewType$,LEN(szNewType$)-2) + "*"
+	ELSEIF RIGHT$(szNewType$,2) = " &" THEN
+		szNewType$ = LEFT$(szNewType$,LEN(szNewType$)-2) + "&"
+	ENDIF
+return
+
+'---------------------------------------------------------------------------
+' StripContainer
+' purpose: strip out keywords and blanks from a container string
+'          (e.g., PRIMARY, SECONDARY, UP2, UP, HEAP, FIXED, UNI)
+' input/output: scContainer$
+'---------------------------------------------------------------------------
+StripContainer:
+    DIM scKeyWords$(7)
+    scKeyWords$(1) = "PRIMARY"
+    scKeyWords$(2) = "SECONDARY"
+    scKeyWords$(3) = "UP2"
+    scKeyWords$(4) = "UP"
+    scKeyWords$(5) = "HEAP"
+    scKeyWords$(6) = "FIXED"
+    scKeyWords$(7) = "UNI"
+    scNumKeyWords = 7
+
+    ' First look for special case of FIXED(#), where # is an integer
+    scDelim = INSTR(scContainer$, "FIXED(")
+    IF scDelim <> 0 THEN
+	scEnd = INSTR(MID$(scContainer$, scDelim), ")")
+	scContainer$ = LEFT$(scContainer$, scDelim - 1) + MID$(scContainer$, scDelim + scEnd + 1)
+    ENDIF
+
+    ' Now do other keywords
+    FOR scI = 1 TO scNumKeyWords
+	scDelim = INSTR(scContainer$, scKeyWords$(scI))
+	IF scDelim <> 0 THEN
+	    ' Second test necessary because INSTR is case insensitive
+	    IF ASC(MID$(scContainer$, scDelim+1)) = ASC(MID$(scKeyWords$(scI), 2)) THEN
+	        scContainer$ = LEFT$(scContainer$, scDelim - 1) + MID$(scContainer$, scDelim + LEN(scKeyWords$(scI)))
+	    ENDIF
+	ENDIF
+    NEXT
+    scI = 1
+    WHILE scI <= LEN(scContainer$)
+        IF MID$(scContainer$, scI, 1) = " " THEN
+	    scContainer$ = LEFT$(scContainer$,scI-1) + MID$(scContainer$,scI+1)
+	ELSE
+	    scI = scI + 1
+	ENDIF
+    WEND
+RETURN
+
+'---------------------------------------------------------------------------
+'                              GenerateRelationAttributes
+'---------------------------------------------------------------------------
+
+GenerateRelationAttributes:
+    FOREACH class.association
+     IF association.Derived = "FALSE" THEN
+      IF ownerclass$ = association.source THEN
+	  scContainer$ = container1$
+      ELSE
+	  scContainer$ = container2$
+      ENDIF
+      GOSUB StripContainer
+      IF (Class.Class <> "" OR scContainer$ <> "") AND (ownerclass$ = association.source OR INSTR(container1$, "UNI") = 0) THEN
+        targetClass$ = Class.Class
+        targetName$ = Class.Name
+	IF AttribCnt = 0 THEN PRINT #1, curScope$,  ":"
+	AttribCnt = AttribCnt + 1
+
+	IF ownerclass$ = association.source THEN
+	    con$ = container1$
+	    rawmul$ = multiplicity2$
+	    GOSUB GetMul
+	    mul2=mul
+	    rawmul$ = multiplicity1$
+	    GOSUB GetMul
+	    mul1=mul  
+	    rol2$ = role2$
+	    rol1$ = role1$
+	ELSE
+	    con$ = container2$
+	    rawmul$ = multiplicity1$
+	    GOSUB GetMul
+	    mul2 = mul
+	    rawmul$ = multiplicity2$
+	    GOSUB GetMul
+	    mul1=mul
+	    rol2$ = role1$
+	    rol1$ = role2$
+	END IF
+
+	propagate = FALSE
+	aName$ = association.name
+	GOSUB PrintRelAttr
+	PRINT #1, " // association"
+
+	' Account for associations to oneself
+	IF (association.source = association.destination) AND (role1$ <> role2$) THEN
+	    con$ = container2$
+	    rawmul$ = multiplicity1$
+	    GOSUB GetMul
+	    mul2 = mul
+	    rawmul$ = multiplicity2$
+	    GOSUB GetMul
+	    mul1=mul
+	    rol2$ = role1$
+	    rol1$ = role2$
+	    propagate = FALSE
+	    GOSUB PrintRelAttr
+	    PRINT #1, " // association"
+	ENDIF
+      ENDIF
+     ENDIF
+    NEXT 'class.association
+
+    FOREACH class.aggregation
+     IF aggregation.Derived = "FALSE" THEN
+      scContainer$ = container1$
+      GOSUB StripContainer
+      IF Class.Class <> "" OR scContainer$ <> "" THEN
+        targetClass$ = Class.Class
+	targetName$ = Class.Name
+	IF AttribCnt = 0 THEN print #1, curScope$,  ":"
+	AttribCnt = AttribCnt + 1
+
+	con$ = container1$
+	rawmul$ = multiplicity2$
+	GOSUB GetMul
+	mul2 = mul
+	rawmul$ = multiplicity1$
+	GOSUB GetMul
+	mul1 = mul
+	rol2$ = role2$
+	rol1$ = role1$
+ 
+	propagate = TRUE
+	aName$ = aggregation.name
+	GOSUB PrintRelAttr
+	PRINT #1, " // aggregation"
+      ENDIF
+     ENDIF
+    NEXT 'class.aggregation
+
+    FOREACH class.participation
+     IF aggregation.Derived = "FALSE" THEN
+      IF Class.Class <> "" AND INSTR(container1$, "UNI") = 0 THEN
+        targetClass$ = Class.Class
+	targetName$ = Class.Name
+	IF AttribCnt = 0 THEN print #1, curScope$,  ":"
+	AttribCnt = AttribCnt + 1
+
+	con$ = container2$
+	rawmul$ = multiplicity1$
+	GOSUB GetMul
+	mul2 = mul
+	rawmul$ = multiplicity2$
+	GOSUB GetMul
+	mul1 = mul
+	rol2$ = role1$
+	rol1$ = role2$
+ 
+	propagate = FALSE
+	aName$ = aggregation.name
+	GOSUB PrintRelAttr
+	PRINT #1, " // participation"
+      ENDIF
+     ENDIF
+    NEXT 'class.participation
+
+RETURN
+
+'---------------------------
+' PrintRelAttr:
+' input: aName$	       = optional association name
+'	 con$          = optional container class
+'        currentName$  = diagram name of class being worked on (e.g., From)
+'        targetName$   = diagram name of class linking to (e.g., To)
+'        currentClass$ = class being worked on (e.g., arFrom)
+'        targetClass$  = class linking to (e.g., arTo)
+'        rol1$         = role on from side
+'        rol2$         = role on to side
+'        mul1          = multiplicity on from side (0:one, 1:1 or more, 2:many)
+'        mul2          = multiplicity on to side (0:one, 1:1 or more, 2:many)
+'        propagate     = propagate locking and deleting along the association?
+'                    
+' scope: inside the scope of class.association or class.aggregation
+'---------------------------
+PrintRelAttr:
+    ' Check if container specifies a different target class
+    IF INSTR(con$, "UNI") <> 0 THEN
+	praUni = TRUE
+    ELSE
+	praUni = FALSE
+    ENDIF
+    scContainer$ = con$
+    GOSUB StripContainer
+    IF INSTR(scContainer$, "->") <> 0 THEN
+	ParseName$ = MID$(scContainer$, INSTR(scContainer$, "->")+2)
+	GOSUB ParseName
+	theTargetClass$ = ParseName$
+    ELSE
+	theTargetClass$ = targetClass$
+    ENDIF
+
+    ' Determine attribute name
+    GOSUB GetRelAttrName
+	
+    offset$ = "  "
+    PRINT #1, offset$,
+
+    ' If a container is specified, use it.
+    IF scContainer$ <> "" AND INSTR(scContainer$, "->") = 0 THEN
+	IF RIGHT$(scContainer$,1) = "]" THEN
+	    PRINT #1, LEFT$(scContainer$,INSTR(scContainer$,"[")-1),
+	    PRINT #1, " ", toName$, "_",
+	    PRINT #1, MID$(scContainer$,INSTR(scContainer$,"[")),";",
+	ELSE
+            PRINT #1, scContainer$," ", toName$,"_;",
+	ENDIF
+    ELSE
+	' Use default rules
+	IF static$ = "FALSE" THEN
+	    PRINT #1, "inline ",
+        ENDIF
+	PRINT #1, "ooRef(",theTargetClass$,") ",toName$, "_",
+	IF mul2 > 0 THEN
+	    PRINT #1, "[]",
+	ENDIF
+
+	' Determine inverse attribute name for bi-directional associations
+        IF praUni = FALSE THEN
+	    saveTargetName$ = targetName$
+	    saveRol2$ = rol2$
+	    saveMul2 = mul2
+	    saveToName$ = toName$
+	    targetName$ = currentName$
+	    rol2$ = rol1$
+	    mul2 = mul1
+	    GOSUB GetRelAttrName
+	    fromName$ = toName$
+	    toName$ = saveToName$
+	    rol2$ = saveRol2$
+	    mul2 = saveMul2
+	    targetName$ = saveTargetName$
+
+	    PRINT #1, " <-> ",fromName$, "_",
+	    IF mul1 > 0 THEN
+	        PRINT #1 "[]",
+	    ENDIF
+	ENDIF
+	IF propagate = TRUE THEN
+	    PRINT #1, " : lock(propagate), delete(propagate)",
+	ENDIF
+	PRINT #1, ";",
+    ENDIF
+RETURN
+
+'---------------------------
+' PrintRelAttrGet:
+' input: aName$	       = optional association name
+'        con$          = optional container class
+'        targetName$   = diagram name of class linking to on (e.g., To)
+'        targetClass$  = class linking to (e.g., arTo)
+'        rol2$         = role on to side
+'        mul2          = multiplicity on to side (0:one, 1:1 or more, 2:many)
+' scope: inside the scope of class.association or class.aggregation
+'---------------------------
+PrintRelAttrGet:
+    ' Check if container specifies a different target class
+    scContainer$ = con$
+    GOSUB StripContainer
+    IF INSTR(scContainer$, "->") <> 0 THEN
+	ParseName$ = MID$(scContainer$, INSTR(scContainer$, "->")+2)
+	GOSUB ParseName
+	theTargetClass$ = ParseName$
+    ELSE
+	theTargetClass$ = targetClass$
+    ENDIF
+
+    ' Determine attribute name
+    GOSUB GetRelAttrName
+	
+    ' Support for ICG
+    PPPBeginFlag$ = StartComment$ + "##begin method " + CurrentClass$ + "." + toName$ + "." + "Get" + " " + EndComment$
+    PPPEndFlag$   = StartComment$ + "##end method "   + CurrentClass$ + "." + toName$ + "." + "Get" + " " + EndComment$
+
+    ' If a container is specified, use it.
+    PRINT #1
+    PRINT #2
+    PRINT #2, PPPBeginFlag$
+    IF scContainer$ <> "" AND INSTR(scContainer$, "->") = 0 THEN
+	PRINT #1, offset$, "const ", scContainer$, "& ", toName$,
+	PRINT #1, "() const;"
+	PRINT #2, "const ", scContainer$, "& "
+	PRINT #2, CurrentClass$, "::", toName$, "() const"
+	PRINT #2, "{ return ", toName$, "_;}"
+    ELSE
+	' Use default rules
+	IF mul2 > 0 THEN
+	    PRINT #1, offset$, "ooStatus ", toName$,
+	    PRINT #1, "(ooItr(", theTargetClass$, ")& itr, ooMode openMode = oocNoOpen) const;"
+	    PRINT #2, "ooStatus"
+	    PRINT #2, CurrentClass$, "::", toName$,
+	    PRINT #2, "(ooItr(", theTargetClass$, ")& itr, ooMode openMode) const"
+	    PRINT #2, "{return ", toName$, "_(itr, openMode);}"
+	    PRINT #1, offset$, "ooStatus ", toName$,
+	    PRINT #1, "(ooItr(", theTargetClass$, ")& itr, const char* predicate) const;"
+	    PRINT #2, "ooStatus"
+	    PRINT #2, CurrentClass$, "::", toName$,
+	    PRINT #2, "(ooItr(", theTargetClass$, ")& itr, const char* predicate) const"
+	    PRINT #2, "{return ", toName$, "_(itr, predicate);}"
+	    PRINT #1, offset$, "ooStatus ", toName$,
+	    PRINT #1, "(ooItr(", theTargetClass$, ")& itr, ooMode openMode, ooAccessMode access, const char* predicate) const;"
+	    PRINT #2, "ooStatus"
+	    PRINT #2, CurrentClass$, "::", toName$,
+	    PRINT #2, "(ooItr(", theTargetClass$, ")& itr, ooMode openMode, ooAccessMode access, const char* predicate) const"
+	    PRINT #2, "{return ", toName$, "_(itr, openMode, access, predicate);}"
+	ELSE
+	    PRINT #1, offset$, "ooHandle(",theTargetClass$,") ",toName$,
+	    PRINT #1, "(ooMode openMode = oocNoOpen);"
+	    PRINT #2, "ooHandle(",theTargetClass$,")"
+	    PRINT #2, CurrentClass$, "::", toName$,
+	    PRINT #2, "(ooMode openMode)"
+	    PRINT #2, "{return ", toName$, "_(openMode);}"
+	    PRINT #1, offset$, "ooHandle(",theTargetClass$,")& ",toName$,
+	    PRINT #1, "(ooHandle(",theTargetClass$,")& objH, ooMode openMode = oocNoOpen);"
+	    PRINT #2, "ooHandle(",theTargetClass$,")&"
+	    PRINT #2, CurrentClass$, "::", toName$,
+	    PRINT #2, "(ooHandle(",theTargetClass$,")& objH, ooMode openMode)"
+	    PRINT #2, offset$, "  {return ",toName$, "_(objH, openMode);}"
+	ENDIF
+    ENDIF
+    ptLead$ = offset$ + StartComment$ + " "
+    IF LEN(association.description) <> 0 THEN
+	ptText$ = "Get " + LOCASE$(LEFT$(association.description, 1))
+	ptText$ = ptText$ + MID$(association.description, 2)
+    ELSE
+	ptText$ = "Get associated " + toName$ + "."
+    ENDIF
+    ptNum = 1
+    GOSUB PrintText
+
+    ' Exists function
+    IF scContainer$ = "" OR INSTR(scContainer$, "->") <> 0 THEN
+	PRINT #1
+        PRINT #2
+        PRINT #1, offset$, "ooBoolean exist",
+        PRINT #1, UPCASE$(LEFT$(toName$,1)),
+        PRINT #1, MID$(toName$,2),
+        PRINT #1, "(const ooHandle(", theTargetClass$, ")& objH) const;"
+        PRINT #2, "ooBoolean"
+        PRINT #2, CurrentClass$, "::exist",
+        PRINT #2, UPCASE$(LEFT$(toName$,1)),
+        PRINT #2, MID$(toName$,2),
+        PRINT #2, "(const ooHandle(", theTargetClass$, ")& objH) const"
+        PRINT #2, "{return exist_", toName$, "_(objH);}"
+        ptLead$ = offset$ + StartComment$ + " "
+        IF LEN(association.description) <> 0 THEN
+	    ptText$ = "Test for existence of " + LOCASE$(LEFT$(association.description, 1))
+            ptText$ = ptText$ + MID$(association.description, 2)
+        ELSE
+            ptText$ = "Test for existence of " + "associated " + toName$ + "."
+        ENDIF
+        ptNum = 1
+        GOSUB PrintText
+    ENDIF
+    PRINT #2, PPPEndFlag$
+RETURN
+
+'---------------------------
+' PrintRelAttrSet:
+' input: aName$	       = optional association name
+'        con$          = optional container class
+'        targetName$   = diagram name of class linking to on (e.g., To)
+'        targetClass$  = class linking to (e.g., arTo)
+'        rol2$         = role on to side
+'        mul2          = multiplicity on to side (0:one, 1:1 or more, 2:many)
+' scope: inside the scope of class.association or class.aggregation
+'---------------------------
+PrintRelAttrSet:
+    ' Check if container specifies a different target class
+    scContainer$ = con$
+    GOSUB StripContainer
+    IF INSTR(scContainer$, "->") <> 0 THEN
+	ParseName$ = MID$(scContainer$, INSTR(scContainer$, "->")+2)
+	GOSUB ParseName
+	theTargetClass$ = ParseName$
+    ELSE
+	theTargetClass$ = targetClass$
+    ENDIF
+
+    ' Determine attribute name
+    GOSUB GetRelAttrName
+	
+    ' Support for ICG
+    PPPBeginFlag$ = StartComment$ + "##begin method " + CurrentClass$ + "." + toName$ + "." + "Set" + " " + EndComment$
+    PPPEndFlag$   = StartComment$ + "##end method "   + CurrentClass$ + "." + toName$ + "." + "Set" + " " + EndComment$
+
+    ' Set/add function
+    PRINT #1
+    PRINT #2
+    PRINT #2, PPPBeginFlag$
+    IF mul2 > 0 THEN
+        PRINT #1, offset$, "ooStatus add",
+        PRINT #2, "ooStatus"
+	PRINT #2, CurrentClass$, "::add",
+    ELSE
+        PRINT #1, offset$, "ooStatus set",
+        PRINT #2, "ooStatus"
+	PRINT #2, CurrentClass$, "::set",
+    ENDIF
+    PRINT #1, UPCASE$(LEFT$(toName$,1)),
+    PRINT #1, MID$(toName$,2), "(const ooHandle(", theTargetClass$, ")& objH);"
+    PRINT #2, UPCASE$(LEFT$(toName$,1)),
+    PRINT #2, MID$(toName$,2), "(const ooHandle(", theTargetClass$, ")& objH)"
+    IF mul2 > 0 THEN
+        PRINT #2, "{return add_", toName$, "_(objH);}"
+    ELSE
+        PRINT #2, "{return set_", toName$, "_(objH);}"
+    ENDIF
+    ptLead$ = offset$ + StartComment$ + " "
+    IF LEN(association.description) <> 0 THEN
+	IF mul2 > 0 THEN
+	    ptText$ = "Add "
+	ELSE
+	    ptText$ = "Set "
+	ENDIF
+	ptText$ = ptText$ + LOCASE$(LEFT$(association.description, 1))
+	ptText$ = ptText$ + MID$(association.description, 2)
+    ELSE
+	IF mul2 > 0 THEN
+	    ptText$ = "Add "
+	ELSE
+	    ptText$ = "Set "
+	ENDIF
+	ptText$ = ptText$ + "associated " + toName$ + "."
+    ENDIF
+    ptNum = 1
+    GOSUB PrintText
+
+    ' Delete function
+    PRINT #1
+    PRINT #2
+    PRINT #1, offset$, "ooStatus del",
+    PRINT #1, UPCASE$(LEFT$(toName$,1)),
+    PRINT #1, MID$(toName$,2), "();"
+    PRINT #2, "ooStatus"
+    PRINT #2, CurrentClass$, "::del",
+    PRINT #2, UPCASE$(LEFT$(toName$,1)),
+    PRINT #2, MID$(toName$,2), "()"
+    PRINT #2, "{return del_", toName$, "_();}"
+    ptLead$ = offset$ + StartComment$ + " "
+    IF LEN(association.description) <> 0 THEN
+	IF mul2 > 0 THEN
+	    ptText$ = "Delete all "
+	ELSE
+	    ptText$ = "Delete "
+	ENDIF
+	ptText$ = ptText$ + LOCASE$(LEFT$(association.description, 1))
+	ptText$ = ptText$ + MID$(association.description, 2)
+    ELSE
+	IF mul2 > 0 THEN
+	    ptText$ = "Delete all "
+	ELSE
+	    ptText$ = "Delete "
+	ENDIF
+	ptText$ = ptText$ + "associated " + toName$ + "."
+    ENDIF
+    ptNum = 1
+    GOSUB PrintText
+
+    ' Subtract function
+    IF mul2 > 0 THEN
+        PRINT #1
+        PRINT #2
+        PRINT #1, offset$, "ooStatus sub",
+        PRINT #1, UPCASE$(LEFT$(toName$,1)),
+        PRINT #1, MID$(toName$,2),
+        PRINT #1, "(const ooHandle(", theTargetClass$, ")& objH);"
+        PRINT #2, "ooStatus"
+	PRINT #2, CurrentClass$,"::sub",
+        PRINT #2, UPCASE$(LEFT$(toName$,1)),
+        PRINT #2, MID$(toName$,2),
+        PRINT #2, "(const ooHandle(", theTargetClass$, ")& objH)"
+	PRINT #2, "{return sub_", toName$, "_(objH);}"
+        ptLead$ = offset$ + StartComment$ + " "
+        IF LEN(association.description) <> 0 THEN
+	    ptText$ = "Remove " + LOCASE$(LEFT$(association.description, 1))
+	    ptText$ = ptText$ + MID$(association.description, 2)
+        ELSE
+	    ptText$ = "Remove " + "associated " + toName$ + "."
+        ENDIF
+        ptNum = 1
+        GOSUB PrintText
+    ENDIF
+    PRINT #2, PPPEndFlag$
+RETURN
+
+'---------------------------
+' GetRelAttrName:
+' input: aName$	       = optional association name
+'        targetName$   = diagram name of class linking to (e.g., To)
+'        rol2$         = role on to side
+'        mul2          = multiplicity on to side (0:one, 1:1 or more, 2:many)
+' output: toName$      = attribute name
+' scope: inside the scope of class.association or class.aggregation
+'---------------------------
+GetRelAttrName:
+    IF rol2$ <> "" THEN
+	toName$ = rol2$
+    ELSEIF aName$ <> "" THEN
+	toName$ = aName$
+    ELSE
+	toName$ = targetName$
+    ENDIF
+
+    ' Parse it
+    ParseName$ = toName$
+    GOSUB ParseName
+    toName$ = ParseName$
+
+    ' Pluralize if association is a one-or-more or many association
+    IF mul2 > 0 THEN
+	IF RIGHT$(toName$, 1) = "y" THEN
+	    toName$ = LEFT$(toName$, LEN(toName$)-1)+"ies"
+        ELSEIF RIGHT$(toName$, 2) = "ch" THEN
+	    toName$ = toName$+"es"
+        ELSEIF RIGHT$(toName$, 1) = "s" THEN
+	    toName$ = toName$+"es"
+	ELSE
+	    toName$ = toName$+"s"
+	ENDIF
+    ENDIF
+RETURN
+
+'----------------------------------------------------------------------------
+'                           GenerateImplementation
+'----------------------------------------------------------------------------
+GenerateImplementation:
+    PRINT #2, "#include ",chr$(34),CurrentClass$,".h",chr$(34)
+    PRINT #2, " "
+
+    OperationLoop:
+    FOREACH ClassOperat$
+      IF (Type$ <> "ABSTRACT" AND Operation.Scope <> "IMPLEMENTATION") THEN
+	GOSUB GetOperationName
+	OpType$ = Operation.Type
+	IF Operation.Category = "CONSTRUCTOR" THEN GOTO ImplementConstructor
+	IF Operation.Category = "DESTRUCTOR" THEN GOTO ImplementDestructor
+	MapOp = TRUE
+	GOSUB MapType
+	MapOp = FALSE
+	Opstr$ = ""
+	'if Operation.Inline = "TRUE" then OpStr$ = OpStr$ + "inline "
+
+	rgaInput$ = szNewType$
+	GOSUB ReplaceGenericArguments
+        OpStr$ = OpStr$ + rgaOutput$ + " "
+
+	If Operation.Friend = "FALSE" then OpStr$ = OpStr$ + CurrentClass$+ "::"
+	OpStr$ = OpStr$ + OpName$ + "("
+	GOTO FinishOpStr
+	ImplementConstructor:
+	    szNewType$ = ""
+	    OpName$ = CurrentClass$
+	    OpStr$ = CurrentClass$+ "::" + OpName$ + "("
+	    GOTO FinishOpStr
+	ImplementDestructor:
+	    szNewType$ = ""
+	    OpName$ = "~"+CurrentClass$
+	    OpStr$ = CurrentClass$+ "::" + OpName$ + "("
+	    GOTO FinishOpStr
+	HandleIndependentOp:
+	    rgaInput$ = szNewType$
+	    GOSUB ReplaceGenericArguments
+	    OpStr$ = OpStr$ +rgaOutput$$ +" " + OpName$ + "("
+
+	FinishOpStr:
+
+	GOSUB GetOpArgs
+	OpStrEnd$ = ")"
+	IF Operation.Constant = "TRUE" THEN OpStrEnd$ = OpStrEnd$ + " const"
+
+	' Support for ICG
+	PPBeginFlag$ = StartComment$ + "##begin method " + CurrentClass$ + "." + OpName$ + "." + Operation.Name + " " + EndComment$
+	PPEndFlag$   = StartComment$ + "##end method "   + CurrentClass$ + "." + OpName$ + "." + Operation.Name + " " + EndComment$
+	PRINT #2, PPBeginFlag$
+
+        ' Remove default values
+        FOR hoI = 1 TO goaNStrings
+            TmpOpStr$ = ""
+            delim1 = 1
+            delim2 = INSTR(delim1, goaArgs$(hoI), "=")
+            WHILE delim2 > 0
+	        delim2 = delim2 - 1
+	        WHILE MID$(goaArgs$(hoI), delim2, 1) = " "
+	            delim2 = delim2 - 1
+	        WEND
+                TmpOpStr$ = TmpOpStr$ + MID$(goaArgs$(hoI), delim1, delim2-delim1+1)
+	        delim1 = INSTR(delim2, goaArgs$(hoI), ",")
+	        IF delim1 = 0 THEN delim1 = INSTR(delim2, goaArgs$(hoI), ")")
+	        delim2 = INSTR(delim1, goaArgs$(hoI), "=")
+            WEND
+            goaArgs$(hoI) = TmpOpStr$ + MID$(goaArgs$(hoI), delim1)
+        NEXT
+
+        ' Print out the call
+	IF goaNStrings > 1 OR LEN(OpStr$+goaArgs$(1)+OpStrEnd$) > 80 THEN
+	    PRINT #2, OpStr$,
+	    offset = LEN(OpStr$)
+            FOR hoI = 1 TO goaNStrings
+	        delim1 = 1
+	        delim2 = INSTR(delim1, goaArgs$(hoI), ",")
+	        WHILE delim2 > 0
+		    IF delim1 = 1 AND hoI = 1 THEN
+	                PRINT #2, MID$(goaArgs$(hoI), delim1, delim2-delim1+1)
+		    ELSE
+		        PRINT #2, "":offset, MID$(goaArgs$(hoI), delim1, delim2-delim1+1)
+		    ENDIF
+		    delim1 = delim2 + 1
+		    WHILE MID$(goaArgs$(hoI), delim1, 1) = " "
+		        delim1 = delim1 + 1
+		    WEND
+	            delim2 = INSTR(delim1, goaArgs$(hoI), ",")
+	        WEND
+		IF delim1 <= LEN(goaArgs$(hoI)) THEN
+	            IF delim1 = 1 AND hoI = 1 THEN
+	                PRINT #2, goaArgs$(hoI),
+	            ELSE
+		        PRINT #2, "":offset, MID$(goaArgs$(hoI), delim1),
+	            ENDIF
+		    IF hoI < goaNStrings THEN PRINT #2
+		ENDIF
+            NEXT
+        ELSE
+            PRINT #2, OpStr$, goaArgs$(1),
+        ENDIF
+        PRINT #2, OpStrEnd$
+
+	IF ErrorCode$ <> "" THEN print #2, ErrorCode$
+	PRINT #2, PPEndFlag$  ' Added by SG for ICG
+
+        IF operation.Source_File = "" THEN
+	    PRINT #2, "{"
+	    PRINT #2, "}"
+	ENDIF
+	print #2, " "
+      ENDIF
+    NEXT
+RETURN

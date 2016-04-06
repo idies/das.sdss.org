@@ -1,0 +1,396 @@
+<HTML>
+<HEAD>
+<TITLE>Paradigm Plus: Metaclasses</TITLE>
+</HEAD>
+<BODY>
+<H1>Metaclasses</H1>
+Below is described our use of the various meta-attributes of the important
+Paradigm Plus metaclasses.  When creating or modifying instances of these
+metaclasses, meta-attributes must be set in accordance with their description
+below.
+
+<MENU>
+<LI> <A HREF="#Class">Class</A>
+<LI> <A HREF="#Attribute">Attribute</A>
+<LI> <A HREF="#Relation">Relation</A>
+<LI> <A HREF="#Operation">Operation</A>
+</MENU>
+
+<H2><A NAME="Class">Class</A></H2>
+<DL>
+<DT> Name
+<DD> Common descriptive name, as it appears on diagrams and in reports
+     (e.g., <EM>Report</EM>).  This name is used when automatically generating
+     code, primarily when naming relation attributes in C++ code, and
+     when generating flat files.  As such, the following rules should be
+     followed when creating a name: it should be singular; each individual
+     word should be capitalized; words should be separated by a space.
+<DT> Class
+<DD> Controls whether or not a C++ class is generated for this class.
+     If a name is specified, then that name is used as the name of the C++
+     class (e.g., <EM>arReport</EM>).  Thus, its name must follow survey C++
+     class naming rules, including the requirement that it start with the
+     prefix <EM>ar</EM>.  If no name is specified, then a C++ class will not be
+     generated for this file; when generating C++ code for other classes with
+     relations to this class, no C++ link attributes to this class
+     will be generated.
+<DT> Prefix
+<DD> Ignored.
+<DT> Document
+<DD> Controls whether flat-file documentation is generated for this class.
+     If a file name is specified, then flat-file documentation (i.e., the
+     result of running "ADA Code") is put in that file
+     (e.g., <EM>report.html</EM>).  If
+     blank, then no flat-file documentation is generated.  The file name should
+     not contain any path.  The file will be created/modified in the
+     directory <EM>$PP_APP_PATH/../flatFiles</EM>. 
+<DT> Source File
+<DD> If C++ code is generated for this class (i.e., a value is specified for
+     its <EM>class</EM> meta-attribute), then this specifies the name of the
+     schema library to which it belongs (e.g., <EM>adminSch</EM>).  Ignored
+     otherwise.
+<DT> Space Complexity
+<DD> Ignored.
+<DT> Container
+<DD> Ignored.
+<DT> Parameters
+<DD> Ignored.
+<DT> Constraints
+<DD> Ignored.
+<DT> Description
+<DD> Brief description, which will appear in reports.  If C++ code is
+     generated, then in the source <EM>*.ddl</EM>
+     file, the description of the class is contained as a consecutive
+     sequence of comment lines immediately following the first line in the
+     class declaration (e.g., after <EM>class arPerson</EM>) but before
+     <EM>{</EM>).  If the <EM>*.ddl</EM> file already exists and contains
+     such a description, then that description is copied over to the new
+     <EM>*.ddl</EM> file.  Otherwise, the brief description contained in this
+     meta-attribute is written to the <EM>*.ddl</EM> as the description.
+<DT> Type
+<DD> Used only for automatic C++ code generation.
+    <DL>
+    <DT> Concrete
+    <DD> A C++ class which may have its own instance objects.
+    <DT> Abstract
+    <DD> A C++ abstract base class.  There may be no instance objects for
+         this class, though there may be for its subclasses.
+    </DL>
+<DT> Visibility
+<DD> If set to <EM>PRIVATE</EM>, then a struct is created when generating
+     C++ code.  Otherwise, a class is created.
+<DT> Persistence
+<DD> Used only for automatic C++ code generation.
+     Set to <EM>Persistent</EM> if instance objects will be stored in
+     the database (i.e., this is a persistent-capable class).
+    <DL>
+    <DT> Transient
+    <DD> Not persistent-capable.
+    <DT> Persistent
+    <DD> Persistent-capable.
+    </DL>
+<DT> Concurrency
+<DD> Ignored.
+<DT> Cardinality
+<DD> This only affects generation of tables in "ADA" code.  It sets the 
+     hierarchy depth which is included as a field in the table.  Normally this
+     should be set to 0 (include all parameters with a hierarchy depth >= 0).
+     If set to 1, then all parameters with a hierarchy depth >= -1 are
+     included.  If set to N, then all parameters with a hierarchy depth >= -2
+     are included.
+<DT> Division
+<DD> Used to determine what type of flattened file to associated with instances
+     of this class.
+    <DL>
+    <DT> Passive
+    <DD> FITS binary table.
+    <DT> Active
+    <DD> FITS file.
+    <DT> Subsytem
+    <DD> FTCL parameter table file.
+    <DT> Terminator
+    <DD> FTCL parameter file.
+    </DL>
+<DT> User Interface
+<DD> Ignored.
+<DT> Derived
+<DD> Ignored.
+<DT> Design
+<DD> When generating a FITS header or FITS binary table, skip the PDU if this
+     is true.  When generating an FTCL table, skip the header keywords.
+     Otherwise ignored.
+<DT> Link
+<DD> If selected, then when flattening, print out secondary attributes for
+secondary associations only if they are directly connected to the class or
+one of its participations or generalizations.  If not selected, then print
+out secondary attributes for associations no matter how many links removed
+they are from the class.
+<DT> Metaclass
+<DD> If selected, then when flattening, rather than printing only the key
+attributes for participations, print all of the attributes.
+Otherwise ignored.
+<DT> Utility
+<DD> If selected, then when flattening, swap the "field" and "filter" fields.
+Otherwise ignored.
+</DL>
+
+<H2><A NAME="Attribute">Attribute</A></H2>
+<DL>
+<DT> Name
+<DD> Descriptive name (e.g., <EM>declination</EM>).
+     If its value is "id", and the <EM>Attribute</EM> field is blank, then when
+     flattening the class this attribute's name is changed from "id" to the
+     last word in the class name.
+<DT> Attribute
+<DD> Attribute name in flat files.  If blank, then it is set to the
+     value of the <EM>Name</EM> field.
+<DT> Document
+<DD> The units for the attribute.  In the special case of an enumerated type,
+     then this is ignored as a unit.  Rather, for enumerated types this is used
+     only when generating FITS binary tables.  In a FITS binary table, an enum
+     is listed as a character string.  This field should specify the length of
+     the character string; i.e., it should specify the width of the ascii field
+     in the FITS binary table.  If <em>Domain</em> is set, the units refer to
+     the public units, not the units for the internal storage (see the
+     description of <em>Domain</em>).
+<DT> Type
+<DD> Data type of the attribute (e.g., <EM>float64</EM>).
+     The values listed below have special meaning;
+     any other value is assumed to be a class or enum.
+    <DL>
+    <DT> STRING
+    <DD> A persistent character string.  This will be mapped to Objectivity's
+         <EM>ooVString</EM>.
+    <DT> TIME
+    <DD> A time, accurate to a second.  This will be mapped to a time class.
+    <DT> uint8, int16, uint16, int32, uint32, float32, float64, char
+    <DD> Any of the Objectivity primitive datatypes (unsigned one byte
+	 integers; unsigned and signed two and four byte integers; 4 and 8
+	 byte floating point numbers; one byte character).
+    </DL>
+     If <em>domain</em> is set (i.e., you want to store a scaled integer
+     representation of the value), then this must be set to <em>float32</em>.
+     See the description of <em>domain</em>.
+<DT> Size
+<DD> The number of elements if this is an array.  If blank, then it is not
+     an array.
+<DT> Initial Value
+<DD> When printing out a flat-file, this is used as a sample value.  This is
+     intended to be used to indicate the desired precision.  For example, if
+     printing out a declination in degrees, this value might be
+     <em>XXX.XX</em>.  Default sample values are used if nothing is entered
+     here.  Otherwise ignored.
+<DT> Description
+<DD> A description.  This will be printed in reports, and in the source
+     *.ddl file as a comment for the declared attribute.  Further, if
+     <EM>get</EM> or <EM>set</EM> methods are automatically generated for this
+     attribute, then this description will be used as the description of that
+     method, with its first letter forced to be in lowercase, and either "Get "
+     or "Set " prepended.
+<DT> Scope
+<DD> Its scope as defined within its C++ class.  Valid values are
+     <EM>PUBLIC</EM>, <EM>PRIVATE</EM>, and <EM>PROTECTED</EM>.  The value
+     <EM>IMPLEMENTATION</EM> means to exclude it in its C++ class, but treat
+     it normally in flat files.
+<DT> Key
+<DD> Used when flattening a class.  If set to "PRIMARY", then this attribute
+     is treated as an identifying attribute.  Ignored otherwise.
+<DT> No.
+<DD> Ignored.
+<DT> Domain
+<DD> Scale factor between the internal value and the public value.  If blank,
+     then the scale factor is 1, and no conversion is made.  If set to a
+     number, then the public data type (i.e., arguments to C++ methods and
+     values in flat files) is <em>float32</em>, but the internal storage
+     type (i.e., the data tpye of the C++ attribute) is <em>int16</em>.  The
+     value stored internally (in the C++ attribute) is equal to the public
+     value times the number specified in <em>Domain</em>.  Here's an example.
+     You've measured the FWHM of a star in pixels.  The measured value is of
+     data type <em>float32</em>, but to save space in the database you store
+     the FWHM * 100 as an <em>int16</em> (i.e., you're storing the FWHM
+     measured in hundreths of a pixels).
+     Then <em>Type</em> = <em>float32</em>,
+     <em>Domain</em> = 100, and <em>Document</em> = "pixels".  The value stored
+     in flat files, as well as all C++ method arguments, will be the FWHM in
+     pixels as a floating point number.
+<DT> User Interface
+<DD> Ignored.
+<DT> Static
+<DD> If set, declare this a static attribute within the C++ class definition.
+     Since this isn't allowed for persistent classes, this should probably
+     never be set.
+<DT> Constant
+<DD> Do not print out this attribute in flatfiles, but otherwise treat it
+     normally in C++ code.
+<DT> Derived
+<DD> Ignored.
+<DT> Readable
+<DD> If set, an accessor method will be automatically generated within the
+     C++ class definition (e.g., <EM>float64 declination() const;</EM>).
+<DT> Writable
+<DD> If set, a set method will be automatically generated within the
+     C++ class definition
+     (e.g., <EM>void setDeclination(float64 declination);</EM>).
+<DT> Exclusive
+<DD> In flat files, always put this attribute in the PDU or param file header.
+<DT> Bound
+<DD> The data type is an enumerated type, and is treated as such in
+     the code generation.
+</DL>
+
+<H2><A NAME="Relation">Relation</A></H2>
+Relations should be created such that the source class and destination
+class reflect the direction of the relation.  For example, a
+<EM>Report</EM> is authored by one or more <EM>Person</EM>s.  The
+relation which captures this relation would then have <EM>Report</EM>
+as the source class and <EM>Person</EM> as the destination class.  For
+uni-directional classes, the link would then be part of the source class in
+the C++ class definition.
+<DL>
+<DT> Name
+<DD> Name as it appears on diagrams.  Not used in code generation.
+<DT> Source
+<DD> Source of the relation.  This field can not be set by the user (it is
+     automatically set when the relation is graphically created).
+<DT> Destination
+<DD> Destination of the relation.  This field can not be set by the user (it is
+     automatically set when the relation is graphically created).
+<DT> Role-1
+<DD> If specified, used as the name of the link attribute in the destination
+     class (if a bi-directional relation).
+<DT> Role-2
+<DD> If specified, used as the name of the link attribute in the source
+     class.
+<DT> Multiplicity-1
+<DD> Determines the multiplicity of the relation at the source end.
+<DT> Multiplicity-2
+<DD> Determines the multiplicity of the relation at the destination end.
+<DT> Constraint-1
+<DD> If this is an array in a FITS binary table (i.e., <EM>Container-1</EM>
+     includes the keyword <EM>ARRAY</EM>) and an integer is specified here,
+     then the array lengths are set to this value.  Otherwise ignored.
+<DT> Constraint-2
+<DD> Ignored.
+<DT> Container-1
+<DD> If specified, used as the datatype of the relation attribute for the
+destination class.  If the datatype has an array specifier appended to it
+(e.g., [10]), then it is treated as an array.
+If of the form "-&gt;class", then the source class of the
+relation is replaced with "class" during source code generation.  This occurs
+after all keywords have been stripped from the field.
+By default, all relations are bi-directional.  If this field contains the
+keyword <EM>UNI</EM>, then this relation will be uni-directional, pointing
+only from the source class to the destination class.  The following additional
+keywords are used only when flattening (except for <EM>UNI</EM>):
+     <DL>
+     <DT> PRIMARY
+     <DD> This relation is a primary key for the source class
+	  (ignored for aggregations).
+     <DT> SECONDARY
+     <DD> This relation is a secondary key for the source class
+	  (ignored for aggregations).
+     <DT> UP
+     <DD> Following this relation causes the hierarchy level to be
+	  decremented by an additional 1 (normally there is no hierarchy change
+	  across relations and "one-only" participations, while there is
+	  a decrement of 1 across "many" participations).
+     <DT> UP2
+     <DD> Following this relation causes the hierarchy level to be
+	  decremented by an additional 2 (normally there is no hierarchy change
+	  across relations and "one-only" participations, while there is
+	  a decrement of 1 across "many" participations).
+     <DT> FIXED
+     <DD> Used only for aggregations.  When creating a FITS binary table,
+          store this aggregation as a series of arrays, creating a fixed-length
+	  list for each attribute.  If an integer value is specified for
+	  <EM>Container-1</EM>, or if "FIXED" is appended with an integer
+	  contained in paraenthesis (e.g., "FIXED(5)"), then the array
+	  lengths are set to that value;  else the array lengths will be set
+	  to #.
+     <DT> HEAP
+     <DD> Used only for aggregations.  When creating a FITS binary table,
+          store this aggregation on the heap, creating a variable-length
+	  list for each attribute.
+     <DT> UNI
+     <DD> This is a unidirectional relation.  A link attribute is created only
+	  for the source class.  By default, all relations are bi-directional.
+     </DL>
+<DT> Container-2
+<DD> If specified, used as the datatype of the relation attribute for the
+source class.  If of the form "-&gt;class", then the target class of the
+relation is replaced with "class" during source code generation.
+<DT> Description
+<DD> Ignored.
+<DT> Mandatory
+<DD> By default, <EM>get</EM> and <EM>set</EM> functions are generated only
+for the source class.  If this box is checked, then they are also generated
+for the destination class.  This is only valid for bi-directional relations.
+<DT> Derived
+<DD> If checked, do not generate C++ code for this relation.
+<DT> Static
+<DD> If checked, create this as a non-inline relation.
+<DT> Friend
+<DD> If checked, create a <EM>get</EM> method.
+<DT> Virtual
+<DD> If checked, create a <EM>set</EM> method.
+</DL>
+
+<H2><A NAME="Operation">Operation</A></H2>
+The return types and argument types may take the following special values,
+which will be substituted with an implementation specific type: DATE,
+TIME, VARRAY&lt;class&gt; (variable-size array).
+
+<DL>
+<DT> Name
+<DD> Name as it appears on diagrams and reports.
+<DT> Operation
+<DD> For constructors only, used to continue the list of arguments if they
+     don't fit in <EM>Formal Parameters</EM>.  For all other operations,
+     the name of associated method.  If not set, then <EM>name</EM> is used.
+<DT> Documentation
+<DD> Used to continue the list of arguments if they don't fit in
+     <EM>Formal Parameters</EM> and <EM>Source File</EM>.
+<DT> Source File
+<DD> Used to continue the list of arguments if they don't fit in
+     <EM>Formal Parameters</EM>.
+<DT> Return Type
+<DD> For constructors only, used to continue the list of arguments if they
+     don't fit in <EM>Formal Parameters</EM>.  For all other operations,
+     the return type for the method.
+<DT> Formal Parameters
+<DD> The argument list for the method.  If it doesn't all fit here, then
+     continue it in the fields <EM>Source File</EM> and <EM>Documentation</EM>
+     (in that order).  For constructors only, it may be continued in the
+     fields <EM>Return Type</EM>, <EM>Source File</EM>, <EM>Documentation</EM>,
+     <EM>Operation</EM>, <EM>Reads</EM>, <EM>Changes</EM>, <EM>Sends</EM>,
+     and <EM>Assumes</EM> (in that order).  If continued in other fields,
+     then the contents of the other fields are appended to the argument string,
+     in the order listed above.  A continuation field may be skipped, and
+     the later fields in order will still be appended.
+<DT> Description
+<DD> Printed out as a descriptive comment in the include file, under the
+     method declaration.
+<DT> Read
+<DD> For constructors only, used to continue the list of arguments if they
+     don't fit in <EM>Formal Parameters</EM>.  Otherwise ignored.
+<DT> Change
+<DD> For constructors only, used to continue the list of arguments if they
+     don't fit in <EM>Formal Parameters</EM>.  Otherwise ignored.
+<DT> Send
+<DD> For constructors only, used to continue the list of arguments if they
+     don't fit in <EM>Formal Parameters</EM>.  Otherwise ignored.
+<DT> Assume
+<DD> For constructors only, used to continue the list of arguments if they
+     don't fit in <EM>Formal Parameters</EM>.  Otherwise ignored.
+<DT> Time
+<DD> Ignored.
+<DT> Space
+<DD> Ignored.
+<DT> Scope
+<DD> Sets the C++ scope under which the method is declared.  The
+     value <EM>implementation</EM> is ignored.
+</DL>
+
+
+</BODY>
+</HTML>

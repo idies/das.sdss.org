@@ -1,0 +1,1933 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: GENCC.SCR - Script that do consistency checks for each paradigm
+'       Supports RUMBAUGH, BOOCH, FUSION, COAD_YOU, SHLAER_M
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation.
+'|-----|----------|---------------------------------------------------------
+'| SG  | 07/10/94 | Added more consistency checks for Shlaer/Mellor
+'|-----|----------|---------------------------------------------------------
+'--------------------------------------------
+'GENCC.SCR
+'--------------------------------------------
+'wcount: warning count =0
+'ecount: error count  =0
+'ucount: direct update count =0
+'To localize the effect, each time the above variables used is
+'   initialize to 0
+'------------------------------------------------------------
+'------------------------------------------------------------
+'Rumbaugh:
+'
+'Getevents: extract events or actions from event strings appeared
+'   in the state diagram  and store them in the Events$ array,
+'   the size of array is max = 5* count(event).
+'   The output Events$ is used in the CheckDM_OM and CheckDM_FM  
+'
+' We perform consistency check between models, for example,
+' CheckDM_OM will check the consistency between the dynamic
+' model and object model, and so on. Each checking we may give one
+' of the two types of error messages:
+' 1. Warning: given in the script output
+' 2. Direct update: a dialog box appeared to allow user adding item to the
+'      database.
+' 
+'CheckDM_OM:
+'  Found:  An action or an event in DM is not an operation in OM
+'  Result: Warning
+'
+'CheckDM_FM: 
+'  Found:  An action (or event) in DM is not a  process in FM
+'  Result: Direct update
+'
+'CheckOM_FM:
+'  Found: A persistent class in OM is not a data store in FM
+'  Result: Direct update.
+'   
+'  Found: any one of the followings:
+'    1. A process in FM is not an  operation in OM.
+'    2. A data store in FM is not a persistent class in OM
+'    3. An actor in FM is not a class in OM.
+'  Result: Warning
+'
+'CheckET_OM:
+'  Found: A message in the Event Trace Diagram is not a 
+'         operation in OM
+'  Result: Direct update: message added as an operation of the destination
+'                         etc. 
+' 
+'CheckSC_OM:
+'  Found: any one of the followings:
+'    1. A state class in the State Class Diagram is not a class
+'       in OM    
+'    2. A SC generalization is not a class generalization.
+'  Result: Direct update
+'
+'CheckOM_OM:
+'  Found: An abtract operation in a concrete class.
+'  Result: warning        
+'  
+'  Found: any one of the followings:
+'    1. An Object without the corresponding class
+'    2. An attribute in an object without the corresponding
+'       attribute in the class
+'    3. An Object without an inheritance relationship to its
+'       class
+'  Result: direct update.
+'-------------------------------------------------------------   
+'--------------------------------------------------------------
+'Fusion:
+
+'  1. All System Operations are defined by a Schema P.no 60 (OOD Fusion Methodology) 
+'     
+'     find:  a. all the system operations and check the link->schema
+'               if not exist
+'     result:  warning
+'
+'  2. All classes,relationships,attributes mentioned in Operational Model
+'     appear in System Object Model P.no 60 (OOD Fusion Methodology)
+'     
+'     find: a. Parse the Operational Schema and cross verify with Object Model
+'              if not exist
+'     result:  warning
+'  3. a.Mutual Consistency: Check Exclusive Server objects are not referenced
+'     by more than one Client P.no 86  (OOD Fusion Methodology)
+'     
+'     b.Completeness: Check to see all message passing defined in the OIG
+'     is realized in Visibility Graphs P.no 86 (OOD Fusion Methodology)
+'  4. Visibility model:
+'     find: all controllers in each OIG if number of Controllers in an OIG > 1
+'     result: Warning
+'
+'  5. object model:
+'     find:   the multiplicity = "many"  but the  constraint =""
+'             in a class relationship
+'     result: warning
+' 
+'  6. Event trace diagram:
+'     find:   a. an etc is the souce of both system operation and event
+'             b. an etc is the destination of both sys op and event
+'     result: warning
+'
+'  7. system interface graph:
+'     find:
+'        a. a system has no class
+'     result: warning
+'
+'  8. object interaction graph model:
+'     find: a. an object does not have a corresponding class
+'           b. a collection does not have a corresponding class
+'           c. an object is not the instantiation of the class specied
+'              in the database       
+'           d. an collection is not the instantiation of the class specied
+'              in the database       
+'     result: warning
+'
+'  9. visibility graph model:
+'     find: the type of the visibility relation from class to an object
+'           or a collection = bound, but the object(or collection) is
+'           outside of the class in a visibility graph
+'     result: warning
+'----------------------------------------------------------
+'----------------------------------------------------------
+'Booch:
+'  1. CheckDM_OM: same as in Rumbaugh
+'  2. CheckET_OM: same as in Rumbaugh
+'  3. Class Model <-> Object Model
+'     find: a. An object whose corresponding class does not exist
+'           b. An attribute of an object does not exist in the
+'              corresponding class
+'           c. A message is not an operation of the class of the
+'              destination object. (or the underline base class
+'              extracted from the message string)
+'     result: direct update
+'
+'     Find: A message with type= "balking" or "Timeout" or "Asynchronous"
+'           send to an object which is an instantiation of an sequentail class
+'     result: Warning
+'  
+'-----------------------------------------------------------
+'-----------------------------------------------------------
+'Shlaer_M:
+'  1. Warning:
+'     a. A datastore is not a persistent class
+'     b. An active class does not link to a state transaction diagram(std)
+'     c. A state in a std does not link to an Action Data Flow Diagram(adfd)
+'     d. Event/s leaving a state whose type is 'final'
+'     e. All events to a single state does not carry same data.
+'     f. Prefix for an event is not the object code.
+'        (Check if it is a prefix of any class).
+'
+'  2. Direct update:
+'     a. Add class if find a data store is not a class.
+'     b. Add class.link.state relation if not exist, for all states found
+'        in std, where the class is the owner class of the std.
+'     c. Add class.link.event relation if not exist, for all events found
+'        in std, where the class is the owner class of the std.
+'     d. Add class.link.data_flow relation if not exist, for all data flows
+'        initiate from initiator in an adfd, where the class is the owner
+'        of the std, which in turn is the owner of the adfd
+'     f. Add class.link.data_flow relation if not exist, for all data flows
+'        flow in or out a data store in an adfd, where the class is the
+'        data store.
+'     g. Add data store/objects for every class. (if does not exist)
+'
+'-----------------------------------------------------------
+'-----------------------------------------------------------
+'Coad_You:
+'  1. Add message as an operation of the destination class, if not exist.
+'-----------------------------------------------------------
+
+main:
+   gosub PrintHeading
+   dashLine$= "-----------------------------------------------------"
+   if paradigm$ = "RUMBAUGH" or paradigm$="OMT94" then
+			gosub Getevents
+			hdr$ = "Phase 1: Object Model <-> Dynamic Model"
+	  gosub CheckDM_OM
+	  gosub CheckDM_FM
+			gosub CheckOM_FM
+			hdr$ = "Phase 4: Object Model <-> Event Trace Model"
+	  gosub CheckET_OM
+	  gosub CheckSC_OM
+	  gosub CheckOM_OM
+   else if paradigm$ = "fusion" then
+			gosub f_cc
+	 else if paradigm$ = "Booch" then
+	  gosub B_cc
+   else if paradigm$ ="Shlaer_m" then
+	  gosub SM_cc
+   else if paradigm$ = "Coad_you" then
+	  gosub cy_cc
+   end if
+end
+'----------------------------------------
+' PrintHeading
+'---------------------------------------
+PrintHeading:
+   print
+   print "Consistency Check Report"
+   print "________________________"
+   print
+   print "Generated on: ", time$
+   print
+   print "Paradigm: ", paradigm$
+   print "Project:  ", app$ 
+   print
+return
+'------------------------------------------------------
+'------------------------
+'Removeblanks: input: parsename$; output: parsename$
+'------------------------
+removeblanks:
+	'---------------------------------
+	'remove any leading blanks in name
+	'---------------------------------
+	WHILE LEFT$(ParseName$, 1) = " " 
+		ParseName$ = RIGHT$(ParseName$, (LEN(ParseName$)-1))
+	WEND
+	'--------------------------
+	'remove any trailing blanks
+	'--------------------------
+	WHILE RIGHT$(ParseName$, 1) = " "
+		ParseName$ = LEFT$(ParseName$, (LEN(ParseName$)-1))
+	WEND
+return
+' -----------------------------------------------------
+'GetEvents:
+'   output: events$ array loaded with all events.
+'     The number of events in the array = index.   
+'   GetEvents calls ParseToken, Parsetoken in turn calls
+'     TokenWithOneEvent
+'------------------------------------------------------
+GetEvents: 
+   max = 100
+   temp= 5 * count(event)  
+   if max < temp then max=temp
+
+   DIM events$(max)
+   index = 0
+   foreach event
+      token$ = name$
+	  gosub ParseToken
+   next
+return
+
+'-------------------------------------------------------
+' ParseToken:
+'    input : token$; 
+'    output: events extracted from token are stores in events$ array
+'    a typical token$ = "e1(att1)[cond1]/ac1/e2(attr2)/ac2"
+'    resulting events are: e1, ac1, e2, ac2         
+'-----------------------------------------------------------
+ParseToken:
+
+   pos = instr(token$, "/")
+   ln = LEN(token$)
+   if pos = 0 then
+      if ln <> 0 then
+	inToken$ = token$
+	gosub TokenWithOneEvent
+	gosub storeouttoken
+	  end if
+   else
+      Ltoken$ = left$(token$, pos-1)      
+      Rtoken$ = right$(token$,ln-pos)
+      '---------------------------------    
+      'Handle Ltoken      
+      inToken$ = Ltoken$
+      gosub TokenWithOneEvent
+
+      gosub storeouttoken
+
+      '---------------------------------------
+      'Handle Rtoken
+      if len(Rtoken$) <>0 then
+	  token$=Rtoken$
+	  goto ParseToken
+      end if
+   end if
+return
+'-------------------
+'storeouttoken
+'-------------------
+storeouttoken:
+	parsename$ = outtoken$ 
+	gosub removeblanks
+	if len(parsename$) <> 0 then 
+	  index = index + 1 
+	  events$(index) = parsename$
+	end if
+return
+'----------------------------------------------------------
+' TokenWithOneEvent:  input: inToken$, Output: outToken$
+'      a possible input : ev(attr)[cond1]; output: ev
+'----------------------------------------------------------
+
+TokenWithOneEvent:
+   tpos = INSTR(intoken$, "[")
+   if tpos = 0 then
+
+      gosub tokenWithoutCond
+
+   else
+      intoken$=left$(intoken$, tpos-1)
+      gosub TokenWithoutCond
+   end if
+return   
+'----------------------------------------
+'TokenWithoutCond  input: inToken$, Output: outToken$
+'      a possible input : ev(attr); output: ev
+'---------------------------------------
+tokenWithoutCond:
+
+	 tposp = INSTR(intoken$, "(")
+    if tposp = 0 then
+       outToken$ = inToken$
+    else
+       outtoken$= left$(inToken$, tposp-1)
+	 end if
+
+return
+'--------------------------------------------------------------
+'--------------------------------------------------------------
+' CheckDM_OM
+'   Input:  events$ array with the number of events = index
+'   Output: see document in the beginning of the program  
+'--------------------------------------------------------------
+CheckDM_OM:
+   print hdr$        '"Phase 1: Object Model <-> Dynamic Model"
+   print dashline$   '"---------------------------------------"
+   wcount=0   
+   for i = 1 to index
+     if not exist(operation, events$(i)) then
+       wcount = wcount + 1
+       Print "WARNING: Event(Action) '", events$(i),
+       print "' has no matching Operation"
+     end if
+   next
+   if wcount = 0 then
+     print "Models are consistent with each other."
+   end if 
+   print
+return
+'----------------------------------------------------------------
+' CheckDM_FM
+'   Input:  events$ array with the number of events = index
+'   Output: see document in the beginning of the program  
+'----------------------------------------------------------------
+CheckDM_FM:
+   print "Phase 2: Dynamic Model <-> Functional Model"
+   print Dashline$  '"-------------------------------------------"
+   ecount = 0
+   ucount = 0
+   for i = 1 to index
+     if not exist(process, events$(i)) then
+       ecount = ecount + 1
+       a$ = "No Process exists for the Event(Action) '" + events$(i) 
+       a$ = a$ + "'. Do you want to create one?"
+       decision = ask(a$, "Create", "Skip")
+       if decision=0 then
+	 UCount = UCount + 1
+	 new process, events$(i)
+	 print "Process '", events$(i), "' added to the data_base"
+       end if    
+     end if
+   next
+   if ecount = 0 then
+     print "Models are consistent with each other"
+   else
+     if ucount <>0 then
+       print ucount, " Process(es) added to the database"
+     end if
+   end if
+   print  
+return
+
+'------------------------------------------------------------------
+' CheckOM_FM
+'------------------------------------------------------------------
+CheckOM_FM:
+   print "Phase 3: Object Model <-> Functional Model"
+   print Dashline$  '"------------------------------------------"
+   wcount = 0
+   ecount = 0
+   ucount = 0 
+
+   ' Is every persistent class a data_store?
+   foreach class
+      if class.persistence = "persistent" then
+	 if (not EXIST(Data_Store, name$))  then
+	    ecount = ecount + 1
+	    a$ = "No data store exists for the persistent class '"
+	    a$ = a$ + name$ + "'. Do you want to create one?"
+	    decision = ask(a$, "Create", "Skip")
+	    if decision=0 then
+	       ucount = ucount + 1
+	       new data_store, name$
+	       print "Data_Store '", name$, "' added to the database"
+	    end if
+	 end if      
+      end if  
+   next
+
+   'Is every process a operation? 
+   foreach process
+      if (not exist(operation, name$)) then
+	wcount = wcount + 1
+	print "WARNING: Process '", name$, "' has no matching operation"
+      end if
+   next
+
+   'Is every data_store a persistent class?
+   foreach Data_Store
+      if (not exist(Class, name$)) then
+	wcount = wcount + 1
+	print "WARNING: Data_Store '", name$,
+	print "' has no matching class "
+      else
+	Dname$ = name$
+	foreach class
+	   if (class.name = Dname$) then
+		 if class.persistence  <> "persistent" then
+	       wcount = wcount + 1          
+	       print "WARNING: Data_Store '", Dname$, 
+	       print "' is not a persistent class"  
+	     end if
+	   end if
+	next
+      end if
+   next
+
+   'Is every actor a class?  
+   foreach actor
+      if (not exist(class, name$)) then
+	wcount = wcount + 1
+	print "WARNING: Actor '", name$, "' has no matching class"
+      end if
+   next
+   
+   'print the result
+   if ecount = 0 and wcount = 0 then
+	  print "Models are consistent with each other"
+   else
+      if ucount <> 0 then
+	 print ucount, " Data_Store(s) added to the database"
+      end if
+   end if
+   return
+'------------------------------------------------------------
+' CheckET_OM
+'------------------------------------------------------------
+CheckET_OM:
+   print
+	 print hdr$ ' "Phase 4: Object Model <-> Event Trace Model"
+   print Dashline$  '"-------------------------------------------"  
+   ecount = 0
+   ucount = 0  
+	 foreach event_trace_class
+			if not exist(class, name$) then
+				 gosub AddETCAsClass    'adding source etc
+			end if
+			rel$ = "event_trace_class.message.event_trace_class"
+			foreach rel$
+				if not exist(class, name$) then
+						gosub addETCAsClass     'adding destination etc
+	       if decision = 0 then
+						gosub addMessAsOP
+	       end if
+				else
+					if not exist(class.operation, name$, message.name) then
+						gosub AddMessAsOp
+					end if
+	    end if
+			next
+	 next
+
+   if ecount = 0 then
+      print "Models are consistent with each other"
+   end if           
+return
+'--------------------------------
+'AddETCClass
+' scope: inside etc or etc.message.etc
+'--------------------------------
+AddETCASClass:
+				 ecount = ecount +1
+	 a$ = "No Class exists for the Event_Trace_Class '"
+	 a$ = a$ + name$ + "'. Do you want to create one?"
+	 decision = ask(a$, "Create", "Skip")
+	 if decision=0 then
+	    ucount = ucount + 1
+	    new class, name$
+						print "Class '", name$, "' added to the database"
+				 end if
+return
+'----------------------
+'addMessAsop
+'   scope: inside the scope of etc.message.etc
+'----------------------
+addMessAsOp:
+		ecount = ecount +1
+		a$ = "No Operation exists for the Message '" + message.name
+    a$ = a$ + "' in the Event_Trace_Class '" + name$ 
+    a$ = a$ + "'. Do you want to create one?"
+    decision = ask(a$, "Create", "Skip")
+    if decision=0 then
+       ucount = ucount + 1               
+			 new class.operation, name$, message.name
+       print "Operation '", message.name, "' added to the database"
+    end if
+return
+'--------------------------------------------------
+' CheckSC_OM
+'--------------------------------------------------
+CheckSC_OM:
+   print
+   print "Phase 5: State_Class Model  <-> Object Model"
+   print Dashline$ '"--------------------------------------------" 
+   ecount = 0
+   ucount = 0
+   foreach state_class
+	  'cname$ = name$
+      if not exist(class, name$) then
+	 ecount = ecount +1
+	 a$ = "No Class exists for the State_Class '" + name$
+	 a$ = a$ + "'. Do you want to create one?"
+	 decision = ask(a$, "Create", "Skip")
+	 if decision=0 then
+	    ucount = ucount + 1
+	    new class, name$
+	    print "Class '", name$, "' added to the database"
+	 end if 
+      end if
+      foreach state_class.generalization
+	 if exist(class, cname$) and not exist(class.generalization, owner$, member$,generalization.name) then
+	   ecount = ecount + 1 
+	   a$= "Generalization '" +generalization.name
+	   a$ = a$ + "' not exist between '" + owner$ 
+	   a$= a$+"' and '" +member$ +"'"
+	   a$=a$ + ". Do you want to create one?"
+	   dicision=ask(a$, "Create", "Skip")
+	   if dicision = 0 then
+	      ucount = ucount + 1  
+	      new class.generalization, owner$,member$, generalization.name
+	      print "Generalization '", generalization.name,"' between '", owner$,
+	      print  "' and '", member$, "' added to the database"
+	   end if 
+	 end if       
+       next
+   next 
+   if ecount = 0 then
+      print "Models are consistent with each other"
+   end if
+return
+'--------------------------------------------------
+' CheckOM_OM
+'--------------------------------------------------
+CheckOM_OM:
+   print
+   print "Phase 6: Object Model <-> Object Model"
+   print Dashline$ '"--------------------------------------------" 
+   ecount = 0
+   ucount = 0
+   wcount = 0
+   foreach object
+      obname$=name$
+      pos = instr(name$, "(")
+      if pos <>0 then
+	 posa = instr(name$, ")")
+	 cname$ = mid$(name$, pos+1, posa -pos-1)
+      else
+	 cname$= name$
+      end if
+    
+      if not exist(class, cname$) then
+	 gosub AddObClass
+      end if
+
+      if not exist(object.instance_of, obname$, cname$) then
+	 ecount = ecount + 1
+	 a$ = "There is no Inheritance Relationship to the object '" + cname$ 
+	 a$ = a$ +"' Do you wish to create the relationship?"
+	 decision = ask( a$, "Create", "Skip")
+	 if decision = 0 then
+	   ucount = ucount + 1
+	   new object.instance_of, obname$, cname$
+	   print "Inheritance Relationship to the Object '", cname$,
+	   print "' added to the database"
+	 end if
+      end if        
+
+      foreach object.attribute_value
+	 mname$ = member$
+	 pos = INSTR(mname$, "=")
+	 if pos <> 0 then
+	   aname$ = left$(mname$, pos -1)
+	   ' should the trailing blanks be removed?    
+	 else
+	   aname$ = mname$
+	 end if
+	 if not exist(class.attribute, cname$, aname$) then
+	   gosub AddAttr
+	 end if
+      next       
+   next 
+
+   foreach class
+      cname$ = name$
+      if class.type = "concrete" then
+	 foreach class.operation
+	    if operation.type ="abstract" then
+	       print "Warning: Abstract Operation '",operation.name,
+	       print "' in the Concrete Class '", cname$,"'" 
+	       wcount = wcount + 1
+	    end if          
+	 next
+
+      end if 
+   next
+   if ecount = 0 and wcount = 0  then
+     print "Objects and Classes are consistent with each other."
+   end if
+return
+'-----------------------------------
+'AddAttr
+'-----------------------------------
+AddAttr:
+	   ecount =ecount + 1
+	   a$="There is no Attribute '"+aname$+"' in the Class '" + cname$ 
+	   a$= a$  +"' which in the object '"+obname$
+	   a$= a$ +"'. Do you wish to create one?"
+	   decision = ask(a$, "Create", "Skip")
+	   if decision = 0 then
+	      ucount = ucount + 1
+	      new class.attribute, cname$, aname$
+	      print "Attribute '", aname$, "' of the Class '", cname$, 
+	      print "' added to the database"
+	   end if 
+
+
+return
+'-----------------
+'addObClass
+'-----------------
+AddObClass:
+	 ecount =ecount + 1
+	 a$ = "There is no class named '" + cname$
+	 a$ = a$ +"' but there is an object instantiating it."
+	 a$ = a$ +" Do you want to create one?"
+	 decision = ask(a$, "Create", "Skip")
+	 if decision = 0 then
+	    ucount = ucount + 1
+	    new class, cname$
+	    new class.instance_of, cname$, obname$
+	    print "Class '", cname$, "' added to the database"
+	    print "Object '", obname$, "' instance of the Class '", cname$, "' added to the database"
+	 end if      
+return
+
+      if not exist(class, cname$) then
+	 ecount =ecount + 1
+	 a$ = "There is no class named '" + cname$
+	 a$ = a$ +"' but there is an object instantiating it."
+	 a$ = a$ +" Do you want to create one?"
+	 decision = ask(a$, "Create", "Skip")
+	 if decision = 0 then
+	    ucount = ucount + 1
+	    new class, cname$
+	    new class.instantiation, cname$, obname$
+	    print "Class '", cname$, "' added to the database"
+	    print "Instantiation of the Class '", cname$, "' added to the database"
+	 end if
+      end if
+return
+
+'------------------------------------------------
+'               f_ph1
+'-----------------------------------------------
+f_ph1:
+   print
+   print "Phase 1: Operational Model <-> Operational Model"
+   print "------------------------------------------------"
+   foreach System_Operation
+    c = Count(System_Operation.Link.Schema)
+      if (c = 0) then
+	print "Warning: Operation '",Name$,"' has no schema associated"
+      endif
+      if (c > 1) then
+	print "System Operations <-> Schema Existence is correct"
+      endif
+   next
+return
+
+'------------------------------------
+'f_ph2
+' Copyright(C) 1993 Hewlett Packard
+' Written ab intio by Chris Dollin
+' Updated for version 2.01 by Suresh Gadagoju - 07/18/94
+'------------------------------------
+f_ph2:
+  print
+  print "Phase 2: Operational Model <-> Object Model"
+  print "-------------------------------------------"
+  
+  TRUE = -1
+  FALSE = 0
+  TAB = 9
+  SPACE = ASC(" ")
+  source = 1
+  header_printed = FALSE
+  currentDoc$ = ""
+
+select all from Schema 
+foreach Schema
+      SchemaName$ = Name$
+      handled = handled + 1
+      if Document$ <> "" then
+	header_printed = FALSE
+	OPEN Document$ FOR INPUT AS source
+	gosub handle_source
+	CLOSE source
+      else
+	print "Warning: No schema available for '", schemaName$,"'"
+      endif 'document <> ""
+next
+return
+
+handle_source:
+   active = FALSE
+   goto possible_next_line
+
+next_line:
+   LINE INPUT #source, LineStr$
+   ch = ASC( LEFT$(LineStr$,1) )
+   if INSTR(LineStr$,"READS:") = 1 or INSTR(LineStr$,"CHANGES:") = 1 then goto start_items
+   if (ch = ASC(" ") or ch = 9) and active then goto handle_item
+   active = FALSE
+   goto possible_next_line
+
+start_items:
+   active = TRUE
+   colon = INSTR(LineStr$,":")
+   if colon = LEN(LineStr$) then LineStr$ = "" else LineStr$ = MID$(LineStr$,colon+1)
+
+handle_item:
+   arg$ = LineStr$
+   gosub strip_item
+   gosub find_item_type
+   if arg$ = "" then goto possible_next_line
+   if is_relation then goto check_relation
+   if EXIST( Class, item_type$ ) then goto class_exists
+   gosub type_not_known
+   goto possible_next_line
+
+class_exists:
+    if slot$ = "" then goto possible_next_line
+    save$ = arg$
+    arg$ = slot$
+    gosub trim_arg
+    'slot$ = item_type$ + "." + arg$
+    arg$ = save$
+    if EXIST( Attribute, slot$ ) then goto possible_next_line
+    gosub attribute_not_known
+    goto possible_next_line
+
+check_relation:
+   ' arg$ looks like Class <Reln> Class2
+    reln_class_ok = TRUE
+    reln$ = arg$
+    lang = INSTR( reln$, "<" )
+    rang = INSTR( reln$, ">" )
+    arg$ = LEFT$( reln$, lang - 1 )
+    gosub trim_arg
+    LName$ = arg$
+    gosub check_reln_class
+    arg$ = MID$( reln$, rang + 1 )
+    gosub trim_arg
+    RName$ = arg$
+    gosub check_reln_class
+    arg$ = MID$( reln$, lang + 1, rang - lang - 1 )
+    gosub trim_arg
+    relname$ = arg$
+    if reln_class_ok then gosub check_reln_exists
+
+possible_next_line:
+   if EOF( source ) = 0 then goto next_line
+   return
+
+
+attribute_not_known:
+    gosub print_document_header
+    print "Warning : Attribute '", slot$,"' donot exist in Object Model"
+    return
+
+check_reln_exists:
+    ' check that there is a relationship called relname$
+    ' This doesn't seem to work properly. "relname$" seems to be
+    ' irrelevant to the result of EXIST. Bug or feature?
+    if not exist(Relationship, relname$) then
+     print "Warning : Relationship '",relname$,"' donot exist in Object Model"
+    endif
+    return
+
+check_reln_class:
+    if EXIST( Class, arg$ ) then return
+    reln_class_ok = FALSE
+    item_type$ = arg$
+    arg$ = reln$
+    gosub type_not_known
+    return
+
+type_not_known:
+    gosub print_document_header
+    print "Warning: Item(s) '",arg$,"' has undefined type '", item_type$,"'"
+    return
+
+print_document_header:
+    if Document$ = currentDoc$ then return
+    currentDoc$ = Document$
+    return
+
+find_item_type:
+   ' find the type of the item in arg$, put it in item_type$, and
+   ' make arg$ just be the item name. If it's a relationship, set
+   ' is_relation TRUE, and leave the type "unspecifed"
+   is_relation = FALSE
+   colon = INSTR(arg$,":")
+   if colon = 0 then goto find_item_type_no_colon
+   temp$ = arg$
+   arg$ = RIGHT$(arg$,LEN(arg$)-colon)
+   gosub trim_arg
+   item_type$ = arg$
+   arg$ = LEFT$(temp$,colon-1)
+   gosub trim_arg
+   return
+
+find_item_type_no_colon:
+   langle = INSTR(arg$,"<")
+   if langle = 0 then goto find_item_type_no_langle
+   is_relation = TRUE
+   item_type$ = "(relationship)"
+   return
+
+find_item_type_no_langle:
+   item_type$ = upcase$(LEFT$(arg$,1)) + RIGHT$(arg$,LEN(arg$)-1)
+   return
+
+strip_item:
+    gosub trim_arg
+    strip$ = "all"
+    gosub strip_leading
+    stripped_all = stripped
+    strip$ = "new"
+    gosub strip_leading
+    strip$ = "supplied"
+    gosub strip_leading
+    gosub strip_with
+    gosub strip_attribute
+    return
+
+strip_leading:
+   ' remove any leading strip$ from arg$
+   stripped = FALSE
+   if INSTR(arg$,strip$ + " ") <> 1 then return
+   arg$ = RIGHT$(arg$,LEN(arg$) - LEN(strip$))
+   stripped = TRUE
+   gosub trim_arg_left
+   return
+
+strip_with:
+   ' remove any "with Condition" from arg$
+   with = INSTR(arg$," with ")
+   if with = 0 then return
+   arg$ = LEFT$(arg$,with-1)
+   gosub trim_arg_right
+   return
+
+strip_attribute:
+   ' Get the slot name off arg$, saving it in slot$.
+    slot$ = ""
+    strip_dot = INSTR(arg$,".")
+    if strip_dot = 0 then return
+    slot$ = MID$( arg$, strip_dot + 1 )
+    arg$ = LEFT$(arg$,strip_dot-1)
+    gosub trim_arg_right
+    return
+
+trim_arg:
+   gosub trim_arg_left
+   gosub trim_arg_right
+   return
+
+trim_arg_left:
+   ' strip leading layout
+   goto trim_arg_left_loop
+
+trim_arg_left_trim:
+   ' Would use MID$, but for apparent length bug.
+   arg$ = RIGHT$(arg$,LEN(arg$)-1)
+
+trim_arg_left_loop:
+   if LEN(arg$) = 0 then return
+   ch = ASC(LEFT$(arg$,1))
+   if ch = ASC(" ") or ch = 9 then goto trim_arg_left_trim
+   return
+
+trim_arg_right:
+   trim_i = LEN(arg$)
+   if trim_i = 0 then return
+   ch = ASC(RIGHT$(arg$,1))
+   if ch <> SPACE and ch <> TAB then return
+   arg$ = LEFT$(arg$,trim_i-1)
+   goto trim_arg_right
+
+
+'----------------------------------------
+'   f_ph3
+'----------------------------------------
+f_ph3:
+print
+print "Phase 3: Object Interation Model <-> Visibility Model"
+print "-------------------------------------------------------"
+cnt = 0
+c =0
+i=0
+j=0
+DIM obj$(10)
+foreach class
+  cname$ = name$
+    foreach class.visibility.object
+      Server$ = name$
+	  select all from object where name = Server$
+      if( object.exclusive = "True") then
+       c= c+1
+       obj$(c) = Server$   
+      endif
+    next
+next
+for i = 1 to c
+ for j=1 to c
+  if(obj$(i) = obj$(j) and i<>j) then
+  exc = exc + 1 
+  print "Exclusive Object '",obj$(i),"' is refered more than once"
+ endif
+next
+next
+
+foreach Object
+    oname$ = name$
+    foreach object.instance_of.class
+	cname$ = name$
+    next
+    foreach object.message.object
+	omname$ = name$
+	select all from class where name = cname$
+	  foreach class
+	    foreach class.visibility.object
+		if(name$ = omname$) then
+		cnt= cnt+1
+		endif
+	    next
+       next
+    if(cnt=1) then
+    print "Class: ",cname$," has no visibility to Object: ",omname$
+    endif
+     next
+next       
+ if( cnt = 0 and exc = 0) then
+  print "Object Interaction Models and Visibility Models are consistent with each other"
+ endif
+return   
+
+'------------------------------------------
+'   f_ph4
+'------------------------------------------
+f_ph4:
+   print
+   print "Phase 4: Object Interaction Model <-> Object Interaction Model"
+   print "--------------------------------------------------------------"
+ 
+ DIM own$(10)
+ DIM mem$(10)
+ cnt = 0
+ c1 = 0
+ select all from diagram where type = "Object Interaction Graph"
+   foreach diagram
+	  cnt = cnt +1
+	  c = 0
+	  foreach diagram.item
+	    if item.relationship ="Agent.message" then
+		c = c+1
+		c1 = c1+1
+		own$(c) = item.owner
+		mem$(c) = item.member
+	    endif
+	  next
+	      if(c>1) then
+		print "Warning: OIG ",name$:20," has ",c," Controllers"
+	      endif                     
+    next
+     if (cnt = c1) then
+      print "Object Interaction Model is consistent" 
+     endif 
+return
+      
+'--------------------------------
+'f_ph5
+'--------------------------------
+f_ph5:
+   print
+   print "Phase 5: Object Model <-> Object Model"
+   print "--------------------------------------"
+   ecount = 0
+   ucount = 0
+   wcount = 0
+   foreach class
+      n$ = name$
+      foreach class.relationship.class
+	 if multiplicity1$ = "many" then
+	    if constraint1$ = "" then
+	       print "Warning: Relationship '",relationship.name,
+	       print "' between Class '", n$, "' and Class '", name$, "'"
+	       print "         has multiplicity_1 = 'many', but constraint_1 is not specified "
+	       wcount = wcount + 1
+	    end if
+	 end if
+	 if multiplicity2$ = "many" then
+	    if constraint2$ ="" then
+	       print "Warning: Relationship '",relationship.name,
+	       print "' between Class '", n$, "' and Class '", name$, "'"
+	       print "         has multiplicity_2 = 'many', but constraint_2 is not specified "
+	       wcount = wcount + 1
+	    end if
+	 end if
+      next
+   next
+   if wcount = 0 then
+      print "Object Models are consistent with each other"
+   end if
+return
+
+'--------------------------------
+'f_ph6
+'-------------------------------
+f_ph6:
+   print
+   print "Phase 6: Event Trace Model <-> Event Trace Model"
+   print "------------------------------------------------"
+   ecount = 0
+   ucount = 0
+   wcount = 0
+   tcs=0
+   tce=0
+   foreach event_trace_class
+      n$ =name$
+      sc = 0
+      ec=0
+      etcs$ ="event_trace_class.system_operation.event_trace_class"
+      foreach etcs$
+	 sc=sc+1
+      next
+      tcs =tcs + count(etcs$)
+
+      etce$ ="event_trace_class.event.event_trace_class"
+      foreach etce$
+	 ec =ec + 1 
+      next
+      if sc <> 0 and ec <> 0 then 
+	wcount = wcount + 1
+	print "Warning: Event Trace Class '", n$, "' is the source of both system operation(s) and event(s)"
+      end if
+      tce =tce + count(etce$)
+   next 
+   
+   'check etc whether an etc is the destination of both sys op and event
+   dim sops$(tcs)
+   dim evs$(tce)
+   sptr = 0
+   eptr = 0
+
+   foreach event_trace_class
+      foreach etcs$
+	 sptr=sptr + 1
+	 sops$(sptr) = name$
+      next
+			foreach etce$
+	 eptr = eptr + 1
+	 evs$(eptr) = name$
+      next   
+   next
+
+   foreach event_trace_class
+      founds=0
+      founde=0
+      for i = 1 to sptr
+	 if sops$(i) = name$ then founds = 1
+      next
+      for i = 1 to eptr
+	 if evs$(i) = name$ then founde = 1
+      next
+      if founds=1 and founde = 1 then
+	wcount = wcount + 1
+	print "Warning: Event Trace Class '", name$, "' is the destination of both system operation(s) and event(s)"
+      end if
+   next
+   if wcount = 0 then print "Event Trace Models are consistent with each other"
+return
+
+'--------------------------------
+'f_ph7
+'-------------------------------
+f_ph7:
+   print
+   print "Phase 7: System Interface Model <-> System Interface Model"
+   print "----------------------------------------------------------"
+   wcount = 0
+   foreach system
+      if count(system.contains.class) = 0 then
+	 wcount = wcount +1
+	 print "Warning: System '", name$, "' has no class"
+      end if
+   next
+   if wcount = 0 then
+      print "System Interface Model is consistent"
+   end if
+return
+
+
+'--------------------------------
+'f_ph8
+'-------------------------------
+f_ph8:
+   print
+   print "Phase 8: Object Interaction Model <-> Object Interaction Model"
+   print "--------------------------------------------------------------"
+   ecount = 0
+   ucount = 0
+   wcount = 0
+   foreach object
+      n$ = name$
+      pos = instr(name$, ":")
+      ln  = len(name$)
+      m$ = right$(name$, ln - pos)
+      parsename$ = m$
+      gosub removeblanks
+      m$ = parsename$ 
+      if not exist(class, m$) then
+	 wcount = wcount + 1
+	 print "Warning: Object '", n$, "' does not have corresponding class '", m$, "'"
+      end if
+   next
+   
+   foreach collection
+      n$ = name$
+      pos = instr(name$, ":")
+      ln  = len(name$)
+      m$ = right$(name$, ln - pos)
+      parsename$ = m$
+      gosub removeblanks
+      m$ = parsename$ 
+      if not exist(class, m$) then
+	 wcount = wcount + 1
+	 print "Warning: Collection '", n$, "' does not have corresponding class '", m$, "'"
+      end if
+   next
+
+   foreach class
+      n$ = name$
+      foreach class.instantiation.object
+	 pos = instr(name$, ":")
+	 ln  = len(name$)
+	 m$ = right$(name$, ln - pos)
+	 parsename$ = m$
+	 gosub removeblanks
+	 m$ = parsename$ 
+	 if m$ <> n$  then
+	    wcount = wcount + 1
+	    print "Warning: Object '", name$, "' is not an instantiation of the class '", n$, "'"
+	 end if
+      next
+      foreach class.instantiation.collection
+	 pos = instr(name$, ":")
+	 ln  = len(name$)
+	 m$ = right$(name$, ln - pos)
+	 parsename$ = m$
+	 gosub removeblanks
+	 m$ = parsename$ 
+	 if m$ <> n$  then
+	    wcount = wcount + 1    
+	    print "Warning: '", name$, "' is not an instantiation of the class '", n$, "'"
+	 end if
+      next
+   next
+   if wcount = 0 then
+      print "Object Interaction Model is consistent"
+   end if
+return
+
+'--------------------------------
+'f_ph9
+'-------------------------------
+f_ph9:
+   print
+   print "Phase 9: Visibility Model<-> Visibility Model"
+   print "---------------------------------------------"
+   ecount = 0
+   ucount = 0
+   wcount = 0
+
+   select all from diagram where type = "visibility Graph"
+   foreach diagram
+      foreach diagram.item
+	 if item.relationship ="class.visibility" then    
+	    o$ = item.owner
+	    m$ = item.member
+	    foreach diagram.item
+	       if item.class <> ""  then
+		  if item.object = o$ then
+		     uxo = val(x$)
+		     uyo = val(y$)
+		     lxo = uxo + val(width$)
+		     lyo = uyo + val(height$)              
+		  end if      
+		  if item.object = m$ then
+		     uxm = val(x$)
+		     uym = val(y$)
+		     lxm = uxm + val(width$)
+		     lym = uym + val(height$)
+		  end if 
+	       end if                 
+	    next         
+
+	    if uxo < uxm and uyo < uym and lxo > uxm and lyo > uym then
+	    else
+	       select all from class where name = o$         
+	       foreach class
+		  foreach class.visibility.object
+		     if name$ = m$  then
+			if visibility.type ="bound" then
+			   wcount =wcount + 1
+			   print "Warning: the visibility from Class '", o$, "' to Object '", m$, "' is bound"
+			end if          
+		     end if
+		  next
+
+		  foreach class.visibility.collection
+		     if name$ = m$  then
+			if visibility.type ="bound" then
+			   wcount =wcount + 1 
+			   print "Warning: the visibility from Class '", o$, "' to Collection '", m$, "' is bound"
+	
+			end if          
+		     end if
+		  next
+		next 'class
+	     end if
+	 end if    
+      next     
+   next
+   if wcount = 0 then
+      print "Visibility Model is consistent"
+   end if
+return
+
+'------------------------------------
+'f_cc
+'------------------------------------
+f_cc:
+   gosub f_ph1
+   gosub f_ph2
+   gosub f_ph3
+   gosub f_ph4
+   gosub f_ph5
+   gosub f_ph6
+   gosub f_ph7
+   gosub f_ph8
+   gosub f_ph9
+ return
+
+'-------------------------
+'-------------------------
+'-------------------------
+'b_ph3
+'------------------------
+b_ph3:
+   print
+   print "Phase 3: Class Model <-> Object Model"
+   print Dashline$
+   ecount = 0
+   ucount = 0
+   wcount = 0
+	 foreach object
+	    in$ = name$
+      obname$ = in$
+		  gosub ExtractClass
+      if out$ <> "" then   
+		     if not exist(class, out$) then
+	    cname$ = out$
+	    gosub AddObClass
+		if decision = 0 then
+	       foreach object.attribute
+		  aname$ = name$
+		  gosub AddAttr
+	       next
+	    end if
+			   else
+		      foreach object.attribute
+	       if not exist(class.attribute, out$, name$) then
+		  cname$ = out$
+		  aname$ = name$
+		  gosub AddAttr
+    
+					     end if
+	    next
+	 end if
+	    end if 'out$
+	 next
+
+	 foreach object
+		foreach object.message.object
+	 in$ = message.name
+	 m$ = in$
+	 obname$ =name$
+	 t$ = message.type
+	 gosub XopAndClass
+	 in$ = name$    'destination object name
+	 gosub ExtractClass ' output = out$, the destination class
+
+	 if c$ = "" then  'method belongs to dest class
+	    c$ = out$
+	    if c$ <> "" then   'dest class is given              
+	      
+	       gosub CheckCAndOP
+	    end if
+	 else            'method belongs to some baseclass
+	    if not exist(class, c$) then
+	       ecount = ecount + 1
+	       a$ = "There is no Class '"+ c$ "', but there is a  corresponding message '" + m$ + "'"
+	       a$ = a$ + ". Do you wish to create one?"
+		   decision = ask( a$, "Create", "Skip")
+	       if decision = 0 then
+		  ucount = ucount + 1  
+		  new class, c$
+		  cname$ = c$
+		  opname$ = op$
+		  gosub Addop
+	       end if
+	    else
+	       if not exist(class.operation, c$, op$) then
+		  cname$ = c$
+		  opname$ = op$      
+		  gosub Addop
+	       end if
+	    end if                        
+	 end if
+	 't$ = message.type
+	 'print "message type : ", t$
+
+
+	 if t$ = "Balking" or t$ = "Timeout" or t$ = "Asynchronous" then
+	    select all from class where name = out$
+	    foreach class
+	       if concurrency$ = "Sequential" then
+		  wcount = wcount + 1
+		  print "WARNING: Message '", m$, "' with type '", t$, "'"
+		  print "         send to the Sequential Class '", out$,"'"
+	       end if
+	    next
+	 end if
+      next
+   next
+   if wcount = 0 and ecount = 0 then
+      print "Models are consistent with each other"
+   end if
+return
+
+'-----------------------------
+'AddOP
+'----------------
+Addop:
+   ecount = ecount + 1
+   a$ = "There is no Operation '" + opname$ + "' in the class '"+cname$
+   a$ = a$ + "', but there is a message '"+ m$ +"' sent to its instance."
+   a$ = a$ + " Do you wish to create one?"
+   decision = ask(a$, "Create", "Skip")
+   if decision = 0    then
+      ucount =ucount + 1
+      new class.operation, cname$, opname$
+      print "Operation '", opname$, "' of the Class '", cname$, "' added to the database"
+
+   end if
+return
+'-----------------------
+'checkCAndOP 
+'-----------------------
+CheckCAndOp:
+		   if not exist(class, c$) then
+	    cname$ = c$
+	    obname$ = name$
+		gosub AddObClass
+
+	    opname$ = op$
+	    gosub Addop
+	 else
+	    if  not exist(class.operation, c$, op$) then
+	       cname$ = c$
+	       opname$ = op$
+	       gosub AddOP    
+	    end if
+	 end if
+return
+'-------------------
+'ExtractClass
+'-------------------
+Extractclass:
+   ln = len(in$)
+   pos = instr( in$, ":")
+   if pos=0 then
+      out$=""
+   else
+	   out$ = right$( in$, ln-pos)
+		parsename$ = out$
+		gosub removeblanks
+		out$=parsename$
+	end if
+return
+'-----------------------
+'XopAndClass
+'  e.g. input:   in$ = "3: interger superclass::open_account(acount)"
+'       output:  c$ ="superclass", op$ = "open_account"
+'-----------------------
+XOPAndClass:
+
+   'suggestion : consider remove "::" first
+   'in case that the seq # does not present will result in error
+
+   'remove seq # and blanks right after ':'
+	 pos = instr(in$, ":")
+   ln  = len(in$)
+   temp$ = right$(in$, ln-pos)
+   parsename$ = temp$
+   gosub removeblanks
+   temp$ = parsename$
+
+   'remove return type
+   pos=instr(temp$, " ")
+   ln  = len(temp$)
+   temp$ = right$(temp$, ln-pos)
+
+   pos = instr(temp$, "::")
+   ln = len(temp$)
+   if pos = 0 then
+      c$ = ""
+      
+   else
+      c$ = left$(temp$, pos-1)
+      temp$ = right$(temp$, ln-pos-1)
+
+   end if
+
+   pos = instr(temp$, "(")
+   op$ = left$( temp$, pos-1)
+
+   if c$ <> "" then
+      parsename$ = c$
+      gosub removeblanks
+      c$ = parsename$
+   end if
+
+   parsename$ = op$
+   gosub removeblanks
+   op$ = parsename$
+
+return
+'--------------------------------
+'b_cc
+'--------------------------------
+b_cc:
+  gosub GetEvents
+  hdr$ = "Phase 1: Class Model <-> State Transition Model"
+  gosub CheckDM_OM
+  hdr$ = "Phase 2: Class Model <-> Interaction Model "
+  gosub CheckET_OM
+  gosub b_ph3
+
+return
+'------------------------------------------
+'-----------------------------------
+'sm_cc
+'-----------------------------------
+SM_CC:
+
+    ECount = 0
+    WCount = 0
+
+    GOSUB Datastore_As_Persistent
+    GOSUB Create_Datastores_And_Objects
+
+    SELECT ALL FROM Class
+    FOREACH Class
+	C$ = Name$
+	IF  (Division$="Active") THEN
+	    Found=0
+	    FOREACH Class.Link.Diagram
+		IF  (Diagram.Type = "State Transition Diagram") THEN
+		    Found = 1
+		    SELECT ALL FROM Diagram WHERE Name = Name$
+		    FOREACH Diagram
+			FOREACH Item
+			    IF  (Item.Class = "State") THEN
+				GOSUB CLSRel
+				GOSUB adfd
+			    ENDIF
+			    IF  (Item.Relationship = "State.Event") THEN
+				GOSUB clerel  
+			    ENDIF
+			NEXT 'Item
+		    NEXT 'Diagram
+		ENDIF
+	    NEXT 'Class.Link.Diagram    
+
+	    IF (Found = 0) THEN
+		WCount = WCount+1 
+		PRINT "Warning: found the active Class '",
+		PRINT c$, "' without std diagram attached to it." 
+	    ENDIF
+
+	ENDIF
+    NEXT
+
+    'Check if any event is leaving a final state and
+    'check if all events to a single state carry the same data.
+    GOSUB Check_State_Events 
+
+    GOSUB Create_Child_Links                         
+    GOSUB Check_Event_Prefix
+
+    IF  (ECount = 0) AND (WCount = 0) THEN
+	PRINT "Models are consistent with each other"
+    ENDIF
+
+RETURN
+
+'-----------------------------------------------------
+'Procedure: Check_Event_Prefix
+'Purpose  : To check if prefix of an event is
+'           also a prefix of a class.
+'-----------------------------------------------------
+Check_Event_Prefix:
+
+    SELECT Name FROM Event
+    FOREACH Event
+	EName$ = Name$
+	IF  (EName$ <> "") THEN
+	    ColonPos = INSTR(EName$, ":")
+	    IF  (ColonPos > 0) THEN
+		ColonPos = ColonPos - 1 
+	    ENDIF
+	    EventPrefix$ = LEFT$(EName$, ColonPos)
+	    IF  (EventPrefix$ = "") THEN
+		WCount = WCount + 1
+		PRINT "Warning: Prefix is not specified for Event '", EName$, "'"
+	    ELSE
+		Found = 0
+		SELECT ALL FROM Class
+		FOREACH Class
+		    ClassPrefix$ = Class.Prefix
+		    IF  (Found = 0) THEN
+			Found = INSTR (EventPrefix$, ClassPrefix$)
+		    ENDIF       
+		NEXT
+		IF  (Found = 0) THEN
+		    PRINT "Warning: Prefix for Event '", EName$, "' is not an object code"
+		ENDIF
+	    ENDIF
+	ENDIF
+    NEXT 'Event
+
+RETURN
+'-----------------------------------------------------
+'Procedure: Create_Child_Links   
+'Purpose  : To create a child link when a state has an
+'           associated ADFD
+'-----------------------------------------------------
+Create_Child_Links:
+
+    SELECT ALL FROM Diagram WHERE Type = "State Transition Diagram"
+    FOREACH Diagram
+	FOREACH Diagram.Item
+	    IF  (Notation$ = "NODE") AND (Class$ = "State") AND (Child$ <> "") THEN
+		Found = 0
+		SELECT ALL FROM Diagram WHERE Name = Child$
+		FOREACH Diagram
+		    IF (Type$ <> "Action Data Flow Diagram") THEN Found = 1
+		    'set flag to skip creating new link
+		NEXT
+		SELECT Name FROM State WHERE Name = Object$
+		FOREACH State
+		    FOREACH State.Link.Diagram
+			IF (Name$ = Child$) THEN Found = 1
+		    NEXT
+		    IF  (Found = 0) THEN
+			NEW State.Link.Diagram, Object$, Child$, "Link"
+			PRINT "Create a link from state '", Object$,
+			PRINT "' to diagram '", Child$
+		    ENDIF
+		NEXT 'State
+	    ENDIF          
+	NEXT 'Diagram.Item
+    NEXT 'Diagram
+
+RETURN
+'-----------------------------------------------------
+'Procedure: Datastore_As_Persistent:   
+'Purpose  : To check if data store is persistent class
+'           To Create corresponding class for Data store
+'-----------------------------------------------------
+Datastore_As_Persistent:
+
+    FOREACH Data_Store
+	Ds$ = Name$
+	IF NOT EXIST(Class, Ds$) THEN
+	    Ecount = Ecount + 1
+	    A$ = "Data Store '"+ Ds$ +"' does not have a "
+	    A$ = A$ + "corresponding class. Do you wish to create one?"
+	    Decision = ASK(a$, "Create", "Skip")
+	    IF  (Decision = 0) THEN
+		NEW Class, Ds$
+		PRINT "Class '", Ds$, "' added to the database"
+	    ENDIF
+	ELSE
+	    SELECT ALL FROM Class WHERE Name = Ds$
+	    FOREACH Class
+		IF  (Persistence$ <> "PERSISTENT") THEN
+		    WCount = WCount + 1
+		    PRINT "Warning: Data Store '", Ds$, "' is not a persistent class"
+		ENDIF 
+	    NEXT
+	ENDIF
+    NEXT
+
+RETURN
+
+'-----------------------------------------------------
+'Procedure: Create_Datastores_And_Objects:   
+'Purpose  : To check if data store is persistent class
+'           To Create corresponding class for Data store
+'-----------------------------------------------------
+Create_Datastores_And_Objects:
+
+    FOREACH Class
+	C$ = Name$
+	IF NOT EXIST(Data_Store, C$) THEN
+	    Ecount = Ecount + 1
+	    A$ = "Class '"+ C$ +"' does not have a "
+	    A$ = A$ + "corresponding data store. Do you wish to create one?"
+	    Decision = ASK(a$, "Create", "Skip")
+	    IF  (Decision = 0) THEN
+		NEW Data_Store, C$
+		PRINT "Data store '", C$, "' added to the database"
+	    ENDIF
+	ENDIF
+	IF NOT EXIST(Object, C$) THEN
+	    Ecount = Ecount + 1
+	    A$ = "Class '"+ C$ +"' does not have a "
+	    A$ = A$ + "corresponding Object. Do you wish to create one?"
+	    Decision = ASK(a$, "Create", "Skip")
+	    IF  (Decision = 0) THEN
+		NEW Object, C$
+		PRINT "Object '", C$, "' added to the database"
+	    ENDIF
+	ENDIF
+    NEXT
+
+RETURN
+
+'-----------------------------------------------------
+'Procedure: Check_Final_States   
+'Purpose  : To check if ant event leaves a final state
+'-----------------------------------------------------
+Check_State_Events:
+
+    FOREACH State
+	S$ = Name$
+	IF  (Type$ = "FINAL") AND (COUNT(State.Event.State) > 0) THEN
+	    WCount = WCount + 1
+	    PRINT "Warning: There are events leaving the ",
+	    PRINT "final state '", S$, "'"
+	ENDIF
+
+	SameDataFlag = 0
+	FirstTime    = 0
+	FOREACH State.Event_Of
+	    IF  (FirstTime = 0) THEN
+		FirstTime  = 1
+		EventData$ = Parameters$
+	    ELSE
+		IF  (EventData$ <> Parameters$) THEN SameDataFlag = 1
+	    ENDIF
+	NEXT
+	IF  (SameDataFlag = 1) THEN
+	    WCount = WCount + 1
+	    PRINT "Warning: All events to state '", S$, 
+	    print "' does not carry the same data"
+	ENDIF
+    NEXT
+
+RETURN
+
+'--------------------------------------
+'CLSRel: check class.link.state relation
+'--------------------------------------
+CLSRel:
+   if not exist(class.link.state, c$, object$, "link") then
+      ecount = ecount + 1
+      a$ ="Class '" + c$ + "' does not link to the State '"+object$+"'"
+      a$ = a$+", but appeared in STD diagram.  Do you want to create one?"
+      dicision=ask(a$, "Create", "Skip")
+      if decision = 0 then
+	 new class.link.state, c$, object$, "link"
+	 print "Relation Class -> State: '", c$,"' -> '", object$, "' added to the database" 
+      end if                            
+   end if
+
+return
+'----------------------------------------
+'CLERel: add class.link.event relation
+'----------------------------------------
+CLERel:
+   if not exist(class.link.event, c$, link$, "link") then
+      ecount = ecount + 1
+      a$="Class '"+c$+"' does not link to the Event '"+link$+"'"
+      a$= a$+", but appeared in STD diagram.  Do you want to create one?"
+      dicision=ask(a$, "Create", "Skip")
+      if decision = 0 then
+	 new class.link.event, c$, link$, "link" 
+	 print "Relation Class -> Event : '", c$, "' -> '", link$, "' added to the database"
+      end if                            
+   end if           
+return
+'----------------------
+'adfd: traverse action data flow diagram
+'----------------------
+adfd:
+
+   select all from state where name=object$
+   foreach state
+'      print "  s:  ", name$:20,
+      found=0 
+      s$=name$       
+      foreach state.link.diagram
+'         print  " td: ", type$, " "
+	 if type$ ="Action Data Flow Diagram" then 
+	    found=1
+	    select all from diagram where name=diagram.name
+	    foreach diagram
+	       dig$ = name$           
+	       foreach item
+		  if item.relationship= "process.event" then
+'                    print "   event: ", link$  
+		     gosub AddERCRel
+		  end if
+		  if item.class="initiator" then
+'                    print "   initiator: ", object$
+		     gosub iCLDRel
+		  end if    
+		  if item.class = "data_store" then
+'                     print "   data_store : ", object$
+		     gosub dsCDLRel  
+		  end if            
+	       next                                    
+	    next 'diagram       
+	 end if
+      next  
+      
+      if found = 0 then
+	 wcount = wcount + 1
+	 print "Warning: found State '",s$,"' without ADFD diagram attached to it"                                 
+      end if  
+   next 'state 
+
+
+return
+
+'-----------------------
+'PCDLRel:  find:   df -> (or <-) p , where df is a data flow, p is a transformation 
+'                  or test process;  both df and p appeared in the  ADFD diagram d   
+'          
+'          relsut: add the  c-> df relation, where c is the owner class of the 
+'                  ADFD d   
+'note: not implemented yet, since I am not sure this is necessary. 
+'-----------------------
+PCDLRel:
+   select all from process where name= object$
+   foreach process
+      if type$ = "Transformation" or type$="Test" then
+
+
+      end if
+   next 
+return
+'--------------------------------------
+'dsCDLRel:
+'--------------------------------------
+dsCDLRel:
+    select all from data_store where name = object$
+    foreach data_store
+       ds$ = name$  
+       if not exist( class, name$) then
+	  wcount = wcount + 1
+	  print "Warning: Data Store '", name$ ,"' does not have the corresponding Class"
+       else
+	  rel$ = "data_store.Data_flow.process"
+	  foreach rel$
+	     d$ = data_flow.name
+	     'print "   data flow :", d$
+	     temp$ = c$    ' I am not sure c$ will be used latter
+	     c$ = ds$
+	     gosub cdl
+	     c$ = temp$                  
+	  next  
+	  rel$ = "data_store.Data_flow_source.process"
+	  foreach rel$
+	     d$ = data_flow.name
+'             print "   data flow :", d$
+	     temp$ = c$    ' I am not sure c$ will be used latter
+	     c$ = ds$
+	     gosub cdl
+	     c$ = temp$                  
+	  next  
+
+       end if       
+    next
+return
+'----------------------------------
+'iCdlRel: find:   i -> p linked by df  in ADFD, i an initiator, df a data flow
+'                 p a process   
+'         result: add the relation c -> df, c the owner class of ADFD          
+'ADD class.link.dataflow
+'---------------------------------
+iCLDRel:
+   select all from initiator where name = object$
+   foreach initiator
+      foreach initiator.data_Flow.process
+	 d$=data_flow.name 
+	 gosub cdl       
+      next
+   next
+return
+'---------------------
+'cdl:
+'-------------------
+cdl:
+   if not exist(class.link.data_flow, c$, d$, "link") then 
+      ecount = ecount + 1            
+      a$="Class '"+c$+"' does not link to Data Flow '"+d$+"' ,but appeared in ADFD. " 
+      a$ =a$ + "Do you wish to create one?"
+      decision = ask (a$, "Create", "Skip")
+      if decision = 0 then
+	 new class.link.data_flow, c$, d$, "link"
+	 print "Relation Class -> Data_Flow: '", c$, "' -> '", d$," added to the database"
+      end if                 
+   end if
+
+return
+'----------------------------------------------------
+'AddERCRel: add event.requester.class rel
+'----------------------------------------------------
+addERCRel:
+     if not exist(event.requester.class, link$, c$, "link") then
+	ecount = ecount + 1
+	a$="Event '"+link$+"' requester Class '"+c$
+	a$= a$ + "' appeared in ADFD, but not in database. Do you wish to create one?"
+	decision = ask(a$, "Create", "Skip")
+	if decision = 0 then
+	   new event.requester.class, link$, c$, "link" 
+	   print "Relation Event.Requestor.Class '", link$, "' -> '", c$, "' added to the database"
+    
+	end if
+     end if                              
+return
+'--------------------------------------
+'--------------------------------------
+'------------------------------
+'cy_cc:
+'------------------------------
+cy_cc:
+ecount = 0
+wcount = 0
+
+foreach class
+   f$ = name$  
+   foreach class.message.class
+      c$ = name$
+      m$ = message.name
+      if m$ <> "" then
+	 if not exist(class.operation, c$, m$) then
+	    ecount = ecount + 1
+	    a$ = "Message '"+ m$ +"' to Class '"+c$ 
+	    a$ = a$ +"' exists, but there is no corresponding operation in Class '"
+	    a$ = a$ + c$ + "'. Do you wish to create one?" 
+	    decision = ask(a$, "Create", "Skip")
+	    if decision= 0 then
+	       new class.operation, c$, m$
+	       print "Relation Class.Operation: '", c$, "'.'", m$, "' added to the database"
+ 
+	    end if           
+	 end if
+      else
+	 wcount = wcount+1
+	 print "Warning: Message from Class '", f$, "' to Class '", c$, "' has no name"
+
+      end if
+   next   
+next
+if ecount = 0 and wcount = 0  then
+   print "Models are consistent with each other"
+end if
+return

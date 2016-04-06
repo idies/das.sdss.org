@@ -1,0 +1,999 @@
+%!PS-Adobe-2.0
+%%Title: Astrometric Pipeline
+%%Creator: XVT PostScript Print Driver (mods by Mike Cowley)
+%%CreationDate: Mon Mar  2 21:35:01 1998
+%%BoundingBox: 0 0 2550 3300
+%%Orientation: Portrait
+%%Pages: (atend)
+%%EndComments
+/PROLOGUE 100 dict def
+PROLOGUE begin
+/res 300 def
+% XVT PostScript Driver Prolog
+% Copyright 1990 XVT Software Inc. All rights reserved. May be distributed
+% and used only by applications written with an XVT toolkit supplied by
+% XVT Software Inc.
+%
+% Problems:
+% Text:
+%	- opaque_text not honored; always FALSE (therefore, back_color ignored)
+% Brushes:
+%	- back_color not honored; always white
+% Not done yet:
+%	- draw_aline [l^ fcn is here]
+
+% --------- Prolog ------------------
+
+% Following based on Program 3 in the Blue Book
+%(PostScript Lanuage: Tutorial and Cookbook)
+% Usage: startangle endangle xrad yrad x_center y_center ellipse
+
+/ellipse {
+	/savematrix matrix currentmatrix def
+	translate
+	scale
+	0 0 1 4 index 4 index arc pop pop
+	savematrix setmatrix
+} bind def
+
+% End of Program 3.
+
+% Following taken from Listing 3-4 in Greek Book
+% (PostScript Language: Program Design), except for inclusion of "mul"
+% and arrowheadscale arg in l^
+% Also, coordinates adjusted to put tip of arrow nearer to current point
+
+% "arrowhead" takes these arguments:
+% lineweight prevX prevY
+ /arrowhead { %def
+	gsave
+		currentpoint
+		4 2 roll exch 4 -1 roll exch
+		sub 3 1 roll sub
+		exch atan rotate dup dup 0 rmoveto scale
+%		-1 2 rlineto
+%		7 -2 rlineto
+%		-7 -2 rlineto
+		-7 2 rlineto
+		1 -2 rlineto
+		-1 -2 rlineto
+		closepath fill
+	grestore
+	newpath
+ } bind def
+ % x y arrowheadscale l^
+ /l^ { %def    % lineto-arrow
+	currentlinewidth mul currentpoint 5 3 roll
+	lineto
+	currentpoint stroke moveto
+	arrowhead
+ } bind def
+
+% End of Listing 3-4 extract.
+
+% Following comes from Listing 9-1 of the Green Book
+% (PostScript Language: Program Design). Changes are marked with "MJR".
+
+% width height matrix proc key cache
+% definepattern -\> font
+/definepattern { %def
+	7 dict begin
+		/FontDict 9 dict def
+		FontDict begin
+			/cache exch def
+			/key exch def
+			/proc exch cvx def
+			/mtx exch matrix invertmatrix def
+			/height exch def
+			/width exch def
+			/ctm matrix currentmatrix def
+			/ptm matrix identmatrix def
+			/str
+			(12345678901234567890123456789012)
+			def
+		end
+		/FontBBox [ %def
+			0 0 FontDict /width get
+			FontDict /height get
+		] def
+		/FontMatrix FontDict /mtx get def
+		/Encoding StandardEncoding def
+		/FontType 3 def
+		/BuildChar { %def
+			pop begin
+			FontDict begin
+				width 0 cache { %ifelse
+					0 0 width height setcachedevice
+				}{ %else
+					setcharwidth
+				} ifelse
+				0 0 moveto width 0 lineto
+				width height lineto 0 height lineto
+				closepath clip newpath
+				gsave proc grestore
+			end end
+		} def
+		FontDict /key get currentdict definefont
+	end
+} bind def
+% dict patternpath -
+% dict matrix patternpath -
+/patternpath { %def
+	dup type /dicttype eq { %ifelse
+		begin FontDict /ctm get setmatrix
+	}{ %else
+		exch begin FontDict /ctm get setmatrix
+		concat
+	} ifelse
+	currentdict setfont
+	FontDict begin
+		FontMatrix concat
+		width 0 dtransform
+		round width div exch round width div exch
+		0 height dtransform
+		round height div exch
+		round height div exch
+		0 0 transform round exch round exch
+		ptm astore setmatrix
+		
+		pathbbox
+		height div ceiling height mul 4 1 roll
+		width div ceiling width mul 4 1 roll
+		height div floor height mul 4 1 roll
+		width div floor width mul 4 1 roll
+		
+		2 index sub height div ceiling cvi exch
+		3 index sub width div ceiling cvi exch
+		4 2 roll moveto
+		
+		FontMatrix ptm invertmatrix pop
+		{ %repeat
+			gsave
+				ptm concat
+				dup str length idiv { %repeat
+					str show
+				} repeat
+				dup str length mod str exch
+				0 exch getinterval show
+			grestore
+			0 height rmoveto
+		} repeat
+		pop
+	end end
+} bind def
+
+% dict patternfill -
+% dict matrix patternfill -
+/patternfill { %def
+	gsave
+		clip patternpath
+	grestore
+	newpath
+} bind def
+
+% dict patterneofill -
+% dict matrix patterneofill -
+/patterneofill { %def
+	gsave
+		eoclip patternpath
+	grestore
+	newpath
+} bind def
+
+% dict patternstroke -
+% dict matrix patternstroke -
+/patternstroke { %def
+	gsave
+		strokepath clip patternpath
+	grestore
+	newpath
+} bind def
+
+% dict ax ay string patternashow -
+% dict matrix ax ay string patternashow -
+/patternashow { %def
+	(0) exch { %forall
+		2 copy 0 exch put pop dup
+		false charpath 
+		currentpoint
+		5 index type /dicttype eq { %ifelse
+			5 index patternfill
+		}{ %else
+			6 index 6 index patternfill
+		} ifelse
+		moveto
+		3 copy pop rmoveto
+	} forall
+	pop pop pop
+	dup type /dicttype ne { pop } if pop
+} bind def
+
+% dict string patternshow -
+% dict matrix string patternshow -
+/patternshow { %def
+	0 exch 0 exch patternashow
+} bind def
+
+/opaquepatternfill { %def
+	gsave
+	1 setgray
+	fill
+	grestore
+	patternfill
+} bind def
+
+/square { %def
+	gsave
+		moveto
+		dup 0 rlineto
+		dup 0 exch rlineto
+		neg 0 rlineto
+		closepath
+		findfont  % a pattern font
+		patternfill
+	grestore
+ } bind def
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	7.5 0 moveto 15 7.5 lineto
+	0 7.5 moveto 7.5 15 lineto
+	2 setlinewidth stroke
+} bind
+/RIGHTdiagonal true definepattern pop
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	7.5 0 moveto 0 7.5 lineto
+	15 7.5 moveto 7.5 15 lineto
+	2 setlinewidth stroke
+} bind
+/LEFTdiagonal true definepattern pop
+
+30 30 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 2 scale
+	2 setlinecap
+	7.5 0 moveto 15 7.5 lineto
+	0 7.5 moveto 7.5 15 lineto
+	7.5 0 moveto 0 7.5 lineto
+	15 7.5 moveto 7.5 15 lineto
+	0.5 setlinewidth stroke
+} bind
+/crosshatch true definepattern pop
+
+% End of Listing 9-1.
+
+% Following fonts added by MJR to flesh out XVT's brushes.
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	0 0 moveto 15 0 lineto
+	2 setlinewidth stroke
+} bind
+/horz true definepattern pop
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	0 0 moveto 0 15 lineto
+	2 setlinewidth stroke
+} bind
+/vert true definepattern pop
+
+15 15 [300 72 div 0 0 300 72 div 0 0]
+{ %definepattern
+	2 setlinecap
+	0 0 moveto 0 15 lineto
+	0 0 moveto 15 0 lineto
+	2 setlinewidth stroke
+} bind
+/cross true definepattern pop
+
+% Boolean to control whether stroking is effective -- used for hollow pens.
+/do_stroke true def
+
+% Boolean to control whether filling is effective -- used for hollow brushes.
+/do_fill true def
+
+% Width of dots
+/dotwidth res 50 div def % default is .02 inches
+
+% Width of dashes
+/dashwidth res 10 div def % default is .1 inches
+
+% Default XVT colors, stored as RGB arrays
+/pen_rgb [0 0 0] def
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+
+% Fcns to set colors into the graphics state
+% Usage: pencolor, brushcolor, forecolor, backcolor
+/pencolor {
+	pen_rgb aload pop setrgbcolor
+} bind def
+/brushcolor {
+	brush_rgb aload pop setrgbcolor
+} bind def
+/forecolor {
+	fore_rgb aload pop setrgbcolor
+} bind def
+/backcolor {
+	back_rgb aload pop setrgbcolor
+} bind def
+
+% Conditional stroke, controlled by do_stroke. Used for all pen drawing.
+/cstroke {
+	do_stroke { pencolor stroke } { newpath } ifelse
+} bind def
+
+% Brush pattern functions -- they redefine /brushfill
+%Usage: XXX
+%	where XXX is brush_solid, brush_bdiag, etc.
+% Call one of these whenever the brush pattern changes.
+/brush_hollow {
+	/do_fill false def
+}
+bind def
+/brush_solid {
+	/do_fill true def
+	/brushfill { fill } bind def
+}
+bind def
+/brush_bdiag {
+	/do_fill true def
+	/brushfill { /LEFTdiagonal findfont patternfill } bind def
+}
+bind def
+/brush_fdiag {
+	/do_fill true def
+	/brushfill { /RIGHTdiagonal findfont patternfill } bind def
+}
+bind def
+/brush_diagcross {
+	/do_fill true def
+	/brushfill { /crosshatch findfont patternfill } bind def
+}
+bind def
+/brush_horz {
+	/do_fill true def
+	/brushfill { /horz findfont patternfill } bind def
+}
+bind def
+/brush_vert {
+	/do_fill true def
+	/brushfill { /vert findfont patternfill } bind def
+}
+bind def
+/brush_cross {
+	/do_fill true def
+	/brushfill { /cross findfont patternfill } bind def
+}
+bind def
+
+% Conditional fill, controlled by do_fill. Used for all brush drawing.
+/cfill {
+	do_fill
+		{ brushcolor brushfill }
+		{ newpath }
+	ifelse
+} bind def
+
+% XVT's move_to
+% Usage: x y mv
+/mv {
+	moveto
+} bind def
+
+% XVT's draw_line
+% Usage: x y dl
+/dl {
+	lineto currentpoint cstroke moveto
+} bind def
+
+% Fcns for polylines and polygons.
+% Usage:	x y b
+%			x y l
+%			... repeat as needed ...
+%			x y dl [for polyline]
+%			x y dg [for polygon]
+/b {
+	moveto
+} bind def
+/l {
+	lineto
+} bind def
+/dg {
+	lineto
+	closepath
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_rect
+% Usage: width height LLx LLy dr
+/dr {
+	moveto
+	1 index 0 rlineto
+	0 exch rlineto
+	neg 0 rlineto
+	closepath
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_roundrect
+% Usage: width oval_width/2 height oval_height/2 LLx LLy drr
+/drr {
+	% Can't use gsave/grestore to preserve CTM -- grestore will clobber path
+	/savematrix matrix currentmatrix def
+	translate
+	2 index 1 index scale
+	div /h exch def
+	div /w exch def
+	1 0 moveto
+	w 0 w 1 1 arcto 4 { pop } repeat
+	w h w 1 sub h 1 arcto 4 { pop } repeat
+	0 h 0 h 1 sub 1 arcto 4 { pop } repeat
+	0 0 1 0 1 arcto 4 { pop } repeat
+	closepath
+	savematrix setmatrix
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_oval
+% Usage: xrad yrad x_center y_center do
+/do {
+	newpath
+	0 360 5 index 5 index 5 index 5 index ellipse pop pop pop pop
+	gsave cfill grestore cstroke
+} bind def
+
+% Create path for arcs and pies
+% Usage: xrad yrad x_center y_center x1 y1 x2 y2 arcpath
+/arcpath {
+	/y2 exch def
+	/x2 exch def
+	/y1 exch def
+	/x1 exch def
+	/y0 exch def
+	/x0 exch def
+	/yr exch def
+	/xr exch def
+	y1 y0 sub xr mul x1 x0 sub yr mul atan % leaves start angle on stack
+	y2 y0 sub xr mul x2 x0 sub yr mul atan % leaves stop angle on stack
+	xr yr x0 y0 ellipse
+} bind def
+
+% XVT's draw_arc
+% Usage: xrad yrad x_center y_center x1 y1 x2 y2 da
+/da {
+	newpath
+	arcpath
+	cstroke
+} bind def
+
+% XVT's draw_pie
+% Usage: xrad yrad x_center y_center x1 y1 x2 y2 dp
+/dp {
+	newpath
+	5 index 5 index moveto
+	arcpath
+	closepath
+	gsave cfill grestore cstroke
+} bind def
+
+% XVT's draw_text
+% Usage: string x y dt
+% Limitations: ignores backcolor, opaque
+/dt {
+	moveto forecolor show
+} bind def
+
+% Fcn for picture_draw and draw_icon
+% Usage:	rowbits scanlines width height x y  bm
+%			... image data in hex follows ...
+% Image data should be in groups, where each group is (rowbits / 8) bytes,
+% rounded up to the next higher byte. There should be as many groups as
+% scanlines. A value of 1 for a bit is white; 0 is black.
+/bm {
+	gsave
+	translate
+	scale
+	/scanlines exch def
+	/rowbits exch def
+	/DataString rowbits 8 div ceiling cvi string def
+	rowbits scanlines 1 [ rowbits 0 0 scanlines neg 0 scanlines ]
+	{ currentfile DataString readhexstring pop }
+	bind image
+	grestore
+} bind def
+
+% Fcn to set pen width
+% Usage: penwidth pw
+/pw {
+	setlinewidth
+} bind def
+
+% Fcn to set pen style and pattern
+% Usage: style pat psp
+%	where style is 1 for solid, 2 for dot, 3 for dash
+%	where pat is 0 for hollow, 1 for solid, 2 for rubber
+/psp {
+	dup
+	/do_stroke exch 0 ne def % takes care of hollow case
+	2 eq
+		{ [dashwidth] }
+		{
+			dup
+			2 eq
+			{ pop [dotwidth] }
+			{ 3 eq { [dashwidth] } {[]} ifelse }
+			ifelse
+		}
+	ifelse
+	0 setdash
+} bind def
+
+% Fcn to set font
+% Usage pointsize fontname f
+/f {
+%	findfont exch res mul 72 div [ exch 0 0 2 index neg 0 0 ] makefont setfont
+	findfont exch res mul 72 div scalefont setfont
+} bind def
+
+% XVT's set_clip
+% Usage: width height LLx LLy sc
+/sc {
+	moveto
+	1 index 0 rlineto
+	0 exch rlineto
+	neg 0 rlineto
+	closepath
+	clip newpath
+} bind def
+
+% End of XVT PostScript Driver Prolog
+% ProtoSoft: start
+/gs  /gsave load def
+/gr  /grestore load def
+% ProtoSoft: end
+
+end %PROLOGUE
+%%EndProlog
+PROLOGUE begin
+1 pw
+1 1 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+%%Page: 1 1
+72 res div dup scale
+2550 3300 0 0 sc
+gsave
+1584 2382 752 348 dr
+brush_solid
+/brush_rgb [0 0 0] def
+2336 2721 b
+2346 2721 l
+2346 339 l
+762 339 l
+762 348 l
+2336 348 l
+2336 2721 dg
+grestore gsave
+1594 2391 752 339 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+18 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+18 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+18 /Helvetica-Bold f
+(Astrometric Pipeline) 1184 255 dt
+brush_solid
+/brush_rgb [1 1 1] def
+396 533 951 1109 dr
+grestore gsave
+396 533 951 1109 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+951 1484 mv
+1347 1484 dl
+(filter) 985 1445 dt
+(a) 985 1396 dt
+(b) 985 1347 dt
+(c) 985 1298 dt
+(d) 985 1250 dt
+(e) 985 1201 dt
+(f) 985 1152 dt
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric ) 1026 1582 dt
+(Transformation) 996 1543 dt
+1405 2150 mv
+1405 2065 dl
+1405 2065 dl
+1146 2002 mv
+1146 2065 dl
+1405 2065 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1386 2122 b
+1405 2150 l
+1425 2122 l
+1405 2084 l
+1386 2122 dg
+brush_solid
+/brush_rgb [0 0 0] def
+16 15 1146 2011 do
+brush_solid
+/brush_rgb [1 1 1] def
+332 533 1240 2150 dr
+grestore gsave
+332 533 1240 2150 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1240 2525 mv
+1572 2525 dl
+(id) 1274 2485 dt
+(incl) 1274 2437 dt
+(node) 1274 2388 dt
+(equinox) 1274 2339 dt
+(field0) 1274 2290 dt
+(nFields) 1274 2242 dt
+(koVersion) 1274 2193 dt
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric ) 1283 2623 dt
+(Calibration) 1297 2584 dt
+443 156 929 1846 dr
+grestore gsave
+443 156 929 1846 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Astrometric Field ) 974 1942 dt
+(Calibration) 1042 1902 dt
+1148 1846 mv
+1148 1642 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1128 1818 b
+1148 1846 l
+1167 1818 l
+1148 1780 l
+1128 1818 dg
+brush_solid
+/brush_rgb [0 0 0] def
+1167 1661 b
+1128 1661 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+({5}) 1179 1672 dt
+1 pw
+1 0 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb[0.753 0.753 0.753] def
+271 137 1270 2917 dr
+1 pw
+1 1 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+239 107 1286 2932 dr
+grestore gsave
+239 107 1286 2932 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Product) 1327 2979 dt
+1408 2683 mv
+1408 2932 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1359 2847 b
+1408 2885 l
+1458 2847 l
+1359 2847 dg
+1 pw
+1 0 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb[0.753 0.753 0.753] def
+278 235 218 2201 dr
+1 pw
+1 1 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+246 205 234 2216 dr
+grestore gsave
+246 205 234 2216 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(SSC ) 308 2361 dt
+(Pipeline ) 271 2321 dt
+(Run) 316 2282 dt
+1 pw
+1 0 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb[0.753 0.753 0.753] def
+271 138 218 1845 dr
+1 pw
+1 1 psp
+/pen_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+239 108 234 1860 dr
+grestore gsave
+239 108 234 1860 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Field) 306 1908 dt
+929 1918 mv
+473 1918 dl
+brush_solid
+/brush_rgb [0 0 0] def
+16 15 919 1918 do
+1240 2281 mv
+480 2281 dl
+16 15 1230 2281 do
+500 2300 b
+500 2262 dl
+1 pw
+1 2 psp
+/pen_rgb [0 0 0] def
+556 1918 mv
+556 2281 dl
+1 pw
+1 1 psp
+/pen_rgb [0 0 0] def
+536 2253 b
+556 2281 l
+576 2253 l
+536 2253 dg
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(same drift scan) 404 2090 dt
+brush_solid
+/brush_rgb [1 1 1] def
+310 777 1479 1222 dr
+grestore gsave
+310 777 1479 1222 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1479 1840 mv
+1789 1840 dl
+(xBore) 1513 1801 dt
+(yBore) 1513 1752 dt
+(xRot) 1513 1703 dt
+(yRot) 1513 1655 dt
+(amu0) 1513 1606 dt
+(anu0) 1513 1557 dt
+(CT) 1513 1508 dt
+(CTphi) 1513 1460 dt
+(thetaf) 1513 1411 dt
+(scalef) 1513 1362 dt
+(t0) 1513 1313 dt
+(C) 1513 1265 dt
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Camera ) 1552 1939 dt
+(Astrometry) 1523 1899 dt
+310 436 1917 1310 dr
+grestore gsave
+310 436 1917 1310 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1917 1587 mv
+2227 1587 dl
+(dewarID) 1951 1548 dt
+(xb) 1951 1499 dt
+(yb) 1951 1450 dt
+(thetai) 1951 1402 dt
+(scalei) 1951 1353 dt
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(Dewar ) 2004 1686 dt
+(Astrometry) 1961 1646 dt
+310 680 1917 475 dr
+grestore gsave
+310 680 1917 475 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+1917 997 mv
+2227 997 dl
+(camRow) 1951 957 dt
+(camCol) 1951 908 dt
+(rowRef) 1951 860 dt
+(colRef) 1951 811 dt
+(xc) 1951 762 dt
+(yc) 1951 713 dt
+(theta) 1951 665 dt
+(sfactc) 1951 616 dt
+(pscale) 1951 567 dt
+(xmag) 1951 518 dt
+grestore gsave
+2550 3300 0 0 sc
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+(CCD ) 2022 1095 dt
+(Astrometry) 1961 1056 dt
+1789 1903 mv
+2072 1903 dl
+2072 1746 dl
+brush_solid
+/brush_rgb [0 0 0] def
+brush_solid
+/brush_rgb [1 1 1] def
+1819 1922 b
+1789 1903 l
+1819 1884 l
+1859 1903 l
+1819 1922 dg
+brush_solid
+/brush_rgb [0 0 0] def
+2092 1764 b
+2052 1764 dl
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica-Bold f
+({8}) 1972 1776 dt
+2072 1310 mv
+2072 1155 dl
+brush_solid
+/brush_rgb [1 1 1] def
+2052 1282 b
+2072 1310 l
+2092 1282 l
+2072 1244 l
+2052 1282 dg
+brush_solid
+/brush_rgb [0 0 0] def
+2092 1174 b
+2052 1174 dl
+1405 2150 mv
+1405 2065 dl
+1405 2065 dl
+1405 2065 mv
+1634 2065 dl
+1634 1999 dl
+brush_solid
+/brush_rgb [1 1 1] def
+1386 2122 b
+1405 2150 l
+1425 2122 l
+1405 2084 l
+1386 2122 dg
+brush_solid
+/brush_rgb [0 0 0] def
+grestore gsave
+brush_solid
+/brush_rgb [1 1 1] def
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+12 /Helvetica-BoldOblique f
+() 0 3254 dt
+() 1275 3254 dt
+() 2550 3254 dt
+/fore_rgb [0 0 0] def
+/back_rgb [1 1 1] def
+10 /Helvetica f
+(Mon Mar  2 19981:34:21 ) 0 58 dt
+(Astrometric Pipeline) 1090 58 dt
+(1) 2527 58 dt
+showpage
+%%PageTrailer
+% End of page 1
+%%Trailer
+%%DocumentFonts:
+%%+ Times-Roman
+%%+ Helvetica-Bold
+%%+ Helvetica
+%%+ Helvetica-BoldOblique
+%%Pages: 1
+end %%PROLOGUE
+%% End of PostScript file
+%%EOF

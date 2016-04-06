@@ -1,0 +1,236 @@
+'---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: GENDC.SCR - Script that does design checking.
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'|     |          | Initial implementation.
+'|-----|----------|---------------------------------------------------------
+'| SG  | 07/08/94 | Added check to see if global attributes have types declared. 
+'|-----|----------|---------------------------------------------------------
+'| SG  | 07/08/94 | Added script written by DA to check inconsistencies b/w
+'|     |          | Class type and cardinality.
+'|-----|----------|---------------------------------------------------------
+
+'====================
+' Design Check Report
+'====================
+main:
+   ecount = 0
+   gosub initialization
+   if count(attribute)  = 0  then
+      ecount = ecount +1
+      print "Design Error: has no attributes."
+   end if
+   if count(operation)  = 0  then
+      ecount = ecount +1
+      print "Design Error: has no operations."
+   end if
+
+
+   dim ancestors$(count(class))  
+   foreach class
+     self$ = name$
+     cir =0
+     gosub circular_inheritance
+     if cir = 1 then
+       ecount = ecount + 1
+       print "Design Error: Class '", self$, "' has circular inheritance."
+     end if
+   next
+
+   GOSUB Check_Abstract_Vs_Cardinality  'Added by SG by 07/08/94
+
+'-----------------------------------
+'  Added by SG on 08/25/94
+'-----------------------------------
+'  Gives error if global qualifiers
+'  does not have types
+
+    IF  (Paradigm$ = "RUMBAUGH") THEN
+        SELECT ALL FROM Qualifier
+        FOREACH Qualifier
+	    IF  (Type$ = "") THEN
+	        ECount = ECount + 1
+	        PRINT "Design Error: Qualifier '", name$,"' has no type." 
+	    ENDIF
+        NEXT 'Qualifier
+    ENDIF
+'-----------------------------------
+
+'-----------------------------------
+'  Added by SG on 07/08/94
+'-----------------------------------
+'  Gives error if global attributes
+'  does not have types
+
+   SELECT ALL FROM Attribute
+   FOREACH Attribute
+	IF  (Type$ = "") THEN
+	    ECount = ECount + 1
+	    PRINT "Design Error: Attribute '", name$,"' has no type." 
+	ENDIF
+   NEXT 'Attribute
+'-----------------------------------
+
+   select all from class
+   foreach class
+      c$ = name$ 
+      foreach class.attribute
+         if type$ = "" then
+            ecount = ecount + 1
+            print "Design Error: Attribute '", name$,"' of the Class '", c$, "' has no type."
+         end if        
+      next
+   next
+
+   select all from class
+   foreach class
+      n$=name$
+      if count(class.attribute) = 0 and count(class.operation) = 0 then
+         print "Warning: Class '", n$, "' has no attribute or operation."
+      end if
+   next
+
+   foreach class
+      c$ = name$
+      foreach class.operation
+         if operation.return_type = "" and operation.formal_parameters ="" then
+            print "Warning: Operation '", name$, "' of the Class '", c$, "' has no return type or formal parameters."
+         end if  
+      next
+   next
+   if ecount = 0 then
+     print "No design errors found."
+   end if 
+
+end
+'--------------------------------
+' circular_inheritance
+'  output : cir = 1 if circular inheritance found. 
+'--------------------------------
+circular_inheritance:
+
+   if paradigm$ = "booch" then
+       ir$ = "class.inheritance"
+   elseif paradigm$ = "Shlaer_M" then
+       ir$ = "class.superclass"
+   else
+       ir$ = "class.generalization"
+   end if
+
+   ptr = 0
+   foreach ir$ 'class.generalization
+      ptr=ptr +1
+      ancestors$(ptr)=name$     
+   next
+
+   conti=1
+   nptr=ptr
+   while(conti=1)
+      ptr = nptr   
+      for i =1 to ptr
+         select all from class where name = ancestors$(i)
+         foreach class
+           found = 0
+           foreach ir$   'class.generalization
+              for j=1 to nptr
+                 if ancestors$(j) = name$ then found = 1
+              next
+              if found = 0 then
+                nptr=nptr+1
+                ancestors$(nptr) =name$
+              end if
+           next
+         next
+      next
+      if nptr=ptr then conti=0
+   wend
+
+   for i=1 to ptr
+      if ancestors$(i) = self$ then cir= 1
+   next
+
+return
+
+
+'------------------------------------------------------
+' Initialization
+'------------------------------------------------------
+Initialization:
+   dashLine$ = "------------------------------------------------------------------------------------"
+   print 
+   print "Design Check Report"
+   print "_____________________________________________________"
+   print 
+   print "Generated on: ", Time$
+   print 
+   print "Paradigm: ", Paradigm$
+   print "Project:  ", App$
+   print
+return
+
+'----------------------------------
+Check_Abstract_Vs_Cardinality:
+
+'(Initially implemented by DA and modified/added by SG on 07/08/94)
+'This script will check that if a class's type is abstract, then it's
+'cardinality should be zero, and/or if cardinality is zero, type should be
+'set to abstract.
+
+    DIM List$(3)
+    List$(1) = "Type: ABSTRACT, Cardinality: 0"
+    List$(2) = "Type: CONCRETE, Cardinality: 1"
+    List$(3) = "Type: CONCRETE, Cardinality: N"
+
+    SELECT ALL FROM Class 
+    FOREACH Class
+	IF  (Class.Type = "CONCRETE") THEN
+
+	    IF  (Class.Cardinality = "0") THEN
+		ECount = ECount +1
+		Msg$ = "Class '" + Name$ + "' has an inconsistency between Type and Cardinality."
+		Note Msg$
+		Choice$ = PICK$(List$,"Class: "+Name$, "Select Class Type/Cardinality")
+		IF  (Choice$ = "Type: ABSTRACT, Cardinality: 0") THEN
+		    Class.Type = "ABSTRACT"
+		    Class.Cardinality = "0"
+		ELSEIF  (Choice$ = "Type: CONCRETE, Cardinality: 1") THEN
+		    Class.Type = "CONCRETE"
+		    Class.Cardinality = "1"
+		ELSEIF (Choice$ = "Type: CONCRETE, Cardinality: N") THEN
+		    Class.Type = "CONCRETE"
+		    Class.Cardinality = "N"
+		ENDIF
+		UPDATE Class,name$
+		PRINT "Design Error: " + Msg$ + " Changed to - " + Choice$
+	    ENDIF 'Class.Cardinality = 0
+
+	ELSE 'Class.Type = ABSTRACT
+
+	    IF  (Class.Cardinality <> "0") THEN
+		ECount = ECount + 1
+		Msg$ = "Class '" + Name$ + "' has an inconsistency between Type and Cardinality."
+		Note Msg$
+		Choice$ = PICK$(List$, "Class: "+Name$, "Select Class Type/Cardinality")
+		IF  (Choice$ = "Type: ABSTRACT, Cardinality: 0") THEN
+		    Class.Type = "ABSTRACT"
+		    Class.Cardinality = "0"
+		ELSEIF (Choice$ = "Type: CONCRETE, Cardinality: 1") THEN
+		    Class.Type = "CONCRETE"
+		    Class.Cardinality = "1"
+		ELSEIF (Choice$ = "Type: CONCRETE, Cardinality: N") THEN
+		    Class.Type = "CONCRETE"
+		    Class.Cardinality = "N"
+		ENDIF
+		UPDATE Class,name$
+		PRINT "Design Error: " + Msg$ + " Changed to - " + Choice$
+	    ENDIF 'Class.Cardinality = 0
+
+	ENDIF
+
+    NEXT 'Class
+  			
+RETURN

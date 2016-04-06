@@ -1,0 +1,62 @@
+<link rel="stylesheet" type="text/css" href="../../css/sdssdas.css"><html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Data Release 7 (coadd)</title>
+</head>
+<body>
+<h1>Data Release 7 (coadd)</h1>
+<table class="release-index-table">
+<tr>
+<th>stripe</th>
+<th>strip</th>
+<th>run</th>
+<th>rerun</th>
+<th>node</th>
+<th>inclination</th>
+<th colspan="6">link (by camera column)</th>
+</tr>
+ 
+ 
+<tr class="shaded">
+<td>82</td>
+<td>S       </td>
+<td>100006</td>
+<td>2</td>
+<td>95</td>
+<td>0</td>
+  
+  <td><a href="../../cgi-bin/wholeseg?RUN=100006&amp;RERUN=2&amp;CAMCOL=1&amp;DR=75">1</a></td>
+  
+  
+  
+  
+  
+  <td><a href="../../cgi-bin/wholeseg?RUN=100006&amp;RERUN=2&amp;CAMCOL=2&amp;DR=75">2</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=100006&amp;RERUN=2&amp;CAMCOL=3&amp;DR=75">3</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=100006&amp;RERUN=2&amp;CAMCOL=4&amp;DR=75">4</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=100006&amp;RERUN=2&amp;CAMCOL=5&amp;DR=75">5</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=100006&amp;RERUN=2&amp;CAMCOL=6&amp;DR=75">6</a></td>
+ </tr>
+<tr>
+<td>82</td>
+<td>N       </td>
+<td>200006</td>
+<td>2</td>
+<td>95</td>
+<td>0</td>
+  
+  <td><a href="../../cgi-bin/wholeseg?RUN=200006&amp;RERUN=2&amp;CAMCOL=1&amp;DR=75">1</a></td>
+  
+  
+  
+  
+  
+  <td><a href="../../cgi-bin/wholeseg?RUN=200006&amp;RERUN=2&amp;CAMCOL=2&amp;DR=75">2</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=200006&amp;RERUN=2&amp;CAMCOL=3&amp;DR=75">3</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=200006&amp;RERUN=2&amp;CAMCOL=4&amp;DR=75">4</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=200006&amp;RERUN=2&amp;CAMCOL=5&amp;DR=75">5</a></td>
+  <td><a href="../../cgi-bin/wholeseg?RUN=200006&amp;RERUN=2&amp;CAMCOL=6&amp;DR=75">6</a></td>
+ </tr>
+</table>
+</body>
+</html>

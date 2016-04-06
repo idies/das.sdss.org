@@ -1,0 +1,1501 @@
+<! Input file: camera.tex>
+<! begin c8camera.tex>
+<! >
+<!  del 931101 jeg>
+<!  rev 931105 jeg>
+<!  rev 931117 rhl figures>
+<!  rev 931118 jeg jhu ias fnal corr>
+<!  filters and photometry discussion transferred from ch7(grey)>
+<!  "photometric calibration"  jk 120795>
+<!  working on figures: add ronchi, filters, PSFs jk 961117>
+<!  revised jk112496>
+<!  revised & updated jeg120396>
+<!  and knocked into shape jk120896>
+<! Walter fix inserted jk011697>
+<! >
+<TITLE>The Photometric Camera and the CCDs</TITLE><H1><A NAME="camera">The Photometric Camera and the CCDs</A></H1><P>
+
+<H2>The Photometric System</H2><P>
+
+The photometric camera for the SDSS consists 
+of two TDI scanning CCD arrays, one,
+using 30 Tektronix/SITe  2048 x 2048  CCDs in a 5 by 6 array for
+five-color photometry, and the other using 24  2048 x 400  chips
+for astrometry and focus monitoring.  We here discuss these arrays, the
+filter system, the scheme for focusing the
+telescope during an imaging scan, and the CCDs and associated
+electronics for the camera and the spectrograph. 
+<P>
+
+There are several important considerations in selecting the filter system.
+
+First, one wants the largest color
+baseline possible.  It is desirable but not necessary to use filters for
+which there already exist a large amount of data.  For example, the
+Thuan-Gunn (1976), (see also Schneider et al.  1983) 
+ uvgriz  system, which has been used for much of the
+work at Palomar on distant clusters, avoids the 5577&Aring; night
+sky line, and the  i  band cuts off in the near-infrared 
+just shortward of the major
+OH bands.  The  g  and  r  filters more-or-less match the  J  and  F 
+bands of the new Palomar Sky Survey.  The  uvgriz 
+filters provide coverage of the total wavelength
+interval and are almost uniformly spaced in   log  lambda  .  They are,
+however, fairly narrow, and all except  u 
+could be usefully widened for a
+system like ours in which efficiency is of paramount importance.  We
+have designed a filter system similar to  ugriz  which should transform
+to and from it with little difficulty, in which the  g ,  r  and  i  filters
+are as wide as practicable consistent with keeping the overlap small. 
+If we wish the  u  band to be a "good" one which is almost entirely
+contained between the Balmer jump and the atmospheric cutoff (we can
+clearly not do anything about that end), it cannot be significantly
+wider than Thuan-Gunn  u .  We
+call the new system  u'   g'   r'   i'   z' .
+The response curves and sensitivity data with the coatings
+and CCDs we will use are shown in  Figure <A HREF="../camera/camera.htm#reponseCurveFig">4.1</A>.
+<P>
+
+<HR>
+<H4><A NAME="reponseCurveFig">Figure 4.1</A></H4>
+<IMG ALIGN="MIDDLE" ALT="filter.gif" SRC="../camera/filter.gif"><P>
+The SDSS system response curves. The responses are shown without atmospheric
+extinction (upper curves) and as modified by the extinction at 1.2
+airmasses (lower curves). The curves represent expected total quantum
+efficiencies of the camera plus telescope on the sky.<HR>
+<P>
+
+The characteristics, are, in brief:  u' , a band with 3540&Aring;
+
+effective wavelength, 570&Aring; full width at half-maximum, and 60% peak
+transmission (such a filter can be made with available glasses; it has a
+small redleak problem which can be solved with suitable coatings);  g' ,
+a very wide blue-green band centered on 4770&Aring; (full width at
+half-maximum 1370&Aring;);  r' , a red band of the same width centered at
+6230&Aring;;  i' , a far-red band centered at 7630&Aring; with a width of
+1530&Aring;, and  z' , a near-infrared band centered at 9130&Aring;
+with a width of 950&Aring;.
+These bands share the advantages of the  uvgriz  system of avoiding
+the 5577&Aring; [OI] line, and the  i'  band cutting
+off before the catastrophic OH brightening and water absorption set in
+just longward of 9000&Aring;.  All the filters except  u'  are easy to make and 
+have very high central transmission; building the  u'  filters proved to
+be difficult, but the results are quite satisfactory.
+<P>
+
+The filters are all made with one or more Schott colored glass elements
+
+in combination with a single-surface interference film which serves
+different purposes in different filters.  The  u'  filter is made of 1 mm
+of UG11 and 1 mm of BG38 with an interference layer which both acts
+as an antireflection coating in the filter passband and an efficient red
+blocker in a region a few hundred &Aring; wide around 7000 &Aring;; the
+glass filters have sufficient red rejection outside this region, but
+the uncoated filter has a peak transmission of about two percent there.
+The coated filter has a maximum transmission of about  10<sup>-4</sup>  outside
+the primary band.
+The  g'  filter is made of 2
+mm of GG400 and 3 mm of BG38, with a film which acts as a short-pass
+element cutting on at 5500 &Aring;; the BG38 blocks the red efficiently
+out to the silicon limit.  The three longer filters consist of a
+single colored long-pass element and for the two shorter ones a
+short-pass interference film, the  r'  4 mm RG550 and short-pass cutoff at
+7000 &Aring;, the  i'  4 mm RG695 and short-pass cutoff at 8500 &Aring;, and
+the  z'  4 mm of RG830 open to the red. Each filter is brought to 5 mm
+physical apex thickness by means of an (quartz for  u' , BK7 for the rest)
+individual field flattener cemented
+to it; this element is necessitated by the fact that the chips are not
+flat, but are convex to the incoming light by about 230 microns measured
+center to corner. The final filters were all constructed and coated by 
+Asahi Spectro-Optical
+in Tokyo; the characteristics and uniformity are superb.
+<P>
+
+The filter assemblies in turn are cemented to the flat rear face of the
+
+final corrector element.  The front face of the corrector has been
+anti-reflection coated in horizontal stripes tailored for each filter
+passband, resulting in about 0.2% reflectivity over each band. 
+The coating was done by QSP in Los Angeles.  Since the filters are
+cemented assemblies and are themselves cemented to the corrector, there
+are only two optical surfaces near the CCD, and one of those has very
+low reflectivity. The other is the filter coating itself, which has low
+reflectivity in the passband but unfortunately has intrinsically high
+reflectivity near the long-wave cutoff over a very small wavelength
+region.  It is these "crossover" regions which contribute most of
+the ghost energy. We have calculated ghost images for the camera, and
+they will not present a serious difficulty for the photometric reductions. 
+<P>
+
+With our arrangement of
+
+CCDs operating in TDI mode at sidereal rate, we obtain
+near-simultaneous color data in the five bands; the time lapse from
+the  r'  data, the first received, to the  g' , the last, is about
+five minutes.
+<P>
+
+It is worth noting that this color set is
+
+<I>not</I> any standard one, but this survey will produce two orders of
+magnitude more photometry than currently exists, and to adopt a system
+not optimized for the survey seemed folly.  The filter set is in any case
+a good one for CCDs and has some quite nice astrophysical properties; we
+hope that it will quickly <I>become</I> a standard system. Toward
+that end we are in the process of producing as complete an astrophysical
+characterization of it (metallicity, gravity, temperature, galaxy type
+and redshift dependences) as we can; we clearly badly need these data
+ourselves. We will attempt to ensure that workers wanting sets of filters
+for this system will have reasonable avenues open to obtaining them.
+<P>
+
+With these filters, the CCDs with which they will be used, and with the
+
+SDSS telescope scanning at sidereal rate, the limiting magnitudes at the
+detection limit, S/N 5:1, will be about  u'=22.3 ,  g'=23.3 ,  r'=23.1 ,
+ i'= 22.5  and  z' = 20.8 .  These limiting magnitudes are for stars,
+note, and those for galaxies are typically between half a magnitude and
+a magnitude brighter at the same signal to noise ratio.  A signal to
+noise ratio of 50:1 (and hence photometry at the 2% level) is reached
+for stars at 19.3, 20.6, 20.4, 19.8 and 18.3 in the five bands.  Note
+that these are magnitudes on the AB system, referred to a spectrum with
+constant  f<sub>nu</sub>   (not an A0V star), and represent the fluxes a flat
+spectrum source with a given  V  magnitude would have near the effective
+wavelengths of the filters.  It is these zero points we intend to adopt. 
+These sensitivity calculations assume 1 arcsecond FWHM seeing (with a
+probably somewhat pessimistic non-gaussian PSF) and a sky with a  V 
+surface brightness of 21.7 mag/arcsecond&sup2;  (typical of the Apache
+Point site) with average extinction
+at the zenith.  A darker site helps, with roughly half a magnitude gain
+in limit per magnitude improvement in the sky (at these faint levels
+shot noise in the sky is the dominant noise source). 
+<P>
+
+<HR>
+<H4><A NAME="cameraAssemblyFig">Figure 4.2</A></H4>
+<IMG ALIGN="MIDDLE" ALT="camassy2.gif" SRC="../camera/camassy2.gif"><P>
+Front view of the SDSS camera assembly.  This diagram shows the camera
+as it would be seen with the front cover and 
+shutters removed, showing the 30 photometric and 24 astrometric/focus
+CCDs and their associated dewars and kinematic supports.<HR>
+<P>
+
+Although the  u'  band is obviously useful, 
+
+the other bandpasses provide a maximum wavelength ratio of 2.4, and
+adding  u'  only increases the baseline to 3.0.  Is there much advantage
+to using  u'  versus a slightly longer wavelength band such as Johnson
+ B  or Thuan-Gunn  v ? The answer is resoundingly yes, on three
+accounts.  First, the  u' -band is much more sensitive to population and
+metallicity effects than any of the longer wavelength bands.  For
+example, for normal spiral galaxies,  U-B  changes 1.5 times as fast as
+ B-V .  In elliptical galaxies, color gradients (which most likely
+reflect metallicity variations) are 3 times as big in  U-B  as in  B-V ;
+one must reach from  B  
+to the  K -band to achieve comparable sensitivity.  The
+ u' -band lies shortward of the H and K break in late-type galaxy
+spectra and provides the best indicator of the presence of recent
+star-formation activity.  Second, at high redshift, galaxies are usually
+observed in the more accessible and sensitive longer wavelength bands,
+which register light that, in the galaxy rest frame, is emitted in the
+ultraviolet.  The  u' -band is shifted to  g'  at  z = 0.34 ,  r'  at  z
+= 0.83 , and  i'  at  z = 1.3 .  Third, the ultraviolet is essential in
+any color-based QSO survey to separate low-redshift ( z&lt;2 ) QSOs from 
+stars, particularly low-metallicity halo stars, and, incidentally, 
+to separate low-metallicity 
+halo stars from high-metallicity stars. 
+<P>
+
+We had originally
+
+planned to devote two of the five chips in a given column to the 
+ u'  band for the sake of
+efficiency, but new UV anti-reflection coatings and an accompanying
+surface treatment developed by Tektronix/SITe for
+the  u'  chips, together with a
+higher-than-expected efficiency of the  u'  filter,
+have led us to go with the current set of 
+five independent bands, including the new  z'  filter.
+The new band is especially useful in the detection
+of very high-redshift quasars and extremely red stars, and, perhaps most
+importantly, distinguishing them from each other.
+<P>
+
+<H2>The Photometric Array-Layout and Performance</H2><P>
+
+The photometric camera is designed to use thirty 2048&sup2;  sensors in
+a six-wide by five-high array, so arranged that two transit swaths
+(strips) cover completely a stripe 2.53&deg; wide in the five independent
+filters, with some overlap (about 1 arcminute) between sensors. About
+8.3% of the area of a given stripe is imaged twice.  The focal
+plane of the camera array is illustrated in Figure <A HREF="../camera/camera.htm#cameraAssemblyFig">4.2</A>.
+Also shown there are
+the 22 smaller (2048 x 400) chips used to provide astrometric 
+calibration, and the two 2048 x 400 focus monitors.
+The scanning is top-to-bottom in Figure <A HREF="../camera/camera.htm#cameraAssemblyFig">4.2</A>,
+along the five closely-spaced CCD columns, and it is handy in discussing the
+camera to think about the geometry in this orientation. (Thus "top" of the
+camera will always refer to the leading edge.)
+<! >
+<HR>
+<P>SDSS Filter Set and Photometric Sensitivity<P>
+<CENTER><TABLE BORDER=1>
+<CAPTION><A NAME="">Table 4.1a: Filter Parameters</A></CAPTION>
+<A NAME="cameraPerformTab"></A>
+<TR><TH>name<TH>  lambda<TH>  FWHM<TH>  q<sub>t</sub><TH>  q<sub>t</sub>dl/l </TR>
+<TR><TD>u'<TD>  3543<TD>  567<TD>  1.24x 10<sup>-1</sup><TD>  1.85x 10<sup>-2</sup>  </TR>
+<TR><TD>g'<TD>  4770<TD>  1387<TD>  4.51x 10<sup>-1</sup><TD>  1.18x 10<sup>-1</sup>  </TR>
+<TR><TD>r'<TD>  6231<TD>  1373<TD>  5.63x 10<sup>-1</sup><TD>  1.17x 10<sup>-1</sup>  </TR>
+<TR><TD>i'<TD>  7625<TD>  1526<TD>  5.02x 10<sup>-1</sup><TD>  8.74x 10<sup>-2</sup>  </TR>
+<TR><TD>z'<TD>  9134<TD>  950<TD>  1.29x 10<sup>-1</sup><TD>  2.23x 10<sup>-2</sup>  </TR>
+</TABLE></CENTER>
+<HR>
+<CENTER><TABLE BORDER=1>
+<CAPTION><A NAME="">Table 4.1b: Photometric Saturation and Sky Background</A></CAPTION>
+<TR><TH>Filters<TH>  u'<TH>  g'<TH>  r'<TH>  i'<TH>  z'</TR>
+<TR><TD>Star saturates at AB<TD>  12.1<TD>  14.1<TD>  14.1<TD>  13.8<TD>  12.3</TR>
+<TR><TD>Eff Sky, mag/sec&sup2<TD>  22.1<TD>  21.8<TD>  21.2<TD>  20.3<TD>  18.6</TR>
+<TR><TD>Sky + bkg count/pxl<TD>  45<TD>  401<TD>  690<TD>  1190<TD>  1120</TR>
+</TABLE></CENTER>
+<HR>
+<CENTER><TABLE BORDER=1>
+<CAPTION><A NAME="">Table 4.1c: Photometric Sensitivity</A></CAPTION>
+<TR><TH>Filter<TH COLSPAN=2>  u'<TH COLSPAN=2>  g'<TH COLSPAN=2>  r'<TH COLSPAN=2>  i'<TH COLSPAN=2>  z'</TR>
+<TR><TH>AB<TH>  count<TH>  S/N<TH>  count<TH>  S/N<TH>  count<TH>  S/N<TH>  count<TH>  S/N<TH>  count<TH>  S/N </TR>
+<TR><TD>17.0<TD>  32489<TD>  173.2<TD>  207754<TD>  442.2<TD>  206173<TD>  432.3<TD>  153488<TD>  352.8<TD>  32840<TD>  127.3</TR>
+<TR><TD>17.5<TD>  20499<TD>  134.6<TD>  131084<TD>  345.4<TD>  130086<TD>  334.4<TD>  96845<TD>  266.0<TD>  20721<TD>  88.8</TR>
+<TR><TD>18.0<TD>  12934<TD>  103.5<TD>  82708<TD>  267.4<TD>  82079<TD>  255.3<TD>  61105<TD>  196.4<TD>  13074<TD>  60.5</TR>
+<TR><TD>18.5<TD>  8161<TD>  78.4<TD>  52185<TD>  204.5<TD>  51788<TD>  191.6<TD>  38555<TD>  141.4<TD>  8249<TD>  40.3</TR>
+<TR><TD>19.0<TD>  5149<TD>  58.2<TD>  32927<TD>  153.7<TD>  32676<TD>  140.7<TD>  24326<TD>  99.3<TD>  5205<TD>  26.4</TR>
+<TR><TD>19.5<TD>  3249<TD>  42.2<TD>  20775<TD>  113.1<TD>  20617<TD>  100.7<TD>  15349<TD>  67.9<TD>  3284<TD>  17.1</TR>
+<TR><TD>20.0<TD>  2050<TD>  29.8<TD>  13108<TD>  81.2<TD>  13009<TD>  70.2<TD>  9684<TD>  45.4<TD>  2072<TD>  11.0</TR>
+<TR><TD>20.5<TD>  1293<TD>  20.5<TD>  8271<TD>  56.8<TD>  8208<TD>  47.8<TD>  6110<TD>  29.9<TD>  1307<TD>  7.0</TR>
+<TR><TD>21.0<TD>  816<TD>  13.8<TD>  5219<TD>  38.7<TD>  5179<TD>  31.8<TD>  3855<TD>  19.4<TD>  825<TD>  4.4</TR>
+<TR><TD>21.5<TD>  515<TD>  9.1<TD>  3293<TD>  25.8<TD>  3268<TD>  20.9<TD>  2433<TD>  12.5<TD>  520<TD>  2.8</TR>
+<TR><TD>22.0<TD>  325<TD>  5.9<TD>  2078<TD>  16.9<TD>  2062<TD>  13.5<TD>  1535<TD>  7.9<TD>  328<TD>  1.8</TR>
+<TR><TD>22.5<TD>  205<TD>  3.8<TD>  1311<TD>  11.0<TD>  1301<TD>  8.7<TD>  968<TD>  5.1<TD>  207<TD>  1.1</TR>
+<TR><TD>23.0<TD>  129<TD>  2.4<TD>  827<TD>  7.0<TD>  821<TD>  5.5<TD>  611<TD>  3.2<TD>  131<TD>  0.7</TR>
+<TR><TD>23.5<TD>  82<TD>  1.6<TD>  522<TD>  4.5<TD>  518<TD>  3.5<TD>  386<TD>  2.0<TD>  82<TD>  0.4</TR>
+<TR><TD>24.0<TD>  51<TD>  1.0<TD>  329<TD>  2.9<TD>  327<TD>  2.2<TD>  243<TD>  1.3<TD>  52<TD>  0.3</TR>
+<TR><TD>24.5<TD>  32<TD>  0.6<TD>  208<TD>  1.8<TD>  206<TD>  1.4<TD>  153<TD>  0.8<TD>  33<TD>  0.2</TR>
+<TR><TD>25.0<TD>  20<TD>  0.4<TD>  131<TD>  1.1<TD>  130<TD>  0.9<TD>  97<TD>  0.5<TD>  21<TD>  0.1</TR>
+</TABLE></CENTER>
+<HR>
+<P>
+
+The expected photometric performance of the camera is outlined in Table
+
+<A HREF="../camera/camera.htm#cameraPerformTab">4.1</A>,
+which presents the assumed filter parameters, derived from the
+curves in Figure <A HREF="../camera/camera.htm#reponseCurveFig">4.1</A>.
+The quantity  q<sub>t</sub>  is the peak system quantum efficiency in
+the system, and  q<sub>t</sub>dl/l  is the integral of the system efficiency times
+ d( ln   lambda ) ; it is this quantity which relates the monochromatic
+flux averaged over the filter passband to the resulting signal:
+<P>
+<CENTER>N<sub>el</sub> = 1.96x10<sup>11</sup>t(q<sub>t</sub>dl/l)10<sup>-0.4AB<sub>nu</sub> </sup>.</CENTER>
+<P>
+The counts and signal-to-noise ratios for
+an assumed sky with a  V  brightness of 21.7 mag per square arcsecond
+(about 1.2 airmasses for the typical sky brightness at Apache Point) and
+a Palomar spectrum (Turnrose, 1974) are given in Table <A HREF="../camera/camera.htm#cameraPerformTab">4.1</A>c
+for stellar objects with 1 arcsecond FWHM images with a
+reasonably realistic seeing-dominated PSF (see Chapter <A HREF="../simul/simul.htm#simul">9</A>). 
+The assumed exposure time is 55 seconds, which corresponds to a TDI
+scanning rate near sidereal; this rate is near optimal from a variety of
+considerations.  The assumed full well is  3x 10<sup>5</sup> electrons and
+the noise is a bit worse than typical at 7 e<sup>-</sup>.  The assumed CCD quantum
+efficiencies are averages of the measured ones for the chips that will
+actually be in the camera; the dispersion is quite small. Typical
+galaxy images reach a given S/N half a magnitude to a magnitude brighter
+at the faint end, depending on their surface brightness. 
+<P>
+
+<H2>Mechanical Design of the Photometric Array</H2><P>
+
+Since the telescope has been designed carefully to accommodate the CCDs,
+
+the camera design is simply a matter of housing the chips
+stably, controlling their temperature, and tending to their various electronic
+needs.  The only complication in this is brought about by the scale of
+the project and the attendant necessity of putting a lot of stuff,
+particularly circuitry, into a relatively small space. The only moving
+parts on the camera are associated with a simple set of pneumatically
+actuated shutters
+which cover each dewar and are intended mostly to protect the CCDs from
+saturation during the day and when the enclosure lights are on, though
+the shutter can also be used to take non-critically timed `snapshot' exposures.
+The camera will be installed and removed from the telescope with a special
+cart/handling fixture which also carries the "saddle" upon which are
+mounted a pair of 10-liter liquid nitrogen dewars and the power supplies
+for the camera. The camera is mounted to the telescope with a trefoil
+kinematic mount which is also shared with the plug-plate cartridges. The
+camera side of this
+mount is carried by a steel ring girder which provides the basic structure
+for the camera and a stable attachment point for the cell for the final
+corrector, which is the optical substrate upon which the sensors and
+filters are mounted, as will be described in greater detail below.
+<P>
+
+The CCDs for the photometric array will be housed in 6 long thin dewars
+
+(Figures <A HREF="../camera/camera.htm#cameraAssemblyFig">4.2</A> and <A HREF="../camera/camera.htm#photoDewarBenchFig">4.3</A>)
+machined from aluminum blocks, each containing
+the 5 chips in one column.  The CCDs are quiet enough to be run at -80&deg;C,
+and will be kept at that temperature by an auto-fill
+liquid-nitrogen system which will be described in the next section.  The
+optical system is fast enough and the focal plane big enough that
+mounting the chips and maintaining dimensional stability is potentially
+a very difficult problem.  We seek to perform astrometry at the
+30-milliarcsecond-per-coordinate level, 
+which corresponds to 2 microns in a focal plane
+600 mm in diameter.  We have elected to solve this problem in a rather
+unusual but, we think, very satisfactory manner.  The final corrector in
+the optical system is a quite thick piece of fused quartz with a flat
+rear face, 45 mm thick in the center and some 8 mm thicker at the rim,
+and we use this element as the mechanical substrate to which all
+the CCDs are registered and all the dewars attached.  The corrector is
+thus both a mounting substrate and window for the camera dewars.  Quartz
+is strong, reasonably stiff, 
+has excellent dimensional stability and very small thermal
+expansion coefficient, and the small mechanical deflections associated
+with loading it with the camera have completely negligible impact on its
+optical performance.  Figure <A HREF="../camera/camera.htm#cameraAssemblyFig">4.2</A> shows the front view
+of the whole
+assembly as it would look with the shutters removed, through the final
+corrector.  Figure <A HREF="../camera/camera.htm#faceplateFig">4.4</A> shows the assembled corrector plate,
+mounted in its support, with the filters and the dewar mounting rails.
+<P>
+
+<HR>
+<H4><A NAME="photoDewarBenchFig">Figure 4.3</A></H4>
+<IMG ALIGN="MIDDLE" ALT="dewar.gif" SRC="../camera/dewar.gif"><P>
+A disassembled photometric dewar. 
+The CCDs are mounted on the invar optical bench (foreground).
+<P>
+
+<HR>
+<H4><A NAME="faceplateFig">Figure 4.4</A></H4>
+<IMG ALIGN="MIDDLE" ALT="faceplat.gif" SRC="../camera/faceplat.gif"><P>
+The face plate (photometric corrector) of the photometric camera. The plate has
+been mounted in its steel cell.  The filters from top
+to bottom are  g' ,  z' ,  u' ,   i' ,  and   r' .  The astrometric  r' 
+filters are above and below the photometric array, though what is seen
+is the neutral density filters associated with those. The quartz kinematic
+mounts for the photometrics and invar ones for the astrometrics can be seen,
+as can the invar rails for mounting the dewar bodies and the screw anchors
+in the quartz for both. The boxes occupying
+the spaces the dewars normally reside in 
+are just protective covers for handling.<HR>
+<P>
+
+The CCDs in the column are mounted 65 mm center-to center, which leaves
+
+1.5 mm gaps between the 63 mm square Kovar packages in which the
+devices are mounted.  There is a similar gap between the edges of the
+packages and the sidewalls of the dewars.  The CCDs are individually
+cemented to the ball element of an invar-36 ball-and-socket mount whose
+center of curvature is at the surface of the chip
+(Figures <A HREF="../camera/camera.htm#photoDewarBenchFig">4.3</A>, <A HREF="../camera/camera.htm#photoOpticBenchFig">4.5</A>, and 
+<A HREF="../camera/camera.htm#photoDewarFig">4.7</A>). These mounts provide tilt adjustment via a set
+of three push-push screws on each.
+These assemblies are in turn mounted on a `T'-shaped invar-36 optical bench
+(Figure <A HREF="../camera/camera.htm#photoOpticBenchFig">4.5</A>)
+in a manner which allows small independent rotation of the chips and
+shimming for piston. The optical benches, one
+per CCD column, are mounted to the quartz corrector by a kinematic mount
+which consists of a quartz column bonded and screwed to the corrector,
+and a set of four ball-and-double-rod pads. On one end, the arrangement
+consists of two balls on sets of parallel ways, one parallel to the
+long axis of the bench and the other perpendicular, which locates that
+end in both dimensions to within small rotations. On the other, one
+ball rests in a set of parallel ways parallel to the bench, which 
+fixes the rotation but is free to move along the bench, and the other
+in sets of <I>mutually perpendicular</I> ways, which is completely free
+to <I>slide</I> in the plane. The bench is sufficiently flexible in
+torsion that the four vertical constraints can be mated independently
+with quite reasonable dimensional tolerances and forces (50N) on the
+balls, and in fact <I>needs</I> the four-point support for torsional
+stability. The  3/16"  balls are made of titanium, which is tough, combines
+reasonably good Young's modulus and reasonably low thermal conductivity, and
+the  3/32"  rods of hard stainless steel. The conductive losses for each
+ball joint are about 0.5 watt, with the 100&deg;C temperature drop shared 
+roughly equally between the ball joint and the quartz pillar. We were
+quite amazed that the measured conductivity of the ball-rod joint was
+within about twenty percent of the calculated value for a wide variety of
+materials we tried; the scheme appears to work very well.
+The one
+disadvantage we know about for this scheme is that the stresses on the
+balls and rods are very high owing to the tiny contact area. There is
+no danger of failure at the static stress levels, but dynamic loading 
+associated with handling could easily permanently deform either member.
+To avoid this, each dewar uses a set of four electroformed nickel bellows
+which are pressurized at 40 PSI to bring the optical benches into contact
+with the kinematic mounts for observing. When the camera is being mounted
+or otherwise moved, this pressure is relieved and springs retract the
+optical benches about 1 mm and latch them away from the kinematic mounts.
+<P>
+
+The optical benches (Figure <A HREF="../camera/camera.htm#photoOpticBenchFig">4.5</A>)
+
+are quite stiff in bending.  Loaded with their own
+mass and that of the CCDs with their ball-and-socket mounts their mass is
+about 2.7 kg and deflect about 1.3 &micro;   in the focus direction and
+1.0 &micro; in the focal plane under worst-case gravity loading.  The
+kinematic mounts deflect a similar amount.  Since the loading changes
+are very slow, the contribution to the astrometric error from these
+deflections should be negligible.  The overall deflection of the
+corrector in the focus direction (which is the <I>only</I> direction there
+are appreciable deflections) is about 2 microns neglecting the
+stiffening by the dewar bodies.  At worst focus changes induce centroid
+motion a factor of 20 smaller, so there is no appreciable error from
+this source. Since the dewars in this design are simply vacuum enclosures
+and, except for the preload bellows pushrods, 
+do not even contact the optical benches,
+the load paths are very
+direct from the kinematic mounts to the telescope structure. The only
+tricky part of the design is the fact that there was a fair amount of
+(simple) machining to do on the quartz corrector.
+There are about 100 holes for screw
+anchors for the kinematic columns and the dewar mounting rails. The screw
+anchors consist of knurled brass inserts epoxied into these holes. The 
+whole process went without mishap, though there was a fair amount of anxiety,
+as there was in applying the striped coatings.
+<P>
+
+<HR>
+<H4><A NAME="photoOpticBenchFig">Figure 4.5</A></H4>
+<IMG ALIGN="MIDDLE" ALT="bench.gif" SRC="../camera/bench.gif"><P>
+Mounting the CCDs. The picture shows an
+invar optical bench, CCD mounts and the ball-and socket joints
+for tilt, rotation and focus of the CCDs. The copper contacts remove 
+the heat load to the  LN<sub>2</sub> reservoirs via silver conducting straps.
+Note the setup of the kinematic mounting pins; the set in the upper left
+is the floating set, which mates with a pair at right angles on the quartz
+post.
+<P>
+
+<HR>
+<H4><A NAME="photoOpticExplFig">Figure 4.6</A></H4>
+<IMG ALIGN="MIDDLE" ALT="clrphoto.gif" SRC="../camera/clrphoto.gif"><P>
+A CADD-generated exploded view of the optical bench assembly. The picture
+shows the bench, the
+kinematic mounts, and the CCD mountings. The ball mount which is cemented
+to the CCD package is itself a vacuum-brazed structure consisting of the
+stiffening plate (gold) and the ball (magenta).
+<P>
+
+<! >
+<HR>
+<H4><A NAME="photoDewarFig">Figure 4.7</A></H4>
+<IMG ALIGN="MIDDLE" ALT="dewarxse.gif" SRC="../camera/dewarxse.gif"><P>
+A central section side view of the photometric dewar. The locations 
+of the liquid nitrogen reservoir and the electronics are shown.<HR>
+<! >
+<P>
+
+It is, of course, necessary to adjust the tilt, rotation, and focus of
+
+each CCD fairly exquisitely; we allow 25 microns tilt error, 5 microns
+rotation error, and 25 microns total piston error.  The tolerances on the
+absolute x,y location of the CCD are not severe, since there is no really
+significant software advantage to having
+objects centered on the same
+pixel on successive chips in the column and there is a 150-pixel overlap
+between successive TDI strips, but in fact the CCD assemblies and the machining
+and mounting 
+of the optical benches has been done with sufficient precision that we
+expect the chips to be located within about 10 microns of their nominal
+positions. (We will not know for sure until the first TDI data on
+the sky is in hand). The tilt adjustment
+will be done on initial assembly of the ball and socket joint to
+theoretical optical design values.  It can be changed on the basis of 
+later tests but
+only with some difficulty; we feel, however, that it is the most
+reliable of the adjustments to predict.  The rotation is much the most
+critical and will be done by the installation of a rigid lever on the
+socket part of the assembled ball and socket which extends some distance
+perpendicular to the optical bench.  
+The optical bench will then be
+mounted accurately parallel to the ways of a precision linear slide and
+several reference points manufactured into the CCD which are exactly
+aligned with the CCD columns will then be examined with an inspection
+microscope as the optical bench assembly is moved along the slide.  The
+rotational correction is then calculated and imposed by moving the lever
+with a micrometer screw.  The lever arm translates the 5 micron
+tolerance over the 5 cm length of the CCD column to about 50
+microns, which is easily resolved by the micrometer actuator.  The
+socket must fit into the receiving hole in the optical bench to quite
+high precision, but the tolerances are not in fact very difficult with
+modern techniques, and were easily met in manufacture. Piston
+will be originally set with a set of shims to match the design
+focal plane.  We expect to
+have to trim both the rotation and focus at the mountain, hopefully
+only once.
+<P>
+
+The dewar bodies themselves are machined of aluminum, and have O-ring
+
+seals to the quartz in front and to a fitted lid which carries the
+cooling system and electronics in back.  They are about 75 mm tall
+and 330 mm long, so the atmospheric pressure on the sidewalls results
+in about 2500 N when they are evacuated.  This is taken up
+by a lip on the lid of the dewar in back and in front by a frame
+machined integrally into the piece, which consists of horizontal bars
+between the
+filters.  Thus the forces do not act on any dimensionally critical
+element.  A similar force in the focus direction acts to seal the quartz
+to the dewar body, and demands that the face of dewar body be quite
+accurately flat in order that it not distort the rear surface of the
+corrector.  This would have no optical consequence, but would change the
+effective shape of the focal plane.  This strong bond with the dewars
+results in considerable stiffening of the corrector by the dewars, since
+the Young's moduli of aluminum alloys and quartz are similar; though the
+dewar walls are relatively thin (about 1 cm) they are twice as deep
+as the corrector is thick, and most of the stiffness is in the dewars.  
+The great
+disparity of their thermal expansion coefficients, however, demands that
+the joint be a low-friction one; thin fluoropolymer gaskets appear
+adequate to the task.  When the dewar is removed, fixtures attached to
+it bring the optical bench away with it for ease of maintenance.  The
+optical bench can then be removed from the dewar through the top,
+carrying the in-dewar circuit boards (see Section  
+<A HREF="../camera/camera.htm#cameraelectronics">4.8</A> below)
+with it. 
+<P>
+
+<H2>Cooling the Photometric Array</H2><P>
+
+The dark currents for the Tek/SITe CCDs range from 30 to about 200
+
+pA/cm&sup2  at 20&deg;C.  At -80 &deg;C, this is reduced by about a
+factor of  3x10<sup>5</sup>, which for a 24 &micro;  pixel becomes 
+0.01 electrons/second for 100 pA at room temperature.  
+The sidereal-rate exposure time
+of 55 seconds thus yields a dark signal of about 5 electrons, which does
+not contribute significantly to the read noise.  The total thermal
+losses for the dewar design we are using come to about 6 to 7 watts per
+dewar, three watts from radiation (mostly from the active detector area
+itself), 2 watts through the kinematic mounting, and another two from
+miscellaneous sources such as radiation to the nitrogen container, conductive
+losses through the flexible printed circuits (FPCs)
+connecting the CCDs to their support circuitry,
+conductive losses to the force actuators on the kinematic mounts, etc. 
+<P>
+
+We will use an autofill LN2 cooling system patterned after the one used
+
+on the 4-shooter camera at Palomar (Gunn et al. 1987).  Each dewar 
+(Figure <A HREF="../camera/camera.htm#photoDewarFig">4.7</A>) will
+have a small LN2 container which holds about 200 ml of liquid, which
+will keep the detectors cool for about an hour.  Under normal operating
+conditions all the LN2 dewars vent through a common vacuum-jacketed
+fill line and are kept under moderate pressure.  There is a temperature
+sensor on the LN2 dewar body which is monitored continuously, and the
+dewar is filled when its temperature rises, but normally the dewars are
+filled on a schedule kept by the executive microprocessor (see below)
+which ensures that they never go empty. The fill is accomplished by
+opening all the solenoid valves on the individual vent lines and allowing
+liquid under pressure to enter; these are
+closed one by one as the dewars fill (as indicated by thermistor-based
+liquid sensors in the vent lines).
+<P>
+
+The heat is conducted from the chips through the kovar ball mounts
+
+cemented to them, and thence to copper posts which are connected via
+silver straps (silver is only slightly more conductive
+than copper but is nearly a factor of two more flexible at a given
+cross-section) to a cold-finger on the base of the LN2 container, which
+will also house a quantity of Zeolite molecular sieve getter.  The very
+low heat conductivity of invar makes it difficult to keep the optical
+bench isothermal, but we will keep the chips at a uniform constant
+temperature with small make-up heaters associated with each CCD and
+mounted to the copper posts,
+as seen in Figure <A HREF="../camera/camera.htm#photoOpticBenchFig">4.5</A>, 
+which attach directly to the CCD mounts. The
+thermal expansion coefficient of invar is so small that small deviations
+from isothermality have little effect on the dimensional relationship in
+the bench.  The temperatures will be measured with small
+platinum resistors fed with resistive dividers which result in reasonably
+accurately linear response over the relevant temperature range. 
+Sensors of the same type 
+are used to monitor the temperature of the LN2 container.
+<P>
+
+On the saddle which carries the power supplies (see below) are mounted
+
+two 10-liter intermediate supply dewars which supply the autofill system,
+each one supplying LN2 for one astrometric and three photometric dewars.
+These in turn are kept filled from a 160-liter dewar on the rotating
+floor of the enclosure, using an autofill system of rather different
+design.
+<P>
+
+<H2>The Astrometric/Focus Array: General</H2><P>
+
+It is necessary to do pretty good relative astrometry simply to place
+
+the fibers; with the other problems such as differential refraction with
+wavelength and position, hole placement uncertainties, etc, it seems
+necessary to find positions to accuracies of the order of 
+200 mas (12 microns in the
+focal plane) or so.  This is difficult to do with the imaging array,
+because it saturates at about 14<sup>th</sup> magnitude in the bands useful for
+astrometry ( g'  and  r' , with  r'  preferred because of the smaller
+refraction corrections), and there are almost no astrometric standards
+at this brightness level.  It would be in principle possible to
+calibrate the camera astrometrically, but one would have to depend on
+its stability and the stability of the telescope drives for relatively
+long periods to make use of the calibrations without suffering
+intolerable overheads.  It would also be very nice from an astronomical
+point of view to do substantially better, and the astrometric CCDs
+illustrated in Figure <A HREF="../camera/camera.htm#cameraAssemblyFig">4.2</A> facilitate this.
+<P>
+
+They should allow tying the
+
+astrometric system of the survey eventually to the Hipparcos reference
+frame with an accuracy of order 30 mas locally, and if the survey could
+be redone in 10 years' time or so, would provide a wealth of proper
+motion data for faint sources.  Even if there is no repeat, the utility
+provided by tying a faint QSO system to the Hipparcos one would be felt
+throughout astronomy.  The astrometry is discussed more fully in Chapter
+<A HREF="../astrom/astrom.htm#astrom">6</A> with respect to performance, Chapter <A HREF="../strategy/strategy.htm#strategy">1</A> with
+respect to the survey
+strategy; 
+here we address the hardware aspects. 
+<P>
+
+It is a simple job to scale the existing 2048-square mask set to a
+
+nonsquare device with 2048 columns, so the astrometric CCDs are
+the same width as the
+photometric chips, but with fewer rows.  A mask set for a  2048x
+400  device was designed and produced by SITe, and two foundry
+runs of frontside devices made with it.
+We need a less tall device simply to fit
+into the available space above and below the photometric array, but
+there are other compelling reasons to favor such a geometry.  We needed a
+number of these devices (24) comparable to the number of photometric chips,
+and it helped substantially
+that they were very much cheaper than the photometric CCDs; a device which
+is  2048 x 400 , which is the size we decided on, can be
+made several to a wafer, and is correspondingly cheaper than the one-to-a-wafer
+square
+device.  Also, as we shall see, we require quite dense neutral filters
+to be able to observe available astrometric standards, and the smaller
+integration times associated with less tall chips allow us to use lower
+densities. The same consideration leads us to use less sensitive (by a
+factor of about 2) and much less expensive frontside illuminated
+CCDs.  The disadvantage of the shorter columns is that the shorter
+integration times lead to larger position errors because of
+seeing-related image wander. 
+<P>
+
+We have from these runs about thirty good devices.
+
+They have been mounted on precisely machined invar-36
+headers of our design which allow the them to be mounted quite close
+together in the column (short) direction, as shown in Figure
+<A HREF="../camera/camera.htm#cameraAssemblyFig">4.2</A>; the
+minimum distance is in fact determined by the necessary oversize of the
+filters to allow for the f/5 beam.  The electrical signals to and from
+the chips are carried by flexible printed circuits of Kapton with
+very thin and narrow copper conductors.  These FPCs are mounted
+permanently on the CCD headers and the chips are bonded out to pads
+on the FPCs. 
+<P>
+
+For a chip 400 pixels high the integration time at the sidereal rate is
+
+about 11 seconds, and we argue in Chapter <A HREF="../astrom/astrom.htm#astrom">6</A> that the
+one-dimensional
+positional accuracy achievable in that time is about 30-40 mas with the
+seeing conditions which must prevail during the imaging survey.  These
+chips can be run somewhat warmer than the photometric imaging devices 
+because we
+are not interested in low signal-to-noise objects and the integration
+time is short. Cooling to -60 &deg;C is
+sufficient, which yields a background of about 10-20 electrons per
+pixel in the 11 second integration time for these devices.
+The centroid of a star which
+deposits about 2000 electrons can be measured to about 30 mas (shot and
+readout noise errors alone) in 1 arcsecond seeing with this background. 
+A star which saturates in the central pixel ( 4 x 10<sup>5</sup>e<sup>-</sup>
+for these devices) has a
+total signal of about  4x 10<sup>6</sup> electrons, so the dynamic range for
+30 mas accuracy, considering shot and read noise alone, is about 
+8.3 magnitudes. 
+<P>
+
+We will use the astrometric sensors in the  r'  band, which seems optimum.
+
+With no further attenuation, they
+will saturate at about 11.3, and one can do 30 mas astrometry to
+about 19.5.  This is not particularly useful, since the Hipparcos net
+and the AGK3 have very few objects as faint as 11.3.  We will use 3.0
+magnitude neutral filters, for a useful range of 8.3 to 16.5  
+This filtration results in
+an overlap of about 2.5 magnitudes between saturation of the imaging array
+(about 14.0), and the 30 mas accuracy limit for the astrometric array,
+and there are more than 200 stars per square degree in that magnitude
+interval near the pole. Thus the frame defined by the astrometric chips
+and the one defined by the red imaging chips (and with only a little
+more difficulty, that defined by any band in the imaging array) can be
+tied together very accurately indeed.  Most of the Hipparcos stars are
+fainter than 7th, so more dynamic range would not really be useful.
+<P>
+
+We will use a total of 24 of these devices, one at each end of each
+
+column of photometric CCDs, 5 across the top and bottom of the array to
+tie the columns together, and two outside these to provide focus
+information.  The sensors at the bottom provide a check on the tracking
+rate and direction; stars cross the bottom set 7.5 minutes after they
+cross the top, and they go through the red photometric sensors at 1.4
+minutes.  Thus drive errors with frequencies lower than  2 x
+10<sup>-3</sup>  Hz can be corrected for, and we can monitor higher frequencies
+statistically.  The astrometric and red sensors define a continuous
+frame which will drift slowly with respect to any initially defined
+absolute frame because we are basically measuring rates.  We will use
+the astrometric standards only to pin this instrumental frame to the sky
+at intervals (see Chapter <A HREF="../astrom/astrom.htm#astrom">6</A>). 
+<P>
+
+There are about 1.5 Hipparcos stars per square degree in our magnitude
+
+interval, and the array will encounter one every 70 seconds on average. 
+If the drives can be held to the accuracy we would like (25 mas rms
+stochastic component in the frequency interval  2x 10<sup>-3</sup>  to
+ 3x 10<sup>-1</sup>  Hz), as seems very likely from measured errors on
+the manufactured parts, tying the survey to the
+Hipparcos net to 30 mas should be possible; in any case, we should be
+limited to the errors imposed by seeing, which is our goal.
+<P>
+
+<H2>Mechanical Design of the Astrometric/Focus Array</H2>The linear dimension associated with 30 mas is about 2 microns, and
+achieving dimensional stability to this order over a focal plane as
+large as ours is not an easy task.  Invar-36 has a thermal coefficient
+of expansion of about  1.5x 10<sup>-6</sup> /&deg;C, and a one-degree temperature
+change induces a dimensional change over the 455 mm width of the array
+of 0.7 &micro;, so one-degree temperature control is adequate.  The
+coefficient for silicon is similar, so changes on the scale of one chip
+with reasonable temperature control are negligible.  Our approach to the
+astrometric array is thus very similar to that for the photometric; the
+chips are mounted on invar-36 headers (which are machined so that the
+curvature in the long dimension is similar to the curvature of the
+square photometric devices) with a thin compliant conductive epoxy film. 
+These headers are mounted with screws onto an invar optical bench (which
+now, of course, goes <I>across</I> the array) on invar shims which are 
+machined with the
+tilts necessary to fit the field curvature.  The shorter vertical
+dimension means that rotation is not so critical, and shimming for
+piston will be the only adjustment normally performed.  The optical
+bench is located to the corrector with kinematic mounts of the same sort
+as used in the photometric dewars, but here the pillars are much smaller,
+shorter, and are made of invar instead of quartz.
+(see Figure <A HREF="../camera/camera.htm#cameraAssemblyFig">4.2</A>). The optical bench is housed in
+an aluminum
+dewar attached to the corrector in the same fashion as the photometric
+ones, again with an O-ring seal against the quartz.  Reinforcing the
+dewar against transverse atmospheric pressure is trickier in this case
+than in the photometric case because there is no clear place to put a
+spreader bar close to the focal plane with the chips overlapping as they
+do, but spreaders behind the main horizontal web of the optical bench through
+holes in the vertical web serve here. This complicates the assembly
+somewhat, but not disastrously so.
+<P>
+
+The dimensional relationship between front and rear ranks of the
+
+astrometrics is also crucial to control, since that determines
+the accuracy with which errors in the drive rate and direction
+can be measured. This is greatly facilitated by our use of the quartz
+corrector as the metering substrate, and the dimensions should not
+be much less accurately maintained than those within one of the
+optical benches, particularly when one considers that the deflections
+associated with the kinematic mounts are the same for the front
+and rear benches (and furthermore quite similar to those for the
+photometric benches).
+<P>
+
+At an operating temperature of -60 &deg;C the total heat load to the
+
+astrometric optical bench is about 6 watts, roughly the same as the
+photometric dewars.  We have decided for simplicity and economy to use
+a cooling system essentially identical to the one adopted for the 
+photometric dewars, and in fact one which shares many parts with its
+photometric counterpart. 
+In this case we must endeavor to keep the bench as isothermal as
+possible.  The bench has a cross-section of about 7 cm&sup2;, and the
+conductivity of invar is about 0.2 watt/&deg;C-cm, so a flux of 1 watt
+in the bench is associated with a temperature gradient of about 0.7&deg;
+per cm.  Temperature <I>differences</I> across the bench of 1 &deg;C
+induce a bow in the bench with an amplitude of about 1&micro;.  We will
+distribute the heat load from the bench to a heavy cold
+bar attached to the LN2 container's coldfinger at four points along
+the optical bench, again using thin silver straps. 
+This will result in temperature inhomogeneities
+of the order of 1 degree, but in a pattern which should remain quite
+stable and hence innocuous astrometrically.
+<P>
+
+<H2>Focus</H2><P>
+
+It is clear that one of the major contributions to image degradation
+
+in normal observing circumstances is the inability to keep up with focus
+changes brought about by flexure and temperature changes, and we
+will address this problem at the outset. Our requirements are
+especially severe because of the astrometry, but it appears that a
+simple scheme will suffice to provide excellent control.
+<P>
+
+There are two astrometric-type sensors housed in the astrometric dewars
+
+which will be used as focus sensors; though they are quite far from
+the center, the image quality is quite good at their location.
+They will have only an  r'  filter with no neutral density; this filter
+is cut into three parts, and the optical thickness associated with the
+neutral filter on the other sensors is taken up by three clear glass spacers
+of varying thickness. When the the rest of the array is in focus, 
+the center of the focus chip is also, but the ends are, respectively,
+300 microns inside and outside of focus; this defocus, which results
+in image degradation from defocus comparable to the expected 1 arcsecond
+seeing, is optimal from a focus-determination signal-to-noise point of view.
+Comparison of the images
+in the two outer thirds  will provide a sensitive differential measure of the
+focus, which we will adjust dynamically; the resolution of the secondary
+motion is such that that should cause us no difficulty. Figure
+<A HREF="../camera/camera.htm#focusImageFig">4.8</A> shows
+images at five positions on the focus sensor through focus with 150 &micro; 
+focus steps, as produced by the design 
+optical system and convolved with 0.8-arcsecond
+Gaussian seeing. 
+<P>
+
+<HR>
+<H4><A NAME="focusImageFig">Figure 4.8</A></H4>
+<IMG ALIGN="MIDDLE" ALT="focus.gif" SRC="../camera/focus.gif"><P>
+Focusing the camera.
+Images in the focus CCDs are shown at at five positions
+across the chip and at focal positions -300 &micro;, -150 &micro;,
+0, +150 &micro;, and +300 &micro; referred to best focus. The left panel are
+the images as produced by the telescope, the right convolved with
+0.8 arcsecond Gaussian seeing.<HR>
+<! >
+We need to control the focus very accurately to maintain astrometric
+accuracy. If we want 2 &micro; positional accuracy in the focal plane,
+we must control the focus to about 35 &micro;, since the maximum angle
+which the central ray makes to the focal plane is about 0.055 radian.
+Focus errors this large contribute only 7 &micro;  RMS to the image
+diameters and are negligible, but we would like the focus errors
+to be negligible for the astrometric determinations as well. The
+factors which contribute to focus errors are residual aberrations
+across the field of the focus chips, photon statistics, and, of course,
+seeing.
+The focus errors from aberrations and photon statistics (the actual 
+errors will almost certainly be dominated by <I>seeing</I>) are about 3 microns 
+for any star brighter than about  r' =15.5, the limit set by psf variations
+across the focus chip. For fainter objects, photon noise becomes important
+and the errors are about 6 microns at 17.0, 9 at 18.0, and 20 at 19.0. 
+At the galactic pole, the star counts are about 250, 500, 820, and 
+1300 per square degree brighter than 15.5, 17, 18, and 19, respectively, 
+and fainter than the saturation limit at  r' =11.5. The three focus zones 
+are each about 4 arcminutes wide, so the camera will see about 0.0167 
+square degrees per minute of time in each of the zones. Thus it will see 
+4 stars brighter than 15.5, 8 brighter than 17, 13 brighter than 18, and
+21 brighter than 19 per minute. The timescale for focus changes is
+not known at this point, but the thermal time constant for the telescope
+is of the order of an hour, so it seems not unreasonable to expect that
+one can effectively average over a hundred to a few hundred stars to generate
+a focus signal, and the statistical errors will be completely negligible.
+<P>
+
+<H2><A NAME="cameraelectronics">The Electronics</A></H2>We will pack the clock drivers and the preamps in the dewars as we have
+always done in the Palomar systems to minimize noise (Gunn and Westphal
+1981).  There are monolithic FET-input operational amplifiers now
+(Burr-Brown OPA627s) which will serve as preamplifiers with
+noise performance almost equivalent to the more complex discrete ones 
+we have used in the past, but with much better overall speed and
+settling behavior.  The optical design has sufficiently good distortion
+characteristics, as we discussed in the last section, to allow clocking
+all the chips in the array synchronously, so the driver and digital
+control circuitry is also very simple.  These two facts keep the
+in-dewar circuitry simple and compact, though the sheer number of
+sensors makes the system and particularly the interconnections rather
+complex.  We have designed, produced, and tested the entire complement of
+surface-mount printed circuit cards for the dewar circuitry, which
+includes two small (43 mm  x  53mm) piggy-back polyimide printed circuit
+cards, one for the
+preamp proper and the other for the clock drivers.  The latter are CMOS
+analog switches with RC pulse-shaping circuitry on the inputs
+to the CCD gates (Figure <A HREF="../camera/camera.htm#dewarFig">4.9</A>).  The CCDs are electrically
+connected to this assembly via a 25-conductor kapton flexible printed 
+circuit with very thin copper conductors. This FPC terminates in a 
+connector on the preamp board and is soldered to a polyimide PC card
+which acts as a socket for the CCD on the other end.
+<P>
+
+<HR>
+<H4><A NAME="dewarFig">Figure 4.9</A></H4>
+<IMG ALIGN="MIDDLE" ALT="newdewar.gif" SRC="../camera/newdewar.gif"><P>
+Schematic of the in-dewar electronics. Included are the
+dual preamplifier and the CCD clock drivers. This is implemented
+as two small piggybacked surface-mount cards which are mounted on 
+the dewar wall.<HR>
+<P>
+
+Each CCD is associated with either one or two analog signal chain
+
+channels; the Tek/SITe chips have split serial registers and we
+originally hoped that we would be able to obtain all our devices with
+two good amplifiers on at least one of the serial registers.  This would
+have allowed us to use rather slow readout, with correspondingly good
+noise performance.  As it turned out, it was expedient to accept a small
+number of devices (6) with only one good amplifier, which we have to run
+twice as fast.  The noise penalty is only about a factor of 1.3, and in
+most cases is not a serious problem. We strongly considered running <I>all</I>
+of the devices with one amplifier, but unfortunately not all the devices
+will run fast enough. 
+Thus the electronics is not quite synchronous, there being
+two serial clocking schemes, one running exactly twice as fast as the 
+other but both generated from a single master clock and locked in phase.
+<P>
+
+The architecture of the serial registers on the devices is
+
+such that there are 20 `extended' pixels between the edge of the
+imaging array and the on-chip source follower amplifier, and we will
+read another 20 overscan pixels in the two-amplifier chips, so each
+half-row will consist of 1024 + 20 + 20 = 1064 pixels.  The
+single-amplifier chips will have the 20 leading and trailing extended
+pixels at either end of the data pixels and will in addition have 40
+overscan pixels at the end.  At sidereal scanning rate, the scale of
+3.643mm/arcminute corresponds to 38.05 lines/sec, or 26.28
+ms/line. The vertical transfers require about 700 &micro;s, leaving
+25.58 ms per line. At 24 &micro;s per pixel, the time for 1064 pixels
+is 25.54 ms. (The fast channels run at 12 &micro;s per pixel, clearly.) We
+need about 32 master clock cycles per pixel for all the functions in a
+classical dual-slope double-correlated sampling system, so a 1.3333
+MHz (750 ns) clock yields 24-microsecond pixels. This will be derived
+from an 8 MHz master clock, which is needed by the A/D converters and
+the data transmitters.
+<P>
+
+<! >
+<HR>
+<H4><A NAME="timingFig">Figure 4.11</A></H4>
+<IMG ALIGN="MIDDLE" ALT="crytimng.gif" SRC="../camera/crytimng.gif"><P>
+Timing and CCD control.
+The figure shows the timing 
+diagram for the horizontal charge transfer,
+double-correlated sampling control, and analog-to-digital conversion
+for one channel of a double-amplifier chip.
+The pixel clock is 1.3333 MHz, derived from the 8 MHz master clock
+which also runs the internal conversion circuitry on the Crystal
+CS5101A converter.<HR>
+<HR>
+<H4><A NAME="signalChainFig">Figure 4.10</A></H4>
+<IMG ALIGN="MIDDLE" ALT="crysig2.gif" SRC="../camera/crysig2.gif"><P>
+A schematic of the dual signal chain and A/D board.
+
+
+
+<HR>
+<! >
+The preamplifiers are AC coupled to the output of the CCDs through a
+more-or-less classical `back-porch' clamp which has no time-constant
+effects during the critical sampling period.  The coupling through the
+rest of the system is DC.  The output of the preamplifiers goes to a
+simple dual-slope integrator which is also used as a hold amplifier for
+the input to the A/Ds.  The latter are Crystal Semiconductor CS5101As,
+which convert to 16 bits in 8 &micro;s with an 8 MHz input clock (fast enough
+for both the slow and fast channels) and which
+have internal calibration circuitry which keeps the internal accuracy at
+&plusmn;&frac14 LSB.  The circuitry for this is illustrated in Figure
+<A HREF="../camera/camera.htm#signalChainFig">4.10</A>, and
+the timing diagram in Figure <A HREF="../camera/camera.htm#timingFig">4.11</A>.
+<P>
+
+There is some
+
+question about whether 16 bits is enough (probably academic, since at
+the moment more accurate converters in this speed range are not readily
+available), but the problem is not severe.  In the  g' ,  r' , and  i' 
+bands the sky levels are such that digitizing at roughly 5 electrons/(AD unit)
+results in a step which is small compared to the standard deviation in
+the background, and accommodates with 16 bits the full 300,000 electron
+full well of the device.  In the  u'  chips the situation is not quite
+so good.  The sky in each chip is only of order 50 electrons, and the noise
+with 5 electrons read noise per chip is 9.  If we demand that we
+digitize at at least two levels per unit sigma, this will result in a
+digital full well of slightly less than the physical full well of
+the CCD.  This is not a serious problem, however, since the fluxes and
+efficiencies are such that no object which does not saturate in one of
+the other bands is likely to overflow the  u'  A/D. 
+<P>
+
+The CCD voltages and the voltages required to trim the dual-slope
+
+circuitry are generated by a set of three octal 8-bit DACs, Maxim 528s,
+for each chip. These converters have serial input, and all the
+converters in the system are daisy-chained to be set up with one very
+long serial word. The output voltages are sampled and placed on
+an output bus for measurement with a set of serial-input 8-position
+analog switches. The circuit for this voltage generator and monitor
+is shown in Figure <A HREF="../camera/camera.htm#voltageBoardFig">4.12</A>. The signal chain electronics and
+this circuit are
+implemented in surface-mount technology on opposite sides of
+one small 8-layer Eurocard, all of which again have been constructed
+and tested.
+There is one of these cards per chip on the photometric camera. Some
+of these cards, associated with the single-amplifier chips, use only
+one signal channel, but all the cards are identical except for the input
+resistors which are used to trim the gains to match the individual output
+amplifier gains for each CCD, and the integrator capacitor, which is
+a different value for the fast single-amplifier circuitry. 
+Thus each photometric dewar
+contains 5 of these cards, plus one card which is basically a bus
+receiver for the clock signals described in the next paragraph; the
+astrometrics employ 6 plus a bus receiver; <I>all</I> of the astrometric
+chips run with only one amplifier to save cards and space, and so we
+run two chips with each signal-chain-bias card -- the performance
+penalty is negligible.
+<P>
+
+<HR>
+<H4><A NAME="voltageBoardFig">Figure 4.12</A></H4>
+<IMG ALIGN="MIDDLE" ALT="bias2.gif" SRC="../camera/bias2.gif"><P>
+A schematic for the voltage generator board for the
+SDSS cameras. All the voltages are generated by DACs and the
+board also has provision for placing any voltage on a measurement
+bus for monitoring.<HR>
+<P>
+
+The clock signals are generated from programs stored in EPROMs and
+
+controlled by a Forth microcontroller using a Hitachi H8/532 CPU from
+Triangle Data Systems.  One controller runs the entire camera; all CCDs
+are clocked synchronously with identical clocking waveforms (though
+there are two sets of serial waveforms for the `fast' and `slow' chips.)
+The voltage rails for all voltages can be optimized for each chip.  The
+controller has two such CPUs, one of which is busy continuously
+generating the CCD signals, and the other of which (the `executive')
+is keeping track of other housekeeping chores, such as control of the
+shutters, initial DAC voltage setup, voltage and temperature monitoring
+(the micro has an on-chip 10-bit A/D), etc.  We
+monitor all the operating voltages (the CCD temperatures are part of
+this set) on a round-robin basis, measuring one voltage per line time. 
+There are 22 voltages for each of 54 CCDs, so the process requires about
+32 seconds for one cycle.  The ADC setting requires a word a little more
+than 10000 bits long, which will have a leading checkbyte which is
+received back at the transmitter after making the entire rounds.  The
+clock will be slow, 10kHz, and so the setup time is 1 second.  All
+signals are sent from the controller by balanced RS485 transmitters and
+received at each dewar by complementary receivers.  All signals except
+the 8 MHz master clock are carried on a 100-conductor ribbon cable bus. 
+The control for the camera comes over a single `RS232' fiber pair to the
+executive micro.  There is considerable flexibility for controlling the
+chips with this scheme; we implement on-chip binning both
+horizontally and vertically (independently) and allow some control of
+the sampling interval. There is, in particular, a "quick" mode in
+which the CCD clocking is identical to that usually employed but which
+cuts the sampling time by a factor of five.  This allows the chips to be
+read at twice the usual speed with a noise penalty of a factor of 2.3,
+which is useful for calibration exposures for the
+spectrographs (this mode cannot be used for the camera, because the single-
+channel chips cannot be run this quickly owing to the limitations of the
+ADCs).  We will also have the capability to bin very heavily
+vertically, which will be used in spectrophotometric calibration for the
+spectrographs. 
+<P>
+
+The Crystal A/Ds have a serial output, which is fed (again over RS485)
+
+to a pair of small cards mounted piggyback on the dewars which carry
+RS485 receivers,
+circuitry to format the data for the single-channel chips to resemble
+that for the dual-channel chips (in the time domain),
+a programmable logic chip which acts as a
+serial-to-parallel converter and multiplexer, and a fiber-optic FOXI
+transmitter to send the data to the DA system in the operations
+building.  Each of these cards is capable of handing 12 slow
+data channels or 6 fast ones or any admixture. Each
+photometric dewar has one and each astrometric dewar 2, for a total of
+10 data fibers for the 10 DA computers (see Chapter <A HREF="../datasys/datasys.htm#datared">10</A>). 
+<P>
+
+Each voltage-generator/signal chain card dissipates 2.8 W, the bus
+
+receiver and a voltage regulator-voltage distribution board about a watt
+each, so the photometric dewars dissipate about 16 watts each and the
+astrometrics about 20 watts.  This waste heat is handled by
+the cooling system for the telescope. The camera enclosure acts as
+a semi-sealed chamber in which air is both generally circulated 
+and blown specifically into the electronic enclosures associated with
+each dewar; the heat exchanged into the air is removed with two
+liquid-cooled heat exchangers on the fans. Water-glycol is provided
+to these exchangers at about two degrees below ambient, the goal being to
+keep the camera enclosure at ambient temperature. A similar scheme is used
+in the camera power supplies.
+<P>
+
+The power supplies are not mounted directly with the camera but are carried
+
+on a separate "saddle" which is mounted with, travels with, and is 
+dismounted with the camera
+but is mounted to both the cart and the telescope mechanically and
+thermally independently. The saddle also carries two ten-liter 
+intermediate "holding" dewars which supply LN2 to the small-capacity
+LN2 containers associated with each CCD dewar.
+Each dewar has its own power
+supply, each of which is implemented using small encapsulated linear
+supplies on a
+single  20x25  cm printed-circuit card. Each supply carries
+a fairly sophisticated monitoring and shutdown system mounted on a separate
+smaller PC card. The supplies are packaged in two identical chassis, each
+set serving one astrometric and three photometric dewars. There is in each
+chassis also an "auxiliary" supply to run the control micros, the LN2
+system, the fans, solenoid valves, etc.
+<P>
+
+Thus the camera has a
+
+power cable which is made up of ten identical dewar power cables, an
+RS232 fiber pair, and ten data fibers as electrical connections to the outside
+world.  It has in addition cooling water/glycol, a single
+vacuum-jacketed LN2 supply, pressurized N2 for the shutters, and
+pressurized N2 and vacuum for the dewar kinematic mount force actuators.
+<P>
+
+Identical analog electronics are used on the spectrographs; there
+
+there will be a controller per spectrograph, so each spectrograph has a
+data fiber, and since those CCDs are not used in TDI mode, there is no
+need for an executive micro.  The spectrograph dewars are copies of the
+Palomar 4-shooter dewars and will employ the same autofill system as the
+photometric camera. 
+<P>
+
+<H2>The CCDs</H2><P>
+
+This whole project hinged quite visibly on the availability of many 
+
+(42, including
+spares) 2048  x  2048 CCD sensors, at least 8 of which need
+excellent UV sensitivity and very low readout noise ( &lt; 5  electrons.) At
+the inception of the work more than ten
+years ago, it was by no means obvious that the chips could be obtainable. 
+The project is really not viable in anything like its present conception
+without them, and though quite powerful surveys could be pursued with
+smaller detectors, we would either have given up a great deal which we believe
+is vital, have been stuck with an impossibly complex system (would you <I>really</I> like to align a focal plane with 120 1024  x  1024 CCDs
+and tend to their electronics?) or extend the survey time-to-completion
+unconscionably. 
+<P>
+
+<HR>
+
+<H4><A NAME="ccdComplementTab">Table 4.2: The SDSS CCD Complement: Requirements</A></H4>
+<H4>The Photometric Imagers: 2048x2048, 24 micron pixels</H4>
+<OL>
+<LI>z' band (9200&Aring;) unthinned frontside devices, no coating
+	<UL>
+        <LH>7 devices, noise  &lt; 20  electrons, qe  &gt;10%  at 9200 &Aring;.</LH>
+	</UL>
+
+<LI>i'  band (7700&Aring;) thinned backside devices, normal AR coat
+	<UL>
+        <LH>7 devices, noise  &lt; 20  electrons, qe  &gt;40%  at 7700 &Aring;.</LH>
+	</UL>
+
+<LI>r'  band (6300&Aring;) thinned backside devices, normal AR coat
+	<UL>
+	<LH>7 devices, noise  &lt; 15  electrons, qe  &gt;60%  at 6300 &Aring;.</LH>
+	</UL>
+
+<LI>g'  band (4800&Aring;) thinned backside devices, normal AR coat
+	<UL>
+	<LH>7 devices, noise  &lt; 10  electrons, qe  &gt;60%  at 4800 &Aring;.</LH>
+	</UL>
+
+<LI>u'  band (3500&Aring;) thinned backside devices, UV coat
+	<UL>
+	<LH>7 devices, noise  &lt; 5  electrons, qe  &gt;45%  at 3500 &Aring;.</LH>
+	</UL>
+</OL>
+
+<H4>The Spectroscopic Detectors: 2048x2048, 24 micron pixels</H4>	
+<UL>
+	<LH>5 thinned backside devices, normal AR coated,<BR></LH>
+        <LH>noise  &lt; 5  electrons, <BR></LH>
+         <LH>qe&gt;40 % at 4000 &Aring;,  &gt;60 % at 6000 &Aring;,  &gt;35 % at 9000 &Aring;.<BR></LH>
+</UL>
+<P>
+
+<H4>The Monitor Telescope Imager: 2048x2048, 24 micron pixels</H4>	
+<UL>
+	<LH>1 thinned backside UV coated device,<BR> </LH>
+       	<LH>noise  &lt; 15  electrons, like the  u'  imagers.<BR></LH>
+</UL>
+<P>
+
+<H4>The Astrometric Imagers: 2048x400, 24 micron pixels</H4>
+<UL>
+	<LH>28 unthinned frontside devices, noise  &lt; 15  electrons.</LH>
+</UL>
+
+<P>
+
+<HR>
+<H4><A NAME="ccdFig">Figure 4.13</A></H4>
+<IMG ALIGN="MIDDLE" ALT="ccds.gif" SRC="../camera/ccds.gif"><P>
+Five CCDs on an optical bench, with the gold plated heat
+shield in place.<HR>
+<P>
+
+The situation improved very markedly in the intervening years.  Tektronix
+
+produced large numbers of 2048 x 2048
+21-micron pixel devices as part of NASA's STIS
+program for the second-generation Hubble Space Telescope
+instrumentation, and went on to produced for our project a foundry 
+run of excellent
+24-micron devices, from which we were delivered 5 working and two
+excellent chips.  Subsequent to that, we negotiated a contract for
+all the chips for the survey, photometric and astrometric/focus, with
+SITe, the now-independent Tektronix CCD division.  Our cosmetic
+requirements are quite different from most of SITe's customers, since
+TDI gets rid of a whole suite of defects which would mar performance
+in normal imaging mode, and they agreed to deliver chips with 
+special grading for us at a price somewhat below that for their normal
+Grade 1 devices. This arrangement was spectacularly successful, and we
+now have in hand and have fully characterized all the chips for the
+project (including the camera, the Monitor Telescope, and the spectrographs)
+including spares.
+Five CCDs,  mounted on their optical bench, are shown in Figure
+<A HREF="../camera/camera.htm#ccdFig">4.13</A>.  This picture shows the CCD complement for one of the
+six photometric dewars.
+<P>
+
+The charge-transfer problems which plagued the early large devices were
+
+solved and considerable progress made toward effective
+antireflection coatings and backside treatment for high stable quantum
+efficiencies in the blue and near ultraviolet.  The engineers at SITe
+pursued two paths toward ultraviolet sensitivity; one
+of
+implantation techniques to keep the backside properly charged, and the
+other of coatings to reduce the severe reflection losses in the blue and
+near UV.  They have consistently produced chips with better than 50% QE
+at 3500 &Aring;.  The quantum efficiency for thinned CCDs with the
+"standard" and the delivered UV AR coating are shown in Figure
+<A HREF="../camera/camera.htm#photoQEFig">4.14</A>. One disappointment we have had is that this high UV
+QE declines substantially at low (operating) temperatures, but still is
+in the vicinity of 40% for all our devices at -80 &deg;C at 3500 &Aring;.
+<P>
+
+<HR>
+<H4><A NAME="photoQEFig">Figure 4.14</A></H4>
+<IMG ALIGN="MIDDLE" ALT="qe.gif" SRC="../camera/qe.gif"><P>
+Quantum efficiency curves.  Data are shown  for the standard
+AR coating (dashed) and for the new UV AR coating (solid) on thinned SITE CCDs.
+The QE for the unthinned chips (dotted) is shown also for comparison.<HR>
+<P>
+
+The new chips have many of the latest `wrinkles'; there is a
+
+mini-channel in the columns for very good low-level charge transfer
+efficiency, the chips can be run in MPP mode (not, unfortunately, in the
+scanning array, since they are clocking all the time), and have
+amplifiers with very small geometry for the lowest possible noise. 
+<P>
+
+The chips are designed and bonded out so that the four quadrants can be
+
+read independently, which for many applications results in a factor of 4
+improvement in readout time; for us, it is the split in the serial
+direction which is useful, since we must integrate over the full chip
+vertically.  
+It would be well to have all four amplifiers working for
+the spectroscopic chips, but that is sadly not the case for the chips in
+hand.  The readout time for a two-amplifier chip is about 1 minute, or
+30 seconds in the higher-noise `quick' mode, which can be used for
+spectroscopic flat fields and wavelength calibrations. 
+<P>
+
+The devices were first characterized roughly at SITe and sent to
+
+Princeton for final evaluation.  We have a cold test station which is
+controlled by a 486 PC which has electronics similar to 
+the survey electronics.  The system noise is about
+1 electron, and we have the capability to measure CTE, quantum
+efficiency as a function of wavelength, uniformity, and also to test the
+vertical CTE in TDI mode using a special parallel-bar target and a
+flashlamp.  The technique involves running the chip for some time with a
+uniform "sky" background of appropriate level, and then exposing the
+bar target, which consists of about 200 thin bright lines parallel to
+the rows of the CCD, with a flashlamp to impose a low-level signal. 
+This frame of data is then captured as the chip continues to scan in TDI
+mode, and the bars are superposed to simulate a single such bar
+traveling along the chip following the charge packets.  Doing this is
+important, because some low-level parallel traps which show up in single
+frames are satiated by the sky in TDI mode and disappear; other stronger
+traps permanently damage the CTE in the affected columns.
+<P>
+
+<! >
+<HR>
+<H4><A NAME="ronchiFig">Figure 4.15</A></H4>
+<IMG ALIGN="MIDDLE" ALT="ronchi.gif" SRC="../camera/ronchi.gif"><P>
+A subimage taken from a typical
+survey-grade CCD. The target is a 45&deg; Ronchi ruling with
+a half-pitch of 3 pixels perpendicular to the rulings. The image
+has 30 electrons in the white bars, less than 3 in the black ones.<HR>
+<! >
+<P>
+
+Our specifications allowed for single bad columns, the notion being that
+
+we are well-enough sampled that we can effectively interpolate across
+one bad column, but two or more contiguous ones disqualify a device from
+our consideration.  Interpolation does, of course, affect the
+statistical accuracy of the photometry of objects affected by the
+column, but that is easy to keep track of and account for in the data
+reduction.  The spectroscopic chips will be arranged so that the spectra
+are along columns, because the defects in CCDs are almost always along
+columns; thus even catastrophic column defects simply wipe out the
+spectra from a few fibers which we know about and can simply avoid
+using, and we have so <I>many</I>.  Here, unlike the situation with the
+imaging array, we <I>prefer</I> for a given number of defects for them
+to be grouped, though here again the loss of a single column in a
+spectrum is not necessarily a disaster.  This is but one example of our
+special requirements. 
+<P>
+
+Partial blocked columns, for example, show up in TDI as columns with
+
+stably depressed quantum efficiency, and if the fraction of the column
+blocked is not too large has almost no effect.  Likewise single hot
+column defects are integrated over and can be simply subtracted out if
+the noise contribution is not too great or interpolated over if it is. 
+<P>
+
+Our chips all have good to excellent electrical performance,
+
+with amplifier noise varying between 2.5 and 10 electrons for all
+devices accepted for use in the three bluest bands, and a few with
+noise as high as 20 for the  i'  and  z'  bands, 
+where the sky background will be
+about 1000 electrons per pixel. The median noise is
+near 5 electrons, and we measure CTEs 
+of around 0.99998 horizontally and 0.99994
+vertically at illumination levels of 30 electrons.  This improves to
+about 0.999993 horizontally and 0.99998 vertically at 300 electrons,
+which is typical of all the expected backgrounds except for the
+ultraviolet.  At the lower level, which is somewhat less than the
+ultraviolet sky level, the net transfer efficiency is 86 percent from
+the upper center of the chip (the pixel with the largest number of
+transfers).  This represents a shift of 0.02 pixel horizontally and 0.07
+pixel vertically (averaging over the column as TDI does) and completely
+negligible PSF degradation.  For the higher-background chips these
+numbers are more like 0.007 pixel horizontally and .02 pixel vertically.
+The overall cosmetic uniformity is excellent as well, with RMS large-scale
+QE variations of about 7% in the blue and 4% in the red and
+infrared. The main defects we have seen are parallel traps of various
+strengths, many of which are strong enough to cause serious CTE degradation
+in the vertical direction with the backgrounds we are using, though
+again they are not fatal if they involve only one column. A subimage
+in the corner farthest from the amplifier
+taken with a quite typical device of a ronchi target with 30 electrons
+signal in the bright bars is shown in Figure <A HREF="../camera/camera.htm#ronchiFig">4.15</A>, in which the
+excellent cosmetics and low-level CTE is seen.
+<P>
+
+We elected to take chips mounted in their standard kovar packages even
+
+though this led to significant mechanical difficulty in their mounting
+and cooling; demanding better packaging would have precluded culling our
+devices from a commercial production stream and would have prohibitively
+increased the cost. The problems incurred are fairly serious, however.
+The expansion coefficient of kovar matches silicon (and the substrate
+for the thinned devices, which <I>does</I> match silicon well) so
+poorly that the overall curvature of the devices, already serious at
+room temperature because of problems in high-temperature processing,
+is much worse at operating temperature. As mentioned above, the chips are 
+convex toward the incoming light by about 230 microns center to corner, and
+that value roughly doubles cooling to -80 C. We have dealt with this both
+for the spectroscopic and photometric chips by cementing a heavy kovar
+stiffener to the back; in the case of the photometric chips, this is
+part of the ball tilt mounting. It was also necessary to build a precision
+measuring microscope to aid in the gluing of the photometric chips, since
+we wished to position the chips to pixel-or-subpixel accuracy and the chips
+are not mounted very accurately in their headers. We thus used reference
+points on the die itself to reference the CCD to its ball mount, and 
+succeeded in doing so to an accuracy of about 3 microns RMS.
+<P>
+
+Our requirements for spectral sensitivity and noise vary a great deal
+
+across the array, though for the  u'  chips (7 with spares; we have
+spared the equivalent of a complete 5-chip dewar) we certainly require
+both good UV sensitivity <I>and</I> very low noise.  The original
+requirements we imposed are summarized in Table <A HREF="../camera/camera.htm#ccdComplementTab">4.2</A>.
+The chips we have received and will use are better than these specs in
+most respects. The operating temperature quantum efficiencies are well 
+exceeded in all devices except those for the  u'  band; the mean
+qe for the  z'  chips is 14 %; for the  i' , 60%; for the  r' , 78%;
+for the  g' , 70%; and for the  u' , 38%; the dispersions in these
+numbers are small and probably dominated by measuring error. 
+We have built in to the dewars
+UV floodlamps and can use them to enhance the UV quantum efficiencies
+to approximately the spec 45%, but whether we will use them or not
+is a complex operational issue, since the effects of UV flooding are
+not permanent and there is a significant dark current penalty.
+The noise specs are also all met except for the  u' , where the worst
+figure is 6.4 electrons.
+<P>
+
+It goes almost without saying that the development of these
+
+devices for the survey has had tangible benefits for all of optical
+astronomy. Though the major thrust of wafer-scale large CCDs has now 
+gone toward
+devices with more but smaller pixels resulting in slightly smaller
+devices overall, the production of these chips with high yield depends
+heavily on techniques learned here.
+<P>
+
+<HR><H3>References</H3> 
+
+<P>
+
+Gunn, J. E. and Westphal, J. A. 1981, <I>Proc SPIE</I> <B>290</B>, 16.
+
+<P>
+
+Gunn, J. E., Carr, M., Danielson, G. E., Lorenz, E. O., Lucinio, R., 
+
+Nenow, V. E., Smith, J. D., and Westphal, J. A. 1987, 
+<I>Optical Engineering</I>, 
+<B>26</B>, 779.
+<P>
+
+Gunn, J. E. 1989, in <I>Clusters of Galaxies</I>, W.  Oegerle, M.  Fitchett,
+
+and L.  Danly eds.,  proceedings of the third Space Telescope Symposium, 
+Cambridge,  341.
+<P>
+
+Schneider D. P., Schmidt, M., and Gunn, J. E., 1989, <I>A. J.</I> <B>98</B>, 1951.
+
+<P>
+
+Turnrose, B. 1974, <I>P. A. S. P.</I> <B>86</B>, 545.
+
+<P>
+
+<! end c8camera.tex>
+<! >

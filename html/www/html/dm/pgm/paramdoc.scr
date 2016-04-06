@@ -1,0 +1,71 @@
+' Parameter file generation Script
+'
+'
+main:
+	FOREACH Window
+	IF Window.Type = "DIAGRAM" THEN
+		tmp$ = Window.Name
+		WHILE INSTR(tmp$, "- ") <> 0
+		  tmp$ = MID$(tmp$, INSTR(tmp$, "- ")+2)
+		WEND
+		SELECT ALL FROM Diagram WHERE Name = tmp$
+		FOREACH Diagram
+		  FOREACH Diagram.Item
+		   IF Item.Selected= "T" THEN
+			SELECT ALL FROM Class WHERE Name = Item.Object
+			  FOREACH CLASS
+			    GOSUB doit
+			  NEXT
+		   ENDIF
+		  NEXT
+		NEXT
+	ENDIF
+	NEXT
+
+END
+
+doit:
+
+e$ = Class.Name
+d$ = Class.Document
+IF d$ = "PARAM" OR d$ = "FITS" THEN
+	outfile$ = "../code/" + e$ + ".doc"
+	OPEN outfile$ FOR OUTPUT AS #1
+	print #1, "#parameter file description for ", e$
+	print #1, " "
+	print #1, "#global params (fast changing parameters like Run Number)"
+ FOREACH Class.Attribute
+	a$ = Attribute.Name
+	ee$ = Attribute.Description
+	ff$ = Attribute.Type
+	gg$ = Attribute.Initial_Value
+	hh$ = Attribute.Size
+	print #1, a$, " ", gg$, " #" , ee$, "  ", ff$, " ", hh$
+ NEXT
+	print #1, " "
+	print #1, "# other parameter groups"
+	print #1, " "
+
+ FOREACH Class.Aggregation
+	b$ = Aggregation.Name
+	c$ = Aggregation.Source
+	f$ = Aggregation.Destination
+	SELECT ALL FROM Class Where Name = f$
+	FOREACH Class
+	nn$ = Class.Name
+	print #1, "#parameter group: ", nn$
+	FOREACH Class.Attribute
+	a$ = Attribute.Name
+	ee$ = Attribute.Description
+	ff$ = Attribute.Type
+	gg$ = Attribute.Initial_Value
+	hh$ = Attribute.Size
+	print #1, a$, " ", gg$, " #" , ee$, "  ", ff$, " ", hh$
+	NEXT
+	NEXT
+NEXT
+
+	CLOSE #1
+ENDIF
+RETURN
+

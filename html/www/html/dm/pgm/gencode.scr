@@ -1,0 +1,531 @@
+---------------------------------------------------------------------------
+' Paradigm Plus 2.0, Copyright 1990-94 ProtoSoft Inc.  All Rights Reserved.
+'
+' FILE: gencode.scr -  Common Code for all code generation
+'       Supports RUMBAUGH, BOOCH, FUSION, COAD_YOU, SHLAER_M
+'
+'---------------------------------------------------------------------------
+'| Who | Date     | Description
+'|-----|----------|---------------------------------------------------------
+'| DD  |          | Initial implementation. 
+'|-----|----------|---------------------------------------------------------
+'| HS  |          | Upgraded to support 2.0. 
+'|-----|----------|---------------------------------------------------------
+'| TZ  | 08-04-94 | Incoporate class, module, & function comment blocks and
+'|     |          |   code generation by subsystem or class
+'|-----|----------|---------------------------------------------------------  
+
+'---------------------------------------------------------------------------
+'                               main
+'---------------------------------------------------------------------------
+CommonCodeMain:
+   FALSE=0
+   TRUE =1
+   UseInclude = TRUE
+   Now$ = Time$
+   MapAtt = TRUE
+   MapQual = FALSE
+   MapOp = FALSE
+   '----------------------------------  TMZ 8-4-94
+    '{Mapping to different Paradigms}
+    Subsystem$               = "Subsystem"
+    SubsystemClass$          = "Subsystem.Contains.Class"
+'    MClass$                  = "Class"
+    ClassAttrib$             = "Class.Attribute"
+    ClassOperat$             = "Class.Operation"
+    ClassGeneralization$     = "Class.Generalization"
+    ClassLink$               = "Class.Link_Association"
+    ClassAssociation$        = "Class.Association"
+    ClassAggregation$        = "Class.Aggregation"
+    ClassParticipation$      = "Class.Participation"
+
+    IF  (Paradigm$ = "BOOCH") THEN
+	ClassGeneralization$     = "Class.Inheritance"
+
+    ELSEIF (Paradigm$ = "FUSION") THEN
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+
+    ELSEIF (Paradigm$ = "COAD_YOU") THEN
+	Subsystem$           = "Subject"
+	SubsystemClass$      = "Subject.Contains.Class"
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+
+    ELSEIF (Paradigm$ = "SHLAER_M") THEN
+	SubsystemClass$      = "Subsystem.Link.Class"
+	ClassLink$           = "Class.Link_Relationship"
+	ClassAssociation$    = "Class.Relationship"
+	ClassGeneralization$ = "Class.Superclass"
+	ClassAggregation$    = ""
+	ClassParticipation$  = ""
+    ENDIF
+   '----------------------------------  
+   ClassCnt = 0
+   IF ICGOption$ = "New" THEN
+	gosub PrintScriptInfo
+   ENDIF
+
+   '----------------------
+'   if paradigm$ = "RUMbaugh" or paradigm$="OMT94" then
+'     gosub GetQualifiers
+'     'output: arrays: qs$, qas$, qcs$, qtys$; size = qt
+'     '  They are qualifierName, Association, ClassName, Q...types
+'     '  Called by GenerateRelationAttribute
+'     '-----------------------
+'   end if       
+   '--------------------------------------------------
+   ' Added ASK and if statement to incorporate the generation
+   '  by subsystem.  TMZ 08-04-94
+   '--------------------------------------------------
+
+   NumSubsystems = COUNT(Subsystem$)
+'   if NumSubsystems > 0 then
+'     choice = ASK("Generate Code by Subsystem or by Class?", "Subsystem", "Class")
+'   else
+    choice = 2
+'   end if
+    if choice = 2 then
+	FOREACH Window
+	   IF Window.Type = "DIAGRAM" THEN
+		tmp$ = Window.Name
+		WHILE INSTR(tmp$, "- ") <> 0
+		    tmp$ = MID$(tmp$, INSTR(tmp$, "- ")+2)
+		WEND
+	        SELECT All FROM Diagram WHERE Name = tmp$
+	        FOREACH Diagram
+		    FOREACH Diagram.Item
+		        IF Item.Selected="T" THEN
+			    SELECT All FROM Class WHERE Name=Item.Object
+	   	    	    '------------------------------------------------
+	   	    	    ' main loop
+	   	    	    '------------------------------------------------
+	   	            foreach Class
+				IF Class.Class <> "" THEN
+	      		            ownerclass$=name$   'used in comparsion
+	      		            CurrentClass$ = Class.Class
+	    		            CurrentName$ = Class.Name
+	      		            ClassCnt = ClassCnt + 1
+	      		            MembersExist = FALSE
+	      		            gosub TestMembers
+	      		            if MembersExist = FALSE then gosub NoMembersMessage
+	      		            if MembersExist <> FALSE then
+		 	                Gosub GenerateCode
+		 	                IF ICGOption$ = "New" THEN
+					    gosub PrintClassInfo
+					ENDIF
+	      		            end if
+	      		            CurScope$ = ""  ' Reset for next class.TMZ 08/05/94
+				ENDIF
+			    NEXT
+		        ENDIF
+		    NEXT
+	        NEXT
+	    ENDIF
+	NEXT
+    ELSEIF choice = 1 then
+        CurrentSubsystem$ = ""
+        ' select for pick statement
+        select name from Class
+        OwnerClass$ = Pick$(Class)
+        ' select for foreach statement
+        select all from Class where name = OwnerClass$
+        '-----------------------------------------------
+        ' Find the owning subsystem for comment in File Comment Header
+        '-----------------------------------------------
+        IF Paradigm$ <> "BOOCH" THEN
+            foreach Subsystem$
+	        foreach SubsystemClass$
+	            if Class.Name = OwnerClass$ then
+	                 CurrentSubsystem$ = Subsystem.Name
+	            end if
+	        next
+            next
+        ELSE
+            foreach Subsystem$
+	        foreach Subsystem.Link.Class_Category
+	            foreach Class_Category.Using.Class
+	                if Class.Name = OwnerClass$ then
+                            CurrentSubsystem$ = Subsystem.Name
+	                end if
+	            next
+	        next
+            next
+        END IF
+        '---------------------------------------------------------
+        ' main loop
+        '---------------------------------------------------------
+        foreach Class
+	    ownerclass$=name$   'used in comparsion
+	    CurrentClass$ = Class.Class
+	    CurrentName$ = Class.Name
+	    ClassCnt = ClassCnt + 1
+	    MembersExist = FALSE
+	    gosub TestMembers
+	    if MembersExist = FALSE then gosub NoMembersMessage
+	    if MembersExist <> FALSE then
+	        Gosub GenerateCode
+	        gosub PrintClassInfo
+	    end if
+	    CurScope$ = ""  ' Reset for next class.  TMZ 08/05/94
+         next 'Metaclass
+    else
+        IF Paradigm$ <> "BOOCH" THEN
+            select name from Subsystem$
+            OwnerSub$ = Pick$(Subsystem$)
+            CurrentSubsystem$ = OwnerSub$
+            select all from Subsystem$ where name = OwnerSub$
+            foreach Subsystem$
+	        foreach SubsystemClass$
+	    	    OwnerClass$ = Class.Name
+	   	    ' select for foreach statement
+	   	    select all from Class where name = OwnerClass$
+	   	    '---------------------------------------------------------
+	   	    ' main loop
+	   	    '---------------------------------------------------------
+	   	    foreach Class
+	      		ownerclass$=name$   'used in comparsion
+	      		CurrentClass$ = Class.Class
+	    		CurrentName$ = Class.Name
+	      		ClassCnt = ClassCnt + 1
+	      		MembersExist = FALSE
+	      		gosub TestMembers
+	      		if MembersExist = FALSE then gosub NoMembersMessage
+	      		if MembersExist <> FALSE then
+		 	    Gosub GenerateCode
+		 	    gosub PrintClassInfo
+	      		end if
+	      		CurScope$ = ""  ' Reset for next class.  TMZ 08/05/94
+	   	    next 'Metaclass
+	 	next  
+       	    next
+        ELSE
+            select name from Subsystem$
+       	    OwnerSub$ = Pick$(Subsystem$)
+       	    CurrentSubsystem$ = OwnerSub$
+       	    select all from Subsystem$ where name = OwnerSub$
+            foreach Subsystem$
+	        foreach Subsystem.Link.Class_Category
+	            foreach Class_Category.Using.Class
+	    	        OwnerClass$ = Class.Name
+	     		' select for foreach statement
+	     		select all from Class where name = OwnerClass$
+	     		'----------------------------------------------------
+	     		' main loop
+	     		'----------------------------------------------------
+	     		foreach Class
+			    ownerclass$=name$   'used in comparsion
+			    CurrentClass$ = Class.Class
+			    ClassCnt = ClassCnt + 1
+			    MembersExist = FALSE
+			    gosub TestMembers
+			    if MembersExist = FALSE then gosub NoMembersMessage
+			    if MembersExist <> FALSE then
+		   		Gosub GenerateCode
+		   		gosub PrintClassInfo
+			    end if
+			    CurScope$ = ""  ' Reset for next class.TMZ 08/05/94
+	     		next 'Metaclass
+	   	    next  
+	 	next
+            next
+     	END IF
+   end if
+
+   if ClassCnt = 0 then
+      print "         ERROR! Class ", OwnerClass$, " does not exist."
+   end if
+return
+
+'---------------------------------------------------------------------------
+'                              GetRelationMultiplicity
+'---------------------------------------------------------------------------
+GetRelationMultiplicity:
+'Within the scope of a class.association or qualifier.association
+'Determines nature of relationship
+
+if (multiplicity2$ = "exactly one") or (multiplicty2$= "optional") then
+  ' 1_1, 1-optional, many-one are treated identically
+  relationmultiplicity$="1_1"
+elseif (multiplicity1$ = "exactly one") or (multiplicty1$= "optional") then
+  '1_many type (mult2=many or 1+)
+  relationmultiplicity$="1_m"
+else
+  ' many to many
+  relationmultiplicity$="m_m"
+end if
+return
+
+
+'---------------------------------------------------------------------------
+'                               NoMembersMessage
+'---------------------------------------------------------------------------
+NoMembersMessage:
+   if OwnerClass$ = "*" AND UseInclude = TRUE AND ICGOption$ = "New" then gosub ClassHeader
+   print ""
+   print "       WARNING! ", CurrentClass$, " has no attributes or methods."
+   print "                no source files have been generated."
+   print
+return
+
+
+'----------------------------------------------------------------------------
+'                          GetClassName
+' scope: Class
+' input:
+' output: ClassName$ = PARSENAME(Class.Class <> "" ? Class.Class : Class.Name)
+'----------------------------------------------------------------------------
+GetClassName:
+  ClassName$ = Class.Class
+  if ClassName$ = "" then ClassName$ = Class.Name
+   ParseName$ = ClassName$
+  gosub ParseName
+  ClassName$ = ParseName$
+return
+
+'----------------------------------------------------------------------------
+'                          GetAttributeName
+' input:  flaFlatFile              boolean --- is output for a flat file?
+' output: AttribName$
+' scope:  Attribute
+'----------------------------------------------------------------------------
+GetAttributeName:
+  'AttribName$ = Attribute.Attribute
+  'IF AttribName$ = "" then AttribName$ = Attribute.Name
+  IF (flaFlatFile = TRUE AND Attribute.Attribute <> "") THEN
+    AttribName$ = Attribute.Attribute
+  else
+    AttribName$ = Attribute.Name
+  end if
+  ParseName$ = AttribName$
+  GOSUB ParseName
+  IF RIGHT$(ParseName$, 1) = "_" then
+    AttribName$ = LEFT$(ParseName$, LEN(ParseName$)-1)
+  else
+    AttribName$ = ParseName$
+  end if
+return
+
+'----------------------------------------------------------------------------
+'                          GetOperationName
+'----------------------------------------------------------------------------
+GetOperationName:
+    OpName$ = Operation.Operation
+    if OpName$ = "" then OpName$ = Operation.Name
+    ParseName$ = OpName$
+    gosub ParseName
+    OpName$ = ParseName$
+return
+
+'----------------------------------------------------------------------------
+'                          GetQualifierName
+'----------------------------------------------------------------------------
+GetQualifierName:
+    QualName$ = Qualifier.Attribute
+    if QualName$ = "" then QualName$ = Qualifier.Name
+    ParseName$ = QualName$
+    gosub ParseName
+    QualName$ = parseName$
+return
+
+'----------------------------------------------------------------------------
+' ParseName:
+' purpose: strips leading and trailing blanks from a name, removes internal
+'          blanks and capitalize the following letter, and strips any
+'          characters preceding and including a '.' or '::'.  Also forces the
+'          first letter to be lower case.  Strips any characters including
+'	   and following a "[".
+' input:  ParseName$
+' output: ParseName$
+'----------------------------------------------------------------------------
+ParseName:
+    'If Name has dot notation then extract just the name
+    pnDelimeter = INSTR(ParseName$, ".")
+    IF pnDelimeter <> 0 THEN ParseName$ = RIGHT$(ParseName$, (LEN(ParseName$)-pnDelimeter))
+    pnDelimeter = INSTR(ParseName$, "::")
+    IF pnDelimeter <> 0 THEN ParseName$ = RIGHT$(ParseName$, (LEN(ParseName$)-pnDelimeter-1))
+
+    '---------------------------------
+    'remove any leading blanks in name
+    '---------------------------------
+    WHILE LEFT$(ParseName$, 1) = " " 
+      ParseName$ = RIGHT$(ParseName$, (LEN(ParseName$)-1))
+    WEND
+
+    '--------------------------
+    'remove any trailing blanks
+    '--------------------------
+    WHILE RIGHT$(ParseName$, 1) = " "
+      ParseName$ = LEFT$(ParseName$, (LEN(ParseName$)-1))
+    WEND
+
+    '--------------------------
+    'remove any internal blanks
+    '--------------------------
+    WHILE INSTR(ParseName$, " ") > 0
+	pnDelimeter = INSTR(ParseName$, " ")
+	ParseName$ = LEFT$(ParseName$, pnDelimeter-1) + UPCASE$(MID$(ParseName$, pnDelimeter+1, 1)) + MID$(ParseName$, pnDelimeter+2)
+    WEND
+
+    '--------------------------
+    'remove all letters after (and including) a [
+    '--------------------------
+    IF INSTR(ParseName$, "[") > 0 THEN
+	pnDelimeter = INSTR(ParseName$, "[")
+	ParseName$ = LEFT$(ParseName$, pnDelimeter-1)
+    END IF
+
+    '--------------------------
+    'make first letter a lower case
+    '--------------------------
+    ParseName$ = LOCASE$(LEFT$(ParseName$, 1)) + MID$(ParseName$, 2)
+RETURN
+
+
+'---------------------------------------------------------------------------
+'                          TestMembers
+'---------------------------------------------------------------------------
+TestMembers:
+   Foreach ClassAttrib$
+      MembersExist=MembersExist+1
+   Next
+   foreach ClassOperat$
+      MembersExist=MembersExist+1
+   Next
+   TempClass$ = Class.Name
+   '----------------------------------
+   ' Test to see if any relationship attributes exist.  TMZ 08-04-94
+   '----------------------------------
+   foreach ClassAssociation$
+     MembersExist=MembersExist+1
+   next
+   IF Paradigm$ <> "SHLAER_M" THEN
+     foreach ClassAggregation$
+       MembersExist=MembersExist+1
+     next
+   END IF
+   '-----------------------------------------------
+   ' Added to bring the current Class.Name back to scope.
+   '-----------------------------------------------
+   SELECT all FROM Class WHERE name = TempClass$
+   foreach Class
+   next
+return
+
+
+'---------------------------------------------------------------------------
+'                               ClassHeader
+'---------------------------------------------------------------------------
+ClassHeader:
+   print ""
+   print "============================================================================"
+   print "                                ", CurrentClass$
+   print "============================================================================"
+return
+
+'-------------------------------------
+'GetGenStr -- output: ir$
+'-------------------------------------
+GetGenStr:
+   if paradigm$= "booch" then
+      ir$ = "Class.Inheritance"
+   elseif paradigm$="Shlaer_m" then
+      ir$="class.superclass" 
+   else 
+     ir$ = "Class.Generalization"
+   end if
+return
+'---------------------------------
+'GetIGenStr
+'----------------------------------
+GetIgenStr:
+
+   if paradigm$= "booch" then
+      ir$ = "Class.ancestor"
+   elseif paradigm$="Shlaer_m" then
+      ir$="class.subclass" 
+   else 
+     ir$ = "Class.specialization"
+   end if
+
+return
+'------------------------------------
+'GetRelStr
+'------------------------------------
+GetRelStr:
+
+   if paradigm$ = "coad_you" or paradigm$="Fusion" or paradigm$="Shlaer_m" then
+      rel$="class.relationship"
+   else 
+      rel$ = "class.association"
+   end if
+return
+
+'--------------------------'
+' GetMul
+'   input: rawMul$
+'   output: mul --- 2:many, 1:one or more, 0:one
+'---------------------------
+GetMul:
+    IF rawmul$ = "many" OR rawmul$ = "many conditional" THEN
+	mul = 2
+    ELSEIF rawmul$ = "one or more" THEN
+	mul=1
+    ELSEIF paradigm$= "fusion" AND rawmul$ ="optional" THEN
+	mul = 1
+    ELSE
+	mul = 0
+    ENDIF          
+RETURN
+
+'-------------------------
+' PrintComment
+'
+' description: Prints a comment, broken up into lines, where lines are broken
+'              on spaces.  We are assumed to be at the column pcStart in the
+	       first line when we enter this subroutine.
+'
+' input:       pcText$  = text to be printed
+'              pcStart  = column to start column in
+'              pcNum    = file number to print to
+'	       pcLead$  = lead "blank" at start of each comment
+'
+' output:      none
+'
+' scope:       none
+'--------------------------
+PrintComment:
+   pcSkip = pcStart - 1
+   pcLineLen = 73 - (pcSkip + LEN(StartComment$) + LEN(EndComment$))
+   pcTmpText$ = pcText$
+   pcLen = LEN(pcTmpText$)
+   pcBegun = FALSE
+   WHILE pcLen <> 0 
+      IF pcLen < pcLineLen THEN
+	 IF pcBegun = TRUE THEN
+	     PRINT #pcNum, pcLead$:pcSkip,
+	 ELSE
+	     pcBegun = TRUE
+	 ENDIF
+         PRINT #pcNum, StartComment$, " ", pcTmpText$, " ", EndComment$
+         pcLen = 0
+      ELSE
+         pcLine$ = LEFT$(pcTmpText$, pcLineLen)
+         WHILE RIGHT$(pcLine$, 1) <> " " AND LEN(pcLine$) > 0
+            pcLine$ = LEFT$(pcLine$, LEN(pcLine$) - 1)
+         WEND 
+         IF LEN(pcLine$) = 0 then  'a very long word!!, very unlikely
+            pcLine$ = LEFT$(pcTmpText$, pcLineLen - pcStart)
+	 END IF
+	 IF pcBegun = TRUE THEN
+	     PRINT #pcNum, pcLead$:pcSkip,
+	 ELSE
+	     pcBegun = TRUE
+	 ENDIF
+	 PRINT #pcNum, StartComment$, " ", pcLine$, " ", EndComment$
+         pcTmpText$ = RIGHT$(pcTmpText$, pcLen - LEN(pcLine$))
+         pcLen = LEN(pcTmpText$)
+      END IF      
+   WEND
+RETURN
+

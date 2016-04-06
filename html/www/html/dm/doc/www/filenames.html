@@ -1,0 +1,195 @@
+<PRE>
+
+Here is the latest 'official' list of file name conventions.
+Pay particular attention to the prefix convention we are proposing
+(facility name prefix + file_name_similar_to_what_currently_exists)
+
+we need a rep from each pipeline:
+
+astrom: jrp
+photo: gk
+mt: annis
+ts: skent
+spectro: yanny
+
+to approve this, send me mail if it's ok or what changes you need.
+These file names will be enforced for the database integration to the
+pipelines currently scheduled for november 1995.
+
+This page will be kept on the web as:
+http://www-sdss.fnal.gov:8000/dm/flatFiles/filenames.html
+and will be regarded as the official document, changes will occur here
+and be pipelines will be notified when file names affecting them change.
+If the pipeline wants to change a file name, send mail to yanny@sdss.fnal.gov.
+
+Since multiple pipelines read these files it's important to follow 
+the file name conventions and notify me when things change.
+
+-brian
+=============================
+
+3-Aug-95 (last modified)
+SDSS Data Processing -- File Name Conventions - Current version
+
+Jeff Munn
+Chris Stoughton
+Brian Yanny
+Steve Kent
+
+1.  All files used by pipelines will use this convention: data files, 
+parameter files, catalog files, log files, and any other files read
+or written by pipelines
+
+2.  A file name has the following form:
+
+	body.suffix
+
+where
+	suffix indicates the format of the file
+		fit -- FITS standard, either an image or table
+		par -- a parameter file, which can be read with inipar 
+		cat -- DWH catalog file 
+		log -- free-form ascii produced by pipelines as a log file
+		dat -- any other custom format
+
+and
+	body describes the content of the file.
+
+3.  The body of a file may be a simple description of what the file is
+for.  A parameter file that runs a pipline, for example, could be called
+
+	asParam.par
+
+4.  When a sequence of files is used, the body can take the following form:
+
+	prefix-runNumber-location-sequenceNumber
+
+where
+	prefix indicates what is in the file
+
+	runNumber is a six digit zero padded number (000123, for example)
+
+	location is two characters indicating location, for example
+		11 -- first row, first column of imaging camera
+		56 -- fifth row, sixth column of imaging camera
+		00 -- monitor telescope CCD
+		c1 -- the first column of CCDs
+	        r6 -- the 6th row of CCDs (astrometric)
+
+	sequenceNumber is a four digit zero padded number (0789, for example)
+		it can indicate frame number or field number.
+
+
+Here is a list of proposed prefixes.  A central listing available
+via www will be maintained as new file prefixes are created.
+
+Facility prefixes:
+
+	id    	Imaging DA
+	md	Montitor Telescope DA
+	sd      Spectroscopic DA
+	sc      Serial Stamp Collecting pipeline
+	mt      Monitor Telescope pipeline
+	as      Astrometry pipeline 
+	ps	Postage Stamp pipeline
+	fp	Frames Pipeline
+	ts	Target Selection
+	sp	SpectroScopic pipeline
+
+
+	File name prefixes (outputs interchanged between pipelines)
+==================================================================
+                idGang -- gang file from astrometric CCDs
+                idPbs -- CCD parameters from bright stars
+                idStamp -- postage stamps (if we repackage)
+                idQuart -- quartiles (if we repackage)
+                idR -- raw frame  
+                idFieldInfo -- field information
+		idIC -- CCD info file
+		idImagingLog -- Imaging run log (.par)
+
+	        scFang -- Cutouts
+
+		asParam -- param file (.par)
+	        asPlan -- plan file (.par)
+                asACRS -- ACRS catalog stars
+                asPPM -- PPM catalog stars
+		asTrans -- TRANS from row,column to great circle coordinates
+
+		mtParam -- param file (.par)
+		mtPlan -- plan file (.par)
+		mtPhotom -- photom. solution
+                mtExt -- extinction coefficients (will be replaced by mtPhotom)
+                mtGSC -- GSC catalog stars
+                mtStd -- monitor telescope secondary standards
+
+		psPlan -- plan file (.par)
+		psParam -- param file (.par)
+		psB2d -- 2d Bias frame
+                psB -- bias vector
+                psBD -- bias drift image
+                psCB -- calib1 by frame information
+                psFF -- flat field vector
+		psPC -- patch calibration by time (calib1bytime)
+
+		fpPlan -- plan file (.par)
+		fpParam -- param file (.par)
+		fpTree -- Object classification params [tree.ascii] (.dat)
+                fpFieldStat -- fieldstat (objects detected per field)
+                fpC -- corrected image
+                fpBIN -- binned image
+                fpM -- image mask
+                fpKO -- known objects (may be several types, FIRST, BRIGHT)
+                fpN -- noise mask
+                fpObjc -- object lists (OBJC)
+		fpAtlas -- Atlas images
+
+		tsPlan -- plan file (.par)
+		tsParam -- param file (.par)
+		tsPhotom -- final photometric solution
+		tsField -- objects calibrated in a field
+		tsRun  -- resolved objects from a run
+		tsScan  -- resolved objects from a scan
+		tsStripe -- resolved objects from a stripe
+		tsSky	-- resolved objects from several stripes
+		tsTarg	-- targets
+		tsB-H	-- Burstein Heiles reddening map
+		tsScanLim -- Scan limits
+		tsStripeLim -- Stripe Limits
+
+		spPlan -- plan file (.par)
+		spParam -- param file (.par)
+		spBias	-- spectro bias frame
+		spFlat	-- spectro flat frame
+		spBdata -- spectro Blue side data
+		spRdata -- spectro Red side data
+		spBComp -- spectro Blue side He-Ne-Ar Comparison Lamp
+		spRComp -- spectro Red side He-Ne-Ar Comparison Lamp
+		spBHalf -- Debiased/Flattened Blue half
+		spRHalf -- Debiased/Flattened Red half
+		spAll -- Merged Red/Blue (?)
+		spSkyline -- 1-D extracted merged red/blue spectra
+		spTemplate -- Template 1-D spectra for X-corr
+		spLinelist -- List of detected and measured lines
+
+	The body may optionally use the sequenceNumber, location, runNumber,
+	and prefix.   
+
+	Other approved numerical identifiers may also be used.  Target 
+	selection, for example, uses stripe, strip, and	scanline oriented 
+	files with appropriate numbering.
+
+	Examples: 
+
+	Original images from the i chip in column 3 for run 123 are named as
+	idR-000123-23-0000.fit, idR-000123-23-0001.fit, ....
+
+	Data that is for all the fields of all the CCDs in column 1 of run 
+	number 123 would have a file name idFieldInfo-000123-c1.fit
+
+	Data for the entire run needs only the run number:  mtPhotom-049993.fit
+	(mt run number is int(MJD))
+
+	
+
+</PRE>
