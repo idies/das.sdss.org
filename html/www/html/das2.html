@@ -1,4 +1,5 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
   <link rel="stylesheet" type="text/css" href="../css/sdssdas.css"/>
@@ -24,15 +25,22 @@
     }
 
   </style>
+<!-- Google Tag Manager -->
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-M6F94N"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-M6F94N');</script>
+<!-- End Google Tag Manager -->
 </head>
 
 <body class="page">
 
 <h1>SDSS DAS Version 2 <span class="warning">new with DR7!</span></h1>
 
-<p class="left"><em>This is the SDSS DAS version 2 main page. For the previous
-version of the DAS, please use
-the <a href="http://das.sdss.org/DR6-cgi-bin/DAS">DR6 DAS</a>. For
+<p class="left"><em>This is the SDSS DAS version 2 main page. DR6 DAS is no longer available. For
 general information on the SDSS, please consult the 
 <a href="http://www.sdss.org">SDSS homepage</a>. For more
 inforation on using SDSS data, please consult the 
@@ -83,12 +91,10 @@ The <tt>-c</tt> and <tt>--cut-dirs</tt> options are also likely to be
 of interest to DAS users; consult the wget documentation.</p>
 
 <p class="left">Mass download
-through <a href="http://samba.anu.edu.au/rsync/">rsync</a> is also
-available. The command to use a DAS generated file for rsync looks like this:</p>
-<div class="sample">
-<pre><tt>bash$ rsync -vtHP --files-from=sdss-rsync.lis rsync://user@rsync.sdss.org/DAS . </tt></pre>
-</div>
-<p class="left">The password is <code>sdss</code>.</p>
+through rsync is no longer
+available. </p>
+
+<p class="left">Please contact webmaster@pha.jhu.edu if you have any questions or concerns.</p>
 
 <h2><a name="dr7"></a>Browse Data Release 7</h2>
 <ul>
@@ -158,7 +164,7 @@ available. The command to use a DAS generated file for rsync looks like this:</p
   <dd>holds the raw data files as they came from the
   mountain.</dd>
 </dl>
-<p class="left">From these directories, you can download files using rsync or an http
+<p class="left">From these directories, you can download files using an http
 downloader such as wget. The total volumes of these directories can be found 
 <a href="volume.html">here</a>.
 </p>
@@ -191,16 +197,6 @@ partially downloaded files.</p>
 
 <p class="left"><em>If you want a directory but not other files or subdirectories in its
 parent, you must use the trailing slash in the URL!</em></p>
-
-<p class="left">You can accomplish something very similar using rsync: </p>
-
-<div class="sample">
-<pre><tt>bash$ rsync -rvtHP rsync://sdss@rsync.sdss.org/DAS/imaging/3836/41 .</tt></pre>
-</div>
-<p class="left">The password is <code>sdss</code>.</p>
-
-<p class="left">
-The <tt>-r</tt> asks that the files be downloaded recursively.</p>
 
 <h2><a name="olddr"></a>Older Data Releases</h2>
 <ul>
@@ -242,14 +238,6 @@ The <tt>-r</tt> asks that the files be downloaded recursively.</p>
     href="imaging/dr-20.html">by stripe</a> and <a
     href="imaging/dr-byRun-20.html">by run.</a></li>
   <li>Browse the DR2 <a href="spectro/dr2index.html">spectroscopic archive.</a></li>
-<!--
-  <li>Browse DR1 legacy survey imaging, best rerun, <a
-    href="imaging/dr-11.html">by stripe</a> and <a
-    href="imaging/dr-byRun-11.html">by run.</a></li>
-  <li>Browse DR1 legacy survey imaging, target rerun, <a
-    href="imaging/dr-10.html">by stripe</a> and <a
-    href="imaging/dr-byRun-10.html">by run.</a></li>
--->
 </ul>
 </body>
 </html>
